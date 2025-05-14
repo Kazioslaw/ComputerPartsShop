@@ -1,0 +1,6 @@
+@ComputerPartsShop_HostAddress = http://localhost:5038
+
+GET {{ComputerPartsShop_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
