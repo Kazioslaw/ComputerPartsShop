@@ -34,7 +34,7 @@ namespace ComputerPartsShop.Controllers
 		/// <summary>
 		/// Get method to get category by its id
 		/// </summary>
-		/// <param name="id">Category id</param>
+		/// <param name="id">Category id to get</param>
 		/// <returns>Category by its id</returns>
 
 		[HttpGet("{id}")]

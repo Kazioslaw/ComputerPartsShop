@@ -36,7 +36,7 @@ namespace ComputerPartsShop.Controllers
 		/// <summary>
 		/// Get method to get address by its id
 		/// </summary>
-		/// <param name="id">Address id</param>
+		/// <param name="id">Address id to get</param>
 		/// <returns>Address by its id</returns>
 
 		[HttpGet("{id}")]
