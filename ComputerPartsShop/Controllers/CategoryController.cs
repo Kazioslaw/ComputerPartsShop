@@ -26,7 +26,7 @@ namespace ComputerPartsShop.Controllers
 		/// List of categories.
 		/// </returns>
 		[HttpGet]
-		public ActionResult<List<Category>> GetCategories()
+		public ActionResult<List<Category>> GetCategoryList()
 		{
 			return Ok(Categories);
 		}
@@ -49,9 +49,9 @@ namespace ComputerPartsShop.Controllers
 		}
 
 		/// <summary>
-		/// Post method to create new Category
+		/// Post method to create new category
 		/// </summary>
-		/// <param name="category"></param>
+		/// <param name="category">Category model to create</param>
 		/// <returns>Newly created category with id.</returns>
 
 		[HttpPost]
@@ -65,8 +65,8 @@ namespace ComputerPartsShop.Controllers
 		/// <summary>
 		/// Put method to update category by its id
 		/// </summary>
-		/// <param name="id"></param>
-		/// <param name="updatedCategory"></param>
+		/// <param name="id">Category ID to update</param>
+		/// <param name="updatedCategory">Category model to update</param>
 		/// <returns>Properly updated category</returns>
 
 		[HttpPut("{id}")]
@@ -85,10 +85,8 @@ namespace ComputerPartsShop.Controllers
 		/// <summary>
 		/// Delete method to delete category by its id
 		/// </summary>
-		/// <param name="id"></param>
-		/// <returns>
-		/// Information about successful deletion
-		/// </returns>
+		/// <param name="id">Category ID to delete</param>
+		/// <returns>Information about successful deletion</returns>
 
 		[HttpDelete("{id}")]
 		public ActionResult DeleteCategory(int id)
