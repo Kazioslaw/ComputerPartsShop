@@ -7,6 +7,88 @@ namespace ComputerPartsShop.Controllers
 	[Route("api/[controller]")]
 	public class CustomerController : ControllerBase
 	{
+		/// <summary>
+		/// Get method to get customer list
+		/// </summary>
+		/// <returns>
+		/// List of customers.
+		/// </returns>
+		[HttpGet]
+		public ActionResult<List<Customer>> GetCustomerList()
+		{
+			return Ok(Customers);
+		}
+
+		/// <summary>
+		/// Get method to get customer by its id
+		/// </summary>
+		/// <param name="id">Customer id to get</param>
+		/// <returns>Customer by its id.</returns>
+		[HttpGet("{id}")]
+		public ActionResult<Customer> GetCustomer(int id)
+		{
+			var customer = Customers.FirstOrDefault(c => c.ID == id);
+			if (customer == null)
+			{
+				return NotFound();
+			}
+			return Ok(customer);
+		}
+
+		/// <summary>
+		/// Post method to create customer
+		/// </summary>
+		/// <param name="customer">Customer model to create</param>
+		/// <returns>Created customer with id.</returns>
+		[HttpPost]
+		public ActionResult<Customer> CreateCustomer(Customer customer)
+		{
+			customer.ID = Customers.Count + 1;
+			Customers.Add(customer);
+			return CreatedAtAction(nameof(CreateCustomer), customer);
+		}
+
+		/// <summary>
+		/// Put method to update customer by its id
+		/// </summary>
+		/// <param name="id">Customer id to update</param>
+		/// <param name="updatedCustomer">Customer model to update</param>
+		/// <returns>Updated customer.</returns>
+		[HttpPut("{id}")]
+		public ActionResult<Customer> UpdateCustomer(int id, Customer updatedCustomer)
+		{
+			var customer = Customers.FirstOrDefault(c => c.ID == id);
+			if (customer == null)
+			{
+				return NotFound();
+			}
+			customer.FirstName = updatedCustomer.FirstName;
+			customer.LastName = updatedCustomer.LastName;
+			customer.PhoneNumber = updatedCustomer.PhoneNumber;
+			customer.Email = updatedCustomer.Email;
+			customer.ContactAddress = updatedCustomer.ContactAddress;
+			customer.DeliveryAddress = updatedCustomer.DeliveryAddress;
+
+			return Ok(customer);
+		}
+
+		/// <summary>
+		/// Delete method to delete customer by its id
+		/// </summary>
+		/// <param name="id">Customer id to delete</param>
+		/// <returns>Information about successful deletion.</returns>
+		[HttpDelete("{id}")]
+		public ActionResult DeleteCustomer(int id)
+		{
+			var customer = Customers.FirstOrDefault(c => c.ID == id);
+			if (customer == null)
+			{
+				return NotFound();
+			}
+			Customers.Remove(customer);
+			return Ok();
+		}
+
 		static List<Customer> Customers = new List<Customer>
 		{
 			new Customer {
@@ -14,7 +96,6 @@ namespace ComputerPartsShop.Controllers
 				ContactAddress = new Address {ID = 1, Street = "1935 Ashford Drive", City = "Ashburn", Zipcode = "22011", Region = "VA"},
 				DeliveryAddress = new Address {ID = 1, Street = "1935 Ashford Drive", City = "Ashburn", Zipcode = "22011", Region = "VA"},
 			},
-
 			new Customer {
 				ID = 2, FirstName = "Kade", LastName = "Kim", PhoneNumber = "201-976-1755", Email = "KadeKim@mail.com",
 				ContactAddress = new Address {ID = 10, Street = "2790 Leo Street", City = "Washington", Zipcode = "15301", Region = "PA"},
@@ -70,88 +151,5 @@ namespace ComputerPartsShop.Controllers
 			}
 
 		};
-
-
-		/// <summary>
-		/// Get method to get customer list
-		/// </summary>
-		/// <returns>
-		/// List of customers
-		/// </returns>
-		[HttpGet]
-		public ActionResult<List<Customer>> GetCustomerList()
-		{
-			return Ok(Customers);
-		}
-
-		/// <summary>
-		/// Get method to get customer by its id
-		/// </summary>
-		/// <param name="id">Customer id to get</param>
-		/// <returns>Customer by its id</returns>
-		[HttpGet("{id}")]
-		public ActionResult<Customer> GetCustomer(int id)
-		{
-			var customer = Customers.FirstOrDefault(c => c.ID == id);
-			if (customer == null)
-			{
-				return NotFound();
-			}
-			return Ok(customer);
-		}
-
-		/// <summary>
-		/// Post method to create customer
-		/// </summary>
-		/// <param name="customer">Customer model to create</param>
-		/// <returns>Created customer with id</returns>
-		[HttpPost]
-		public ActionResult<Customer> CreateCustomer(Customer customer)
-		{
-			customer.ID = Customers.Count + 1;
-			Customers.Add(customer);
-			return CreatedAtAction(nameof(CreateCustomer), customer);
-		}
-
-		/// <summary>
-		/// Put method to update customer by its id
-		/// </summary>
-		/// <param name="id">Customer id to update</param>
-		/// <param name="updatedCustomer">Customer model to update</param>
-		/// <returns>Updated customer</returns>
-		[HttpPut("{id}")]
-		public ActionResult<Customer> UpdateCustomer(int id, Customer updatedCustomer)
-		{
-			var customer = Customers.FirstOrDefault(c => c.ID == id);
-			if (customer == null)
-			{
-				return NotFound();
-			}
-			customer.FirstName = updatedCustomer.FirstName;
-			customer.LastName = updatedCustomer.LastName;
-			customer.PhoneNumber = updatedCustomer.PhoneNumber;
-			customer.Email = updatedCustomer.Email;
-			customer.ContactAddress = updatedCustomer.ContactAddress;
-			customer.DeliveryAddress = updatedCustomer.DeliveryAddress;
-
-			return Ok(customer);
-		}
-
-		/// <summary>
-		/// Delete method to delete customer by its id
-		/// </summary>
-		/// <param name="id">Customer id to delete</param>
-		/// <returns>Information about successful deletion</returns>
-		[HttpDelete("{id}")]
-		public ActionResult DeleteCustomer(int id)
-		{
-			var customer = Customers.FirstOrDefault(c => c.ID == id);
-			if (customer == null)
-			{
-				return NotFound();
-			}
-			Customers.Remove(customer);
-			return Ok();
-		}
 	}
 }

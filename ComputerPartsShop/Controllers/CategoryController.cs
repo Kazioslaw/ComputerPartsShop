@@ -7,17 +7,6 @@ namespace ComputerPartsShop.Controllers
 	[Route("api/[controller]")]
 	public class CategoryController : ControllerBase
 	{
-		static List<Category> Categories = new()
-		{
-			new Category { ID = 1, Name = "CPU/Processor" },
-			new Category { ID = 2, Name = "RAM Memory" },
-			new Category { ID = 3, Name = "Motherboard"},
-			new Category { ID = 4, Name = "GPU/Graphics Card"},
-			new Category { ID = 5, Name = "Computer Case"},
-			new Category { ID = 6, Name = "Power Supply"},
-			new Category { ID = 7, Name = "Hard Drive"},
-			new Category { ID = 8, Name = "Solid State Drive"}
-		};
 
 		/// <summary> 
 		/// Get method to get list of categories
@@ -100,5 +89,18 @@ namespace ComputerPartsShop.Controllers
 
 			return Ok();
 		}
+
+		static List<Category> Categories = new()
+		{
+			new Category { ID = 1, Name = "CPU/Processor" },
+			new Category { ID = 2, Name = "RAM Memory" },
+			new Category { ID = 3, Name = "Motherboard"},
+			new Category { ID = 4, Name = "GPU/Graphics Card"},
+			new Category { ID = 5, Name = "Computer Case"},
+			new Category { ID = 6, Name = "Power Supply"},
+			new Category { ID = 7, Name = "Hard Drive"},
+			new Category { ID = 8, Name = "Solid State Drive"}
+		};
+
 	}
 }
