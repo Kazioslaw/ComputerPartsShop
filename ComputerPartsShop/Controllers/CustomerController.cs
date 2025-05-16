@@ -10,61 +10,61 @@ namespace ComputerPartsShop.Controllers
 		static List<Customer> Customers = new List<Customer>
 		{
 			new Customer {
-				ID = 1, FirstName = "Bernard", LastName = "Mortensen", PhoneNumber = "714-201-0523", Email = "vergie.schimm@yahoo.com",
+				ID = 1, FirstName = "Bernard", LastName = "Mortensen", PhoneNumber = "201-714-0523", Email = "bernard.Mortensen@mail.com",
 				ContactAddress = new Address {ID = 1, Street = "1935 Ashford Drive", City = "Ashburn", Zipcode = "22011", Region = "VA"},
 				DeliveryAddress = new Address {ID = 1, Street = "1935 Ashford Drive", City = "Ashburn", Zipcode = "22011", Region = "VA"},
 			},
 
 			new Customer {
-				ID = 2, FirstName = "Kade", LastName = "Kim", PhoneNumber = "", Email = "",
+				ID = 2, FirstName = "Kade", LastName = "Kim", PhoneNumber = "201-976-1755", Email = "KadeKim@mail.com",
 				ContactAddress = new Address {ID = 10, Street = "2790 Leo Street", City = "Washington", Zipcode = "15301", Region = "PA"},
 				DeliveryAddress = new Address {ID = 10, Street = "2790 Leo Street", City = "Washington", Zipcode = "15301", Region = "PA"}
 			},
 			new Customer
 			{
-				ID = 3, FirstName = "Macy", LastName = "House", PhoneNumber = "", Email = "",
+				ID = 3, FirstName = "Macy", LastName = "House", PhoneNumber = "201-760-9160", Email = "MacyHouse@mail.com",
 				ContactAddress = new Address {ID = 9, Street = "3845 Angie Drive", City = "Santa Ana", Zipcode = "92705", Region = "CA"},
 				DeliveryAddress = new Address {ID = 9, Street = "3845 Angie Drive", City = "Santa Ana", Zipcode = "92705", Region = "CA"}
 			},
 			new Customer
 			{
-				ID = 4, FirstName = "Alonso", LastName = "Chapman", PhoneNumber = "", Email = "",
+				ID = 4, FirstName = "Alonso", LastName = "Chapman", PhoneNumber = "201-766-4997", Email = "AlonsoChapman@mail.com",
 				ContactAddress = new Address {ID = 5, Street = "4153 Private Lane", City = "Miami", Zipcode = "65344", Region = "MO"},
 				DeliveryAddress = new Address {ID = 5, Street = "4153 Private Lane", City = "Miami", Zipcode = "65344", Region = "MO"}
 			},
 			new Customer
 			{
-				ID = 5, FirstName = "Felipe", LastName = "Reeves", PhoneNumber = "", Email = "",
+				ID = 5, FirstName = "Felipe", LastName = "Reeves", PhoneNumber = "201-745-0187", Email = "FelipeReeves@mail.com",
 				ContactAddress = new Address {ID = 4, Street = "425 Hart Country Lane", City = "Anaheim", Zipcode = "92801", Region = "CA"},
 				DeliveryAddress = new Address {ID = 4, Street = "425 Hart Country Lane", City = "Anaheim", Zipcode = "92801", Region = "CA"}
 			},
 			new Customer
 			{
-				ID = 6, FirstName = "Misael", LastName = "Chavez", PhoneNumber = "", Email = "",
+				ID = 6, FirstName = "Misael", LastName = "Chavez", PhoneNumber = "201-495-5360", Email = "MisaelChavez@mail.com",
 				ContactAddress = new Address {ID = 3, Street = "3785 Blackwell Street", City = "Cordova", Zipcode = "99574", Region = "AK"},
 				DeliveryAddress = new Address {ID = 3, Street = "3785 Blackwell Street", City = "Cordova", Zipcode = "99574", Region = "AK"}
 			},
 			new Customer
 			{
-				ID = 7, FirstName = "Mireya", LastName = "Haas", PhoneNumber = "", Email = "",
+				ID = 7, FirstName = "Mireya", LastName = "Haas", PhoneNumber = "201-217-8365", Email = "MireyaHaas@mail.com",
 				ContactAddress =  new Address {ID = 7, Street = "3456 Water Street", City = "Oakland", Zipcode = "94612", Region = "CA"},
 				DeliveryAddress = new Address {ID = 7, Street = "3456 Water Street", City = "Oakland", Zipcode = "94612", Region = "CA"}
 			},
 			new Customer
 			{
-				ID = 8, FirstName = "Sawyer", LastName = "Blackburn", PhoneNumber = "", Email = "",
+				ID = 8, FirstName = "Sawyer", LastName = "Blackburn", PhoneNumber = "201-498-9148", Email = "SawyerBlackburn@mail.com",
 				ContactAddress = new Address {ID = 6, Street = "1417 Pin Oak Drive", City = "Long Beach", Zipcode = "90807", Region = "CA"},
 				DeliveryAddress = new Address {ID = 6, Street = "1417 Pin Oak Drive", City = "Long Beach", Zipcode = "90807", Region = "CA"}
 			},
 			new Customer
 			{
-				ID = 9, FirstName = "Tia", LastName = "Lowe", PhoneNumber = "", Email = "",
+				ID = 9, FirstName = "Tia", LastName = "Lowe", PhoneNumber = "201-353-1630", Email = "TiaLowe@mail.com",
 				ContactAddress = new Address {ID = 2, Street = "41 Center Avenue", City = "Fresno", Zipcode = "93710", Region = "CA"},
 				DeliveryAddress = new Address {ID = 2, Street = "41 Center Avenue", City = "Fresno", Zipcode = "93710", Region = "CA"}
 			},
 			new Customer
 			{
-				ID = 10, FirstName = "Owen", LastName = "Kidd", PhoneNumber = "", Email = "",
+				ID = 10, FirstName = "Owen", LastName = "Kidd", PhoneNumber = "201-287-4477", Email = "OwenKidd@mail.com",
 				ContactAddress = new Address {ID = 8, Street = "672 State Street", City = "Detroit", Zipcode = "48219", Region = "MI"},
 				DeliveryAddress = new Address {ID = 8, Street = "672 State Street", City = "Detroit", Zipcode = "48219", Region = "MI"}
 			}
