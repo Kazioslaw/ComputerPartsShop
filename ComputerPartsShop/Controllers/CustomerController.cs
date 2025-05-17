@@ -28,10 +28,12 @@ namespace ComputerPartsShop.Controllers
 		public ActionResult<Customer> GetCustomer(int id)
 		{
 			var customer = Customers.FirstOrDefault(c => c.ID == id);
+
 			if (customer == null)
 			{
 				return NotFound();
 			}
+
 			return Ok(customer);
 		}
 
@@ -43,8 +45,10 @@ namespace ComputerPartsShop.Controllers
 		[HttpPost]
 		public ActionResult<Customer> CreateCustomer(Customer customer)
 		{
-			customer.ID = Customers.Count + 1;
+			customer.ID = (Customers.OrderByDescending(a => a.ID).FirstOrDefault()?.ID ?? 0) + 1;
+
 			Customers.Add(customer);
+
 			return CreatedAtAction(nameof(CreateCustomer), customer);
 		}
 
@@ -58,10 +62,12 @@ namespace ComputerPartsShop.Controllers
 		public ActionResult<Customer> UpdateCustomer(int id, Customer updatedCustomer)
 		{
 			var customer = Customers.FirstOrDefault(c => c.ID == id);
+
 			if (customer == null)
 			{
 				return NotFound();
 			}
+
 			customer.FirstName = updatedCustomer.FirstName;
 			customer.LastName = updatedCustomer.LastName;
 			customer.PhoneNumber = updatedCustomer.PhoneNumber;
@@ -81,17 +87,21 @@ namespace ComputerPartsShop.Controllers
 		public ActionResult DeleteCustomer(int id)
 		{
 			var customer = Customers.FirstOrDefault(c => c.ID == id);
+
 			if (customer == null)
 			{
 				return NotFound();
 			}
+
 			Customers.Remove(customer);
+
 			return Ok();
 		}
 
-		static List<Customer> Customers = new List<Customer>
+		private static List<Customer> Customers = new List<Customer>
 		{
-			new Customer {
+			new Customer
+			{
 				ID = 1, FirstName = "Bernard", LastName = "Mortensen", PhoneNumber = "201-714-0523", Email = "bernard.Mortensen@mail.com",
 				ContactAddress = new Address {ID = 1, Street = "1935 Ashford Drive", City = "Ashburn", Zipcode = "22011", Region = "VA"},
 				DeliveryAddress = new Address {ID = 1, Street = "1935 Ashford Drive", City = "Ashburn", Zipcode = "22011", Region = "VA"},
@@ -149,7 +159,6 @@ namespace ComputerPartsShop.Controllers
 				ContactAddress = new Address {ID = 8, Street = "672 State Street", City = "Detroit", Zipcode = "48219", Region = "MI"},
 				DeliveryAddress = new Address {ID = 8, Street = "672 State Street", City = "Detroit", Zipcode = "48219", Region = "MI"}
 			}
-
 		};
 	}
 }

@@ -16,7 +16,7 @@ namespace ComputerPartsShop.Controllers
 		[HttpGet]
 		public ActionResult<List<Product>> GetProductList()
 		{
-			return Ok(products);
+			return Ok(Products);
 		}
 
 		/// <summary>
@@ -29,11 +29,13 @@ namespace ComputerPartsShop.Controllers
 		[HttpGet("{id}")]
 		public ActionResult<Product> GetProduct(int id)
 		{
-			var product = products.FirstOrDefault(x => x.ID == id);
+			var product = Products.FirstOrDefault(x => x.ID == id);
+
 			if (product == null)
 			{
 				return NotFound();
 			}
+
 			return Ok(product);
 		}
 
@@ -45,8 +47,8 @@ namespace ComputerPartsShop.Controllers
 		[HttpPost]
 		public ActionResult<Product> CreateProduct(Product product)
 		{
-			product.ID = products.Count + 1;
-			products.Add(product);
+			product.ID = (Products.OrderByDescending(a => a.ID).FirstOrDefault()?.ID ?? 0) + 1;
+			Products.Add(product);
 			return Ok(product);
 		}
 
@@ -61,7 +63,8 @@ namespace ComputerPartsShop.Controllers
 		[HttpPut("{id}")]
 		public ActionResult<Product> UpdateProduct(int id, Product updatedProduct)
 		{
-			var product = products.FirstOrDefault(x => x.ID == id);
+			var product = Products.FirstOrDefault(x => x.ID == id);
+
 			if (product == null)
 			{
 				return NotFound();
@@ -86,17 +89,19 @@ namespace ComputerPartsShop.Controllers
 		[HttpDelete("{id}")]
 		public ActionResult DeleteProduct(int id)
 		{
-			var product = products.FirstOrDefault(x => x.ID == id);
+			var product = Products.FirstOrDefault(x => x.ID == id);
+
 			if (product == null)
 			{
 				return NotFound();
 			}
 
-			products.Remove(product);
+			Products.Remove(product);
+
 			return Ok();
 		}
 
-		static List<Product> products = new List<Product>
+		private static List<Product> Products = new List<Product>
 		{
 			new Product {
 				ID = 1, Name = "Nvidia RTX 5090",
@@ -159,6 +164,5 @@ namespace ComputerPartsShop.Controllers
 				Category = new Category { ID = 6, Name = "Power Supply"}, Price = 149.99M, Stock = 25
 			},
 		};
-
 	}
 }

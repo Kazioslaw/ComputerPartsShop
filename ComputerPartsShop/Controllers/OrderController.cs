@@ -26,10 +26,12 @@ namespace ComputerPartsShop.Controllers
 		public ActionResult<Order> GetOrder(int id)
 		{
 			var order = Orders.FirstOrDefault(x => x.ID == id);
+
 			if (order == null)
 			{
 				return NotFound();
 			}
+
 			return Ok(order);
 		}
 
@@ -41,8 +43,10 @@ namespace ComputerPartsShop.Controllers
 		[HttpPost]
 		public ActionResult<Order> CreateOrder(Order order)
 		{
-			order.ID = Orders.Count + 1;
+			order.ID = (Orders.OrderByDescending(a => a.ID).FirstOrDefault()?.ID ?? 0) + 1;
+
 			Orders.Add(order);
+
 			return Ok(order);
 		}
 
@@ -56,6 +60,7 @@ namespace ComputerPartsShop.Controllers
 		public ActionResult<Order> UpdateOrder(int id, Order updatedOrder)
 		{
 			var order = Orders.FirstOrDefault(x => x.ID == id);
+
 			if (order == null)
 			{
 				return NotFound();
@@ -80,15 +85,18 @@ namespace ComputerPartsShop.Controllers
 		public ActionResult<Order> DeleteOrder(int id)
 		{
 			var order = Orders.FirstOrDefault(x => x.ID == id);
+
 			if (order == null)
 			{
 				return NotFound();
 			}
+
 			Orders.Remove(order);
+
 			return Ok();
 		}
 
-		static List<Order> Orders = new List<Order>()
+		private static List<Order> Orders = new List<Order>()
 		{
 			new Order {ID = 1, Customer = new Customer{ FirstName = "Alonso", LastName = "Chapman" },
 			Product = new List<Product>

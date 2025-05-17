@@ -26,6 +26,7 @@ namespace ComputerPartsShop.Controllers
 		public ActionResult<Payment> GetPayment(int id)
 		{
 			var payment = Payments.FirstOrDefault(x => x.ID == id);
+
 			if (payment == null)
 			{
 				return NotFound();
@@ -45,8 +46,10 @@ namespace ComputerPartsShop.Controllers
 		[HttpPost]
 		public ActionResult<Payment> CreatePayment(Payment payment)
 		{
-			payment.ID = Payments.Count + 1;
+			payment.ID = (Payments.OrderByDescending(a => a.ID).FirstOrDefault()?.ID ?? 0) + 1;
+
 			Payments.Add(payment);
+
 			return Ok(payment);
 		}
 
@@ -61,14 +64,17 @@ namespace ComputerPartsShop.Controllers
 		public ActionResult<Payment> UpdatePayment(int id, Payment updatedPayment)
 		{
 			var payment = Payments.FirstOrDefault(x => x.ID == id);
+
 			if (payment == null)
 			{
 				return NotFound();
 			}
+
 			payment.Customer = updatedPayment.Customer;
 			payment.Order = updatedPayment.Order;
 			payment.PaymentStatus = updatedPayment.PaymentStatus;
 			payment.PaymentType = updatedPayment.PaymentType;
+
 			return Ok(payment);
 		}
 
@@ -81,15 +87,18 @@ namespace ComputerPartsShop.Controllers
 		public ActionResult DeletePayment(int id)
 		{
 			var payment = Payments.FirstOrDefault(x => x.ID == id);
+
 			if (payment == null)
 			{
 				return NotFound();
 			}
+
 			Payments.Remove(payment);
+
 			return Ok();
 		}
 
-		static List<Payment> Payments = new List<Payment>
+		private static List<Payment> Payments = new List<Payment>
 		{
 			new Payment { ID = 1,
 				Customer = new Customer { FirstName = "Bernard", LastName = "Mortensen", PhoneNumber = "201-714-0523", Email = "bernard.Mortensen@mail.com"},

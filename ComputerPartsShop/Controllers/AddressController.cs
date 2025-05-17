@@ -24,28 +24,31 @@ namespace ComputerPartsShop.Controllers
 		/// </summary>
 		/// <param name="id">Address id to get</param>
 		/// <returns>Address by its id</returns>
-
 		[HttpGet("{id}")]
 		public ActionResult<Address> GetAddress(int id)
 		{
 			var address = Addresses.FirstOrDefault(a => a.ID == id);
+
 			if (address == null)
 			{
 				return NotFound();
 			}
+
 			return Ok(address);
 		}
 
 		/// <summary>
 		/// Post method to Create new address
 		/// </summary>
-		/// <param name="address">Addres model to create</param>
+		/// <param name="address">Address model to create</param>
 		/// <returns>Newly created address with id</returns>
 		[HttpPost]
 		public ActionResult<Address> CreateAddress(Address address)
 		{
-			address.ID = Addresses.Count + 1;
+			address.ID = (Addresses.OrderByDescending(a => a.ID).FirstOrDefault()?.ID ?? 0) + 1;
+
 			Addresses.Add(address);
+
 			return CreatedAtAction(nameof(CreateAddress), address);
 		}
 
@@ -55,19 +58,21 @@ namespace ComputerPartsShop.Controllers
 		/// <param name="id">Address id to update</param>
 		/// <param name="updatedAddress">Address model to update</param>
 		/// <returns>Updated address</returns>
-
 		[HttpPut("{id}")]
 		public ActionResult<Address> UpdateAddress(int id, Address updatedAddress)
 		{
 			var address = Addresses.FirstOrDefault(a => a.ID == id);
+
 			if (address == null)
 			{
 				return NotFound();
 			}
+
 			address.Street = updatedAddress.Street;
 			address.City = updatedAddress.City;
 			address.Zipcode = updatedAddress.Zipcode;
 			address.Region = updatedAddress.Region;
+
 			return Ok(address);
 		}
 
@@ -80,6 +85,7 @@ namespace ComputerPartsShop.Controllers
 		public ActionResult DeleteAddress(int id)
 		{
 			var address = Addresses.FirstOrDefault(a => a.ID == id);
+
 			if (address == null)
 			{
 				return NotFound();
@@ -88,7 +94,7 @@ namespace ComputerPartsShop.Controllers
 			return Ok();
 		}
 
-		static List<Address> Addresses = new List<Address>
+		private static List<Address> Addresses = new List<Address>
 		{
 			new Address {ID = 1, Street = "1935 Ashford Drive", City = "Ashburn", Zipcode = "22011", Region = "VA"},
 			new Address {ID = 2, Street = "41 Center Avenue", City = "Fresno", Zipcode = "93710", Region = "CA"},

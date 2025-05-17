@@ -25,15 +25,16 @@ namespace ComputerPartsShop.Controllers
 		/// </summary>
 		/// <param name="id">Category id to get</param>
 		/// <returns>Category by its id</returns>
-
 		[HttpGet("{id}")]
 		public ActionResult<Category> GetCategory(int id)
 		{
 			var category = Categories.FirstOrDefault(c => c.ID == id);
+
 			if (category == null)
 			{
 				return NotFound();
 			}
+
 			return Ok(category);
 		}
 
@@ -42,12 +43,13 @@ namespace ComputerPartsShop.Controllers
 		/// </summary>
 		/// <param name="category">Category model to create</param>
 		/// <returns>Newly created category with id.</returns>
-
 		[HttpPost]
 		public ActionResult CreateCategory(Category category)
 		{
-			category.ID = Categories.Count + 1;
+			category.ID = (Categories.OrderByDescending(a => a.ID).FirstOrDefault()?.ID ?? 0) + 1;
+
 			Categories.Add(category);
+
 			return CreatedAtAction(nameof(CreateCategory), category);
 		}
 
@@ -57,15 +59,16 @@ namespace ComputerPartsShop.Controllers
 		/// <param name="id">Category ID to update</param>
 		/// <param name="updatedCategory">Category model to update</param>
 		/// <returns>Properly updated category</returns>
-
 		[HttpPut("{id}")]
 		public ActionResult<Category> UpdateCategory(int id, Category updatedCategory)
 		{
 			var category = Categories.FirstOrDefault(c => c.ID == id);
+
 			if (category == null)
 			{
 				return NotFound();
 			}
+
 			category.Name = updatedCategory.Name;
 
 			return Ok(category);
@@ -76,21 +79,22 @@ namespace ComputerPartsShop.Controllers
 		/// </summary>
 		/// <param name="id">Category ID to delete</param>
 		/// <returns>Information about successful deletion</returns>
-
 		[HttpDelete("{id}")]
 		public ActionResult DeleteCategory(int id)
 		{
 			var category = Categories.FirstOrDefault(c => c.ID == id);
+
 			if (category == null)
 			{
 				return NotFound();
 			}
+
 			Categories.Remove(category);
 
 			return Ok();
 		}
 
-		static List<Category> Categories = new()
+		private static List<Category> Categories = new()
 		{
 			new Category { ID = 1, Name = "CPU/Processor" },
 			new Category { ID = 2, Name = "RAM Memory" },
