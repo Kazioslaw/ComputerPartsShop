@@ -1,4 +1,12 @@
+IF NOT EXISTS (Select Name from dbo.sysdatabases WHERE name = 'ComputerPartsShop')
+BEGIN 
+CREATE DATABASE [ComputerPartsShop]
+END;
+GO
+
 BEGIN TRANSACTION;
+USE [ComputerPartsShop]
+
 	CREATE TABLE [Category] (
 		[ID] INT PRIMARY KEY,
 		[Name] NVARCHAR(50) UNIQUE NOT NULL,
