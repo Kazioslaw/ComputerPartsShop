@@ -5,34 +5,34 @@ namespace ComputerPartsShop.API.Controllers
 {
 	[ApiController]
 	[Route("/[controller]")]
-	public class OrderController : ControllerBase
+	public class ReviewController : ControllerBase
 	{
 		[HttpGet]
-		public ActionResult<List<OrderResponse>> GetOrderList()
+		public ActionResult<List<ReviewResponse>> GetReviewList()
 		{
 			return Ok();
 		}
 
 		[HttpGet("{id:int}")]
-		public ActionResult<DetailedOrderResponse> GetOrder(int id)
+		public ActionResult<ReviewResponse> GetReview(int id)
 		{
 			return Ok();
 		}
 
 		[HttpPost]
-		public ActionResult<OrderResponse> CreateOrder(OrderRequest request)
+		public ActionResult<ReviewResponse> CreateReview(ReviewRequest request)
 		{
 			return Ok();
 		}
 
 		[HttpPut("{id:int}")]
-		public ActionResult<OrderResponse> UpdateOrder(int id, OrderRequest request)
+		public ActionResult<ReviewResponse> UpdateReview(int id, ReviewRequest request)
 		{
 			return Ok();
 		}
 
 		[HttpDelete("{id:int}")]
-		public ActionResult DeleteOrder(int id)
+		public ActionResult DeleteReview(int id)
 		{
 			return Ok();
 		}
