@@ -2,9 +2,9 @@
 {
 	public class CustomerAddress
 	{
-		public Guid AddressID { get; set; }
-		public Address Address { get; set; }
 		public Guid CustomerID { get; set; }
 		public Customer Customer { get; set; }
+		public Guid AddressID { get; set; }
+		public Address Address { get; set; }
 	}
 }
