@@ -1,4 +1,5 @@
-﻿using ComputerPartsShop.Models;
+﻿using ComputerPartsShop.Domain.DTOs;
+using ComputerPartsShop.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.Controllers
@@ -14,7 +15,7 @@ namespace ComputerPartsShop.Controllers
 		/// List of addresses.
 		/// </returns>
 		[HttpGet]
-		public ActionResult<List<Address>> GetAddressList()
+		public ActionResult<List<AddressResponse>> GetAddressList()
 		{
 			return Ok(Addresses);
 		}
@@ -24,8 +25,8 @@ namespace ComputerPartsShop.Controllers
 		/// </summary>
 		/// <param name="id">Address id to get</param>
 		/// <returns>Address by its id</returns>
-		[HttpGet("{id}")]
-		public ActionResult<Address> GetAddress(int id)
+		[HttpGet("{id:guid}")]
+		public ActionResult<AddressResponse> GetAddress(Guid id)
 		{
 			var address = Addresses.FirstOrDefault(a => a.ID == id);
 
@@ -45,7 +46,7 @@ namespace ComputerPartsShop.Controllers
 		[HttpPost]
 		public ActionResult<Address> CreateAddress(Address address)
 		{
-			address.ID = (Addresses.OrderByDescending(a => a.ID).FirstOrDefault()?.ID ?? 0) + 1;
+			address.ID = Guid.NewGuid();
 
 			Addresses.Add(address);
 
@@ -58,8 +59,8 @@ namespace ComputerPartsShop.Controllers
 		/// <param name="id">Address id to update</param>
 		/// <param name="updatedAddress">Address model to update</param>
 		/// <returns>Updated address</returns>
-		[HttpPut("{id}")]
-		public ActionResult<Address> UpdateAddress(int id, Address updatedAddress)
+		[HttpPut("{id:guid}")]
+		public ActionResult<Address> UpdateAddress(Guid id, Address updatedAddress)
 		{
 			var address = Addresses.FirstOrDefault(a => a.ID == id);
 
@@ -70,7 +71,7 @@ namespace ComputerPartsShop.Controllers
 
 			address.Street = updatedAddress.Street;
 			address.City = updatedAddress.City;
-			address.Zipcode = updatedAddress.Zipcode;
+			address.ZipCode = updatedAddress.ZipCode;
 			address.Region = updatedAddress.Region;
 
 			return Ok(address);
@@ -81,8 +82,8 @@ namespace ComputerPartsShop.Controllers
 		/// </summary>
 		/// <param name="id">Address id to delete</param>
 		/// <returns>Information about successful deletion</returns>
-		[HttpDelete("{id}")]
-		public ActionResult DeleteAddress(int id)
+		[HttpDelete("{id:guid}")]
+		public ActionResult DeleteAddress(Guid id)
 		{
 			var address = Addresses.FirstOrDefault(a => a.ID == id);
 
@@ -96,16 +97,16 @@ namespace ComputerPartsShop.Controllers
 
 		private static List<Address> Addresses = new List<Address>
 		{
-			new Address {ID = 1, Street = "1935 Ashford Drive", City = "Ashburn", Zipcode = "22011", Region = "VA"},
-			new Address {ID = 2, Street = "41 Center Avenue", City = "Fresno", Zipcode = "93710", Region = "CA"},
-			new Address {ID = 3, Street = "3785 Blackwell Street", City = "Cordova", Zipcode = "99574", Region = "AK"},
-			new Address {ID = 4, Street = "425 Hart Country Lane", City = "Anaheim", Zipcode = "92801", Region = "CA"},
-			new Address {ID = 5, Street = "4153 Private Lane", City = "Miami", Zipcode = "65344", Region = "MO"},
-			new Address {ID = 6, Street = "1417 Pin Oak Drive", City = "Long Beach", Zipcode = "90807", Region = "CA"},
-			new Address {ID = 7, Street = "3456 Water Street", City = "Oakland", Zipcode = "94612", Region = "CA"},
-			new Address {ID = 8, Street = "672 State Street", City = "Detroit", Zipcode = "48219", Region = "MI"},
-			new Address {ID = 9, Street = "3845 Angie Drive", City = "Santa Ana", Zipcode = "92705", Region = "CA"},
-			new Address {ID = 10, Street = "2790 Leo Street", City = "Washington", Zipcode = "15301", Region = "PA"}
+			new Address {ID = Guid.NewGuid(), Street = "Sosnowa 39A", City = "Ostrów Mazowiecka", ZipCode = "28-903", Region = "Wielkopolskie", CountryID = 1,},
+			new Address {ID = Guid.NewGuid(), Street = "41 Center Avenue", City = "Fresno", ZipCode = "93710", Region = "CA", CountryID = 1},
+			new Address {ID = Guid.NewGuid(), Street = "3785 Blackwell Street", City = "Cordova", ZipCode = "99574", Region = "AK"},
+			new Address {ID = Guid.NewGuid(), Street = "425 Hart Country Lane", City = "Anaheim", ZipCode = "92801", Region = "CA"},
+			new Address {ID = Guid.NewGuid(), Street = "4153 Private Lane", City = "Miami", ZipCode = "65344", Region = "MO"},
+			new Address {ID = Guid.NewGuid(), Street = "1417 Pin Oak Drive", City = "Long Beach", ZipCode = "90807", Region = "CA"},
+			new Address {ID = Guid.NewGuid(), Street = "3456 Water Street", City = "Oakland", ZipCode = "94612", Region = "CA"},
+			new Address {ID = Guid.NewGuid(), Street = "672 State Street", City = "Detroit", ZipCode = "48219", Region = "MI"},
+			new Address {ID = Guid.NewGuid(), Street = "3845 Angie Drive", City = "Santa Ana", ZipCode = "92705", Region = "CA"},
+			new Address {ID = Guid.NewGuid(), Street = "2790 Leo Street", City = "Washington", ZipCode = "15301", Region = "PA"}
 		};
 	}
 }
