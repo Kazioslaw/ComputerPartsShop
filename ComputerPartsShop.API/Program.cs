@@ -1,4 +1,3 @@
-
 namespace ComputerPartsShop
 {
 	public class Program
