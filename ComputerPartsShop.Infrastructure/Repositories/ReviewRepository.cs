@@ -4,29 +4,66 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class ReviewRepository : ICRUDRepository<Review, int>
 	{
-		public Task<List<Review>> GetList()
+		readonly TempData _dbContext;
+
+		public ReviewRepository(TempData dbContext)
 		{
-			throw new NotImplementedException();
+			_dbContext = dbContext;
 		}
 
-		public Task<Review> Get(int id)
+		public async Task<List<Review>> GetList()
 		{
-			throw new NotImplementedException();
+			return _dbContext.ReviewList;
 		}
 
-		public Task<int> Create(Review request)
+		public async Task<Review> Get(int id)
 		{
-			throw new NotImplementedException();
+			var review = _dbContext.ReviewList.FirstOrDefault(x => x.ID == id);
+
+			return review;
 		}
 
-		public Task<Review> Update(int id, Review request)
+		public async Task<int> Create(Review request)
 		{
-			throw new NotImplementedException();
+			var last = _dbContext.ReviewList.LastOrDefault();
+
+			if (last == null)
+			{
+				request.ID = 1;
+			}
+			else
+			{
+				request.ID = last.ID + 1;
+			}
+
+			_dbContext.ReviewList.Add(request);
+
+			return request.ID;
 		}
 
-		public Task Delete(int id)
+		public async Task<Review> Update(int id, Review request)
 		{
-			return Task.CompletedTask;
+			var review = _dbContext.ReviewList.FirstOrDefault(x => x.ID == id);
+
+			if (review != null)
+			{
+				review.CustomerID = request.CustomerID;
+				review.ProductID = request.ProductID;
+				review.Rating = request.Rating;
+				review.Description = request.Description;
+			}
+
+			return review;
+		}
+
+		public async Task Delete(int id)
+		{
+			var review = _dbContext.ReviewList.FirstOrDefault(x => x.ID == id);
+
+			if (review != null)
+			{
+				_dbContext.ReviewList.Remove(review);
+			}
 		}
 	}
 }

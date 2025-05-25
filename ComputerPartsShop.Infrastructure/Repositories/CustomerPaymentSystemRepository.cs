@@ -4,29 +4,56 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class CustomerPaymentSystemRepository : ICRUDRepository<CustomerPaymentSystem, Guid>
 	{
-		public Task<List<CustomerPaymentSystem>> GetList()
+		readonly TempData _dbContext;
+
+		public CustomerPaymentSystemRepository(TempData dbContext)
 		{
-			throw new NotImplementedException();
+			_dbContext = dbContext;
 		}
 
-		public Task<CustomerPaymentSystem> Get(Guid id)
+		public async Task<List<CustomerPaymentSystem>> GetList()
 		{
-			throw new NotImplementedException();
+			return _dbContext.CustomerPaymentSystemList;
 		}
 
-		public Task<Guid> Create(CustomerPaymentSystem request)
+		public async Task<CustomerPaymentSystem> Get(Guid id)
 		{
-			throw new NotImplementedException();
+			var cps = _dbContext.CustomerPaymentSystemList.FirstOrDefault(x => x.ID == id);
+
+			return cps;
 		}
 
-		public Task<CustomerPaymentSystem> Update(Guid id, CustomerPaymentSystem request)
+		public async Task<Guid> Create(CustomerPaymentSystem request)
 		{
-			throw new NotImplementedException();
+			request.ID = Guid.NewGuid();
+
+			_dbContext.CustomerPaymentSystemList.Add(request);
+
+			return request.ID;
 		}
 
-		public Task Delete(Guid id)
+		public async Task<CustomerPaymentSystem> Update(Guid id, CustomerPaymentSystem request)
 		{
-			return Task.CompletedTask;
+			var cps = _dbContext.CustomerPaymentSystemList.FirstOrDefault(x => x.ID == id);
+
+			if (cps != null)
+			{
+				cps.CustomerID = request.CustomerID;
+				cps.ProviderID = request.ProviderID;
+				cps.PaymentReference = request.PaymentReference;
+			}
+
+			return cps;
+		}
+
+		public async Task Delete(Guid id)
+		{
+			var cps = _dbContext.CustomerPaymentSystemList.FirstOrDefault(x => x.ID == id);
+
+			if (cps != null)
+			{
+				_dbContext.CustomerPaymentSystemList.Remove(cps);
+			}
 		}
 	}
 }

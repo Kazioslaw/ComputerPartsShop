@@ -4,34 +4,72 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class CountryRepository : ICRUDRepository<Country, int>
 	{
-		public Task<List<Country>> GetList()
+		readonly TempData _dbContext;
+
+		public CountryRepository(TempData dbContext)
 		{
-			throw new NotImplementedException();
+			_dbContext = dbContext;
 		}
 
-		public Task<Country> Get(int id)
+		public async Task<List<Country>> GetList()
 		{
-			throw new NotImplementedException();
+			return _dbContext.CountryList;
 		}
 
-		public Task<Country> GetByCountry3Code(string Country3Code)
+		public async Task<Country> Get(int id)
 		{
-			throw new NotImplementedException();
+			var country = _dbContext.CountryList.FirstOrDefault(c => c.ID == id);
+
+			return country;
 		}
 
-		public Task<int> Create(Country request)
+		public async Task<Country> GetByCountry3Code(string Country3Code)
 		{
-			throw new NotImplementedException();
+			var country = _dbContext.CountryList.FirstOrDefault(x => x.Alpha3 == Country3Code);
+
+			return country;
 		}
 
-		public Task<Country> Update(int id, Country request)
+		public async Task<int> Create(Country request)
 		{
-			throw new NotImplementedException();
+			var last = _dbContext.CountryList.OrderBy(x => x.ID).LastOrDefault();
+
+			if (last == null)
+			{
+				request.ID = 1;
+			}
+			else
+			{
+				request.ID = last.ID + 1;
+			}
+
+			_dbContext.CountryList.Add(request);
+
+			return request.ID;
 		}
 
-		public Task Delete(int id)
+		public async Task<Country> Update(int id, Country request)
 		{
-			return Task.CompletedTask;
+			var country = _dbContext.CountryList.FirstOrDefault(x => x.ID == id);
+
+			if (country != null)
+			{
+				country.Alpha2 = request.Alpha2;
+				country.Alpha3 = request.Alpha3;
+				country.Name = request.Name;
+			}
+
+			return request;
+		}
+
+		public async Task Delete(int id)
+		{
+			var country = _dbContext.CountryList.FirstOrDefault(x => x.ID == id);
+
+			if (country != null)
+			{
+				_dbContext.CountryList.Remove(country);
+			}
 		}
 	}
 }

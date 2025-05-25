@@ -4,29 +4,69 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class PaymentRepository : ICRUDRepository<Payment, int>
 	{
-		public Task<List<Payment>> GetList()
+		readonly TempData _dbContext;
+
+		public PaymentRepository(TempData dbContext)
 		{
-			throw new NotImplementedException();
+			_dbContext = dbContext;
 		}
 
-		public Task<Payment> Get(int id)
+		public async Task<List<Payment>> GetList()
 		{
-			throw new NotImplementedException();
+			return _dbContext.PaymentList;
 		}
 
-		public Task<int> Create(Payment request)
+		public async Task<Payment> Get(int id)
 		{
-			throw new NotImplementedException();
+			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.ID == id);
+
+			return payment;
 		}
 
-		public Task<Payment> Update(int id, Payment request)
+		public async Task<int> Create(Payment request)
 		{
-			throw new NotImplementedException();
+			var last = _dbContext.PaymentList.OrderBy(x => x.ID).FirstOrDefault();
+
+			if (last == null)
+			{
+				request.ID = 1;
+			}
+			else
+			{
+				request.ID = last.ID + 1;
+			}
+
+			_dbContext.PaymentList.Add(request);
+
+			return request.ID;
 		}
 
-		public Task Delete(int id)
+		public async Task<Payment> Update(int id, Payment request)
 		{
-			return Task.CompletedTask;
+			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.ID == id);
+
+			if (payment != null)
+			{
+				payment.CustomerPaymentSystemID = request.CustomerPaymentSystemID;
+				payment.OrderID = request.OrderID;
+				payment.Total = request.Total;
+				payment.Method = request.Method;
+				payment.Status = request.Status;
+				payment.PaymentStartAt = request.PaymentStartAt;
+				payment.PaidAt = request.PaidAt;
+			}
+
+			return payment;
+		}
+
+		public async Task Delete(int id)
+		{
+			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.ID == id);
+
+			if (payment != null)
+			{
+				_dbContext.PaymentList.Remove(payment);
+			}
 		}
 	}
 }

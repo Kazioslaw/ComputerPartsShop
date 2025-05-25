@@ -4,34 +4,79 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class CustomerRepository : ICRUDRepository<Customer, Guid>
 	{
-		public Task<List<Customer>> GetList()
+		readonly TempData _dbContext;
+
+		public CustomerRepository(TempData dbContext)
 		{
-			throw new NotImplementedException();
+			_dbContext = dbContext;
 		}
 
-		public Task<Customer> Get(Guid id)
+		public async Task<List<Customer>> GetList()
 		{
-			throw new NotImplementedException();
+			return _dbContext.CustomerList;
 		}
 
-		public Task<Customer> GetByUsernameOrEmail(string input)
+		public async Task<Customer> Get(Guid id)
 		{
-			throw new NotImplementedException();
+			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.ID == id);
+
+			return customer;
 		}
 
-		public Task<Guid> Create(Customer request)
+		public async Task<Customer> GetByUsernameOrEmail(string input)
 		{
-			throw new NotImplementedException();
+			Customer? customer = null;
+
+			var emailCustomer = _dbContext.CustomerList.FirstOrDefault(x => x.Email == input);
+			if (emailCustomer != null)
+			{
+				customer = emailCustomer;
+				return customer;
+			}
+
+			var usernameCustomer = _dbContext.CustomerList.FirstOrDefault(x => x.Username == input);
+			if (usernameCustomer != null)
+			{
+				customer = usernameCustomer;
+				return customer;
+			}
+
+			return customer;
 		}
 
-		public Task<Customer> Update(Guid id, Customer request)
+		public async Task<Guid> Create(Customer request)
 		{
-			throw new NotImplementedException();
+			request.ID = Guid.NewGuid();
+
+			_dbContext.CustomerList.Add(request);
+
+			return request.ID;
 		}
 
-		public Task Delete(Guid id)
+		public async Task<Customer> Update(Guid id, Customer request)
 		{
-			return Task.CompletedTask;
+			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.ID == id);
+
+			if (customer != null)
+			{
+				customer.FirstName = request.FirstName;
+				customer.LastName = request.LastName;
+				customer.Username = request.Username;
+				customer.Email = request.Email;
+				customer.PhoneNumber = request.PhoneNumber;
+			}
+
+			return customer;
+		}
+
+		public async Task Delete(Guid id)
+		{
+			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.ID == id);
+
+			if (customer != null)
+			{
+				_dbContext.CustomerList.Remove(customer);
+			}
 		}
 	}
 }

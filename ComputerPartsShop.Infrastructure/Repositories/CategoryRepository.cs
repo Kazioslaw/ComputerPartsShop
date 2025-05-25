@@ -4,34 +4,70 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class CategoryRepository : ICRUDRepository<Category, int>
 	{
-		public Task<List<Category>> GetList()
+		readonly TempData _dbContext;
+		public CategoryRepository(TempData dbContext)
 		{
-			throw new NotImplementedException();
+			_dbContext = dbContext;
 		}
 
-		public Task<Category> Get(int id)
+		public async Task<List<Category>> GetList()
 		{
-			throw new NotImplementedException();
+			return _dbContext.CategoryList;
 		}
 
-		public Task<Category> GetByName(string name)
+		public async Task<Category> Get(int id)
 		{
-			throw new NotImplementedException();
+			var category = _dbContext.CategoryList.FirstOrDefault(c => c.ID == id);
+
+			return category;
 		}
 
-		public Task<int> Create(Category request)
+		public async Task<Category> GetByName(string name)
 		{
-			throw new NotImplementedException();
+			var category = _dbContext.CategoryList.FirstOrDefault(c => c.Name == name);
+
+			return category;
 		}
 
-		public Task<Category> Update(int id, Category request)
+		public async Task<int> Create(Category request)
 		{
-			throw new NotImplementedException();
+			var last = _dbContext.CategoryList.OrderBy(x => x.ID).LastOrDefault();
+
+			if (last == null)
+			{
+				request.ID = 1;
+			}
+			else
+			{
+				request.ID = last.ID + 1;
+			}
+
+			_dbContext.CategoryList.Add(request);
+
+			return request.ID;
 		}
 
-		public Task Delete(int id)
+		public async Task<Category> Update(int id, Category request)
 		{
-			return Task.CompletedTask;
+			var category = _dbContext.CategoryList.FirstOrDefault(c => c.ID == id);
+
+			if (category != null)
+			{
+				category.Name = request.Name;
+				category.Description = request.Description;
+			}
+
+			return category;
+		}
+
+		public async Task Delete(int id)
+		{
+			var category = _dbContext.CategoryList.FirstOrDefault(c => c.ID == id);
+
+			if (category != null)
+			{
+				_dbContext.CategoryList.Remove(category);
+			}
 		}
 	}
 }

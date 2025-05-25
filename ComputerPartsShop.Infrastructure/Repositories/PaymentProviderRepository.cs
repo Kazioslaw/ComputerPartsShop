@@ -4,34 +4,70 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class PaymentProviderRepository : ICRUDRepository<PaymentProvider, int>
 	{
-		public Task<List<PaymentProvider>> GetList()
+		readonly TempData _dbContext;
+
+		public PaymentProviderRepository(TempData dbContext)
 		{
-			throw new NotImplementedException();
+			_dbContext = dbContext;
 		}
 
-		public Task<PaymentProvider> Get(int id)
+		public async Task<List<PaymentProvider>> GetList()
 		{
-			throw new NotImplementedException();
+			return _dbContext.PaymentProviderList;
 		}
 
-		public Task<PaymentProvider> GetByName(string input)
+		public async Task<PaymentProvider> Get(int id)
 		{
-			throw new NotImplementedException();
+			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.ID == id);
+
+			return paymentProvider;
 		}
 
-		public Task<int> Create(PaymentProvider request)
+		public async Task<PaymentProvider> GetByName(string input)
 		{
-			throw new NotImplementedException();
+			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Name == input);
+
+			return paymentProvider;
 		}
 
-		public Task<PaymentProvider> Update(int id, PaymentProvider request)
+		public async Task<int> Create(PaymentProvider request)
 		{
-			throw new NotImplementedException();
+			var last = _dbContext.PaymentProviderList.OrderBy(x => x.ID).FirstOrDefault();
+
+			if (last == null)
+			{
+				request.ID = 1;
+			}
+			else
+			{
+				request.ID = last.ID + 1;
+			}
+
+			_dbContext.PaymentProviderList.Add(request);
+
+			return request.ID;
 		}
 
-		public Task Delete(int id)
+		public async Task<PaymentProvider> Update(int id, PaymentProvider request)
 		{
-			return Task.CompletedTask;
+			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.ID == id);
+
+			if (paymentProvider != null)
+			{
+				paymentProvider.Name = request.Name;
+			}
+
+			return paymentProvider;
+		}
+
+		public async Task Delete(int id)
+		{
+			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.ID == id);
+
+			if (paymentProvider != null)
+			{
+				_dbContext.PaymentProviderList.Remove(paymentProvider);
+			}
 		}
 	}
 }

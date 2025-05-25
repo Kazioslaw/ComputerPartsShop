@@ -4,29 +4,58 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class AddressRepository : ICRUDRepository<Address, Guid>
 	{
-		public Task<List<Address>> GetList()
+		readonly TempData _dbContext;
+
+		public AddressRepository(TempData dbContext)
 		{
-			throw new NotImplementedException();
+			_dbContext = dbContext;
 		}
 
-		public Task<Address> Get(Guid id)
+		public async Task<List<Address>> GetList()
 		{
-			throw new NotImplementedException();
+			return _dbContext.AddressList;
 		}
 
-		public Task<Guid> Create(Address request)
+		public async Task<Address> Get(Guid id)
 		{
-			throw new NotImplementedException();
+			var address = _dbContext.AddressList.FirstOrDefault(x => x.ID == id);
+
+			return address;
 		}
 
-		public Task<Address> Update(Guid id, Address request)
+		public async Task<Guid> Create(Address request)
 		{
-			throw new NotImplementedException();
+			request.ID = Guid.NewGuid();
+
+			_dbContext.AddressList.Add(request);
+
+			return request.ID;
 		}
 
-		public Task Delete(Guid id)
+		public async Task<Address> Update(Guid id, Address request)
 		{
-			return Task.CompletedTask;
+			var address = _dbContext.AddressList.FirstOrDefault(request => request.ID == id);
+
+			if (address != null)
+			{
+				address.Street = request.Street;
+				address.City = request.City;
+				address.Region = request.Region;
+				address.ZipCode = request.ZipCode;
+				address.CountryID = request.CountryID;
+			}
+
+			return address;
+		}
+
+		public async Task Delete(Guid id)
+		{
+			var address = _dbContext.AddressList.FirstOrDefault(a => a.ID == id);
+
+			if (address != null)
+			{
+				_dbContext.AddressList.Remove(address);
+			}
 		}
 	}
 }
