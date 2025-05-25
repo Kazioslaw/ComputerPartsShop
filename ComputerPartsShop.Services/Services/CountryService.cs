@@ -1,32 +1,66 @@
 ﻿using ComputerPartsShop.Domain.DTOs;
+using ComputerPartsShop.Domain.Models;
+using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
 	public class CountryService : ICRUDService<CountryRequest, CountryResponse, DetailedCountryResponse, int>
 	{
-		public List<CountryResponse> GetList()
+		private readonly CountryRepository _countryRepository;
+
+		public CountryService(CountryRepository countryRepository)
 		{
-			throw new NotImplementedException();
+			_countryRepository = countryRepository;
 		}
 
-		public DetailedCountryResponse Get(int id)
+		public async Task<List<CountryResponse>> GetList()
 		{
-			throw new NotImplementedException();
+			var countryList = await _countryRepository.GetList();
+
+			return countryList.Select(c => new CountryResponse(c.ID, c.Alpha2, c.Alpha3, c.Name)).ToList();
+
+
 		}
 
-		public CountryResponse Create(CountryRequest request)
+		public async Task<DetailedCountryResponse> Get(int id)
 		{
-			throw new NotImplementedException();
+			var country = await _countryRepository.Get(id);
+			var addressList = country.Addresses;
+
+			return country == null ? null! : new DetailedCountryResponse(country.ID, country.Alpha2, country.Alpha3, country.Name,
+				addressList.Select(a => new AddressInCountryResponse(a.ID, a.Street, a.City, a.Region, a.ZipCode)).ToList());
 		}
 
-		public CountryResponse Update(int id, CountryRequest request)
+		public async Task<CountryResponse> Create(CountryRequest country)
 		{
-			throw new NotImplementedException();
+			var newCountry = new Country()
+			{
+				Alpha2 = country.Alpha2,
+				Alpha3 = country.Alpha3,
+				Name = country.Name,
+			};
+
+			var createdCountryID = await _countryRepository.Create(newCountry);
+			return new CountryResponse(createdCountryID, country.Alpha2, country.Alpha3, country.Name);
 		}
 
-		public void Delete(int id)
+		public async Task<CountryResponse> Update(int id, CountryRequest updatedCountry)
 		{
-			return;
+			var country = new Country()
+			{
+				Alpha2 = updatedCountry.Alpha2,
+				Alpha3 = updatedCountry.Alpha3,
+				Name = updatedCountry.Name
+			};
+
+			await _countryRepository.Update(id, country);
+
+			return new CountryResponse(id, updatedCountry.Alpha2, updatedCountry.Alpha3, updatedCountry.Name);
+		}
+
+		public async Task Delete(int id)
+		{
+			await _countryRepository.Delete(id);
 		}
 
 	}

@@ -1,31 +1,61 @@
 ﻿using ComputerPartsShop.Domain.DTOs;
+using ComputerPartsShop.Domain.Models;
+using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	internal class CategoryService : ICRUDService<CategoryRequest, CategoryResponse, CategoryResponse, int>
+	public class CategoryService : ICRUDService<CategoryRequest, CategoryResponse, CategoryResponse, int>
 	{
-		public List<CategoryResponse> GetList()
+		private readonly CategoryRepository _categoryRepository;
+
+		public CategoryService(CategoryRepository categoryRepository)
 		{
-			throw new NotImplementedException();
+			_categoryRepository = categoryRepository;
 		}
 
-		public CategoryResponse Get(int id)
+		public async Task<List<CategoryResponse>> GetList()
 		{
-			throw new NotImplementedException();
-		}
-		public CategoryResponse Create(CategoryRequest request)
-		{
-			throw new NotImplementedException();
+			var categoryList = await _categoryRepository.GetList();
+
+			return categoryList.Select(c => new CategoryResponse(c.ID, c.Name, c.Description)).ToList();
 		}
 
-		public CategoryResponse Update(int id, CategoryRequest request)
+		public async Task<CategoryResponse> Get(int id)
 		{
-			throw new NotImplementedException();
+			var category = await _categoryRepository.Get(id);
+
+			return category == null ? null! : new CategoryResponse(id, category.Name, category.Description);
 		}
 
-		public void Delete(int id)
+		public async Task<CategoryResponse> Create(CategoryRequest category)
 		{
-			throw new NotImplementedException();
+			var newCategory = new Category()
+			{
+				Name = category.Name,
+				Description = category.Description,
+			};
+
+			var createdCategoryID = await _categoryRepository.Create(newCategory);
+
+			return new CategoryResponse(createdCategoryID, category.Name, category.Description);
+		}
+
+		public async Task<CategoryResponse> Update(int id, CategoryRequest updatedCategory)
+		{
+			var category = new Category()
+			{
+				Name = updatedCategory.Name,
+				Description = updatedCategory.Description,
+			};
+
+			await _categoryRepository.Update(id, category);
+
+			return new CategoryResponse(id, updatedCategory.Name, updatedCategory.Description);
+		}
+
+		public async Task Delete(int id)
+		{
+			await _categoryRepository.Delete(id);
 		}
 	}
 }

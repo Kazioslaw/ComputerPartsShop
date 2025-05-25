@@ -1,6 +1,6 @@
 ﻿namespace ComputerPartsShop.Domain.Models
 {
-	public class PaymentProvder
+	public class PaymentProvider
 	{
 		public int ID { get; set; }
 		public string Name { get; set; }

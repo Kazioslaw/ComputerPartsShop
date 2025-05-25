@@ -1,4 +1,5 @@
 ﻿using ComputerPartsShop.Domain.DTOs;
+using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -7,33 +8,68 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class CategoryController : ControllerBase
 	{
-		[HttpGet]
-		public ActionResult<List<CategoryResponse>> GetCategoryList()
+		private readonly CategoryService _categoryService;
+
+		public CategoryController(CategoryService categoryService)
 		{
-			return Ok(new List<CategoryResponse>());
+			_categoryService = categoryService;
+		}
+
+		[HttpGet]
+		public async Task<ActionResult<List<CategoryResponse>>> GetCategoryList()
+		{
+			var categoryList = await _categoryService.GetList();
+			return Ok(categoryList);
 		}
 
 		[HttpGet("{id:int}")]
-		public ActionResult<CategoryResponse> GetCategory(Guid id)
+		public async Task<ActionResult<CategoryResponse>> GetCategory(int id)
 		{
-			return Ok();
+			var category = await _categoryService.Get(id);
+
+			if (category == null)
+			{
+				return NotFound();
+			}
+
+			return Ok(category);
 		}
 
 		[HttpPost]
-		public ActionResult<CategoryResponse> CreateCategory(CategoryRequest request)
+		public async Task<ActionResult<CategoryResponse>> CreateCategory(CategoryRequest request)
 		{
-			return Ok();
+			var category = await _categoryService.Create(request);
+
+			return CreatedAtAction(nameof(CreateCategory), category);
 		}
 
 		[HttpPut("{id:int}")]
-		public ActionResult<CategoryResponse> UpdateCategory(int id, CategoryRequest request)
+		public async Task<ActionResult<CategoryResponse>> UpdateCategory(int id, CategoryRequest request)
 		{
-			return Ok();
+			var category = await _categoryService.Get(id);
+
+			if (category == null)
+			{
+				return NotFound();
+			}
+
+			var updatedCategory = await _categoryService.Update(id, request);
+
+			return Ok(updatedCategory);
 		}
 
 		[HttpDelete("{id:int}")]
-		public ActionResult DeleteCategory(int id)
+		public async Task<ActionResult> DeleteCategory(int id)
 		{
+			var category = await _categoryService.Get(id);
+
+			if (category == null)
+			{
+				return NotFound();
+			}
+
+			await _categoryService.Delete(id);
+
 			return Ok();
 		}
 	}

@@ -1,32 +1,180 @@
 ﻿using ComputerPartsShop.Domain.DTOs;
+using ComputerPartsShop.Domain.Models;
+using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	internal class OrderService : ICRUDService<OrderRequest, OrderResponse, DetailedOrderResponse, int>
+	public class OrderService : ICRUDService<OrderRequest, OrderResponse, DetailedOrderResponse, int>
 	{
-		public List<OrderResponse> GetList()
+		private readonly OrderRepository _orderRepository;
+		private readonly CustomerRepository _customerRepository;
+		private readonly ProductRepository _productRepository;
+		private readonly AddressRepository _addressRepository;
+		private readonly PaymentRepository _paymentRepository;
+		private readonly CustomerPaymentSystemRepository _cpsRepository;
+
+		public OrderService(OrderRepository orderRepository, CustomerRepository customerRepository,
+			ProductRepository productRepository, AddressRepository addressRepository, PaymentRepository paymentRepository, CustomerPaymentSystemRepository cpsRepository)
 		{
-			throw new NotImplementedException();
+			_orderRepository = orderRepository;
+			_customerRepository = customerRepository;
+			_productRepository = productRepository;
+			_addressRepository = addressRepository;
+			_paymentRepository = paymentRepository;
+			_cpsRepository = cpsRepository;
 		}
 
-		public DetailedOrderResponse Get(int id)
+		public async Task<List<OrderResponse>> GetList()
 		{
-			throw new NotImplementedException();
+			var orderList = await _orderRepository.GetList();
+
+			return orderList.Select(o => new OrderResponse(o.ID, o.CustomerID, o.OrdersProducts.Select(p => p.ProductID).ToList(), o.Total, o.DeliveryAddress.ID,
+				o.Status, o.OrderedAt, o.SendAt, o.Payments.Select(p => p.ID).ToList())).ToList();
 		}
 
-		public OrderResponse Create(OrderRequest request)
+		public async Task<DetailedOrderResponse> Get(int id)
 		{
-			throw new NotImplementedException();
+			var order = await _orderRepository.Get(id);
+			var productList = order.OrdersProducts.Select(o => o.Product).ToList();
+			var paymentList = order.Payments;
+
+			return order == null ? null! : new DetailedOrderResponse(
+				order.ID,
+				new CustomerResponse(order.Customer.ID, order.Customer.FirstName, order.Customer.LastName, order.Customer.Username, order.Customer.Email, order.Customer.PhoneNumber),
+				productList.Select(p => new ProductInOrderResponse(p.ID, p.Name, p.UnitPrice, order.OrdersProducts.Where(c => c.ProductID == p.ID).Sum(c => c.Quantity))).ToList(),
+				order.Total,
+				new AddressResponse(order.DeliveryAddress.ID, order.DeliveryAddress.Street, order.DeliveryAddress.City,
+				order.DeliveryAddress.Region, order.DeliveryAddress.ZipCode, order.DeliveryAddress.Country.Alpha3),
+				order.Status, order.OrderedAt, order.SendAt,
+				paymentList.Select(p => new PaymentInOrderResponse(p.ID, new CustomerPaymentSystemResponse(p.CustomerPaymentSystem.ID,
+				p.CustomerPaymentSystem.Customer.Username, p.CustomerPaymentSystem.Customer.Email, p.CustomerPaymentSystem.Provider.Name, p.CustomerPaymentSystem.PaymentReference),
+				p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt)).ToList());
 		}
 
-		public OrderResponse Update(int id, OrderRequest request)
+		public async Task<OrderResponse> Create(OrderRequest order)
 		{
-			throw new NotImplementedException();
+			var customer = await _customerRepository.GetByUsernameOrEmail(order.Username! ?? order.Email!);
+			var address = await _addressRepository.Get(order.AddressID);
+			var productsID = order.ProductIDList;
+			var productsIDDistinct = productsID.Distinct();
+			var productList = new List<OrderProduct>();
+			foreach (var productID in productsIDDistinct)
+			{
+				var product = await _productRepository.Get(productID);
+				var orderProduct = new OrderProduct()
+				{
+					ProductID = productID,
+					Product = product,
+					Quantity = order.ProductIDList.Count(id => id == productID),
+				};
+				productList.Add(orderProduct);
+			}
+
+			var newOrder = new Order()
+			{
+				CustomerID = customer.ID,
+				Customer = customer,
+				OrdersProducts = productList,
+				Total = order.Total,
+				DeliveryAddressID = order.AddressID,
+				DeliveryAddress = address,
+				Status = "Pending",
+				OrderedAt = DateTime.Now,
+			};
+
+			var orderID = await _orderRepository.Create(newOrder);
+
+			return new OrderResponse(orderID, newOrder.CustomerID, order.ProductIDList, order.Total, order.AddressID, newOrder.Status, newOrder.OrderedAt, null, newOrder.Payments.Select(p => p.ID).ToList());
 		}
 
-		public void Delete(int id)
+		public async Task<OrderResponse> Update(int id, OrderRequest updatedOrder)
 		{
-			throw new NotImplementedException();
+			var customer = await _customerRepository.GetByUsernameOrEmail(updatedOrder.Username! ?? updatedOrder.Email!);
+			var address = await _addressRepository.Get(updatedOrder.AddressID);
+
+			var productIDList = updatedOrder.ProductIDList;
+			var productsIDDistinct = productIDList.Distinct();
+			var productList = new List<OrderProduct>();
+
+			var cps = await _cpsRepository.Get(updatedOrder.CustomerPaymentSystemID);
+
+			var payments = cps.Payments.Where(x => x.OrderID == id).ToList();
+
+			foreach (var productID in productsIDDistinct)
+			{
+				var product = await _productRepository.Get(productID);
+				var orderProduct = new OrderProduct()
+				{
+					ProductID = productID,
+					Product = product,
+					Quantity = updatedOrder.ProductIDList.Count(id => id == productID),
+				};
+				productList.Add(orderProduct);
+			}
+
+			Order order = null!;
+
+			switch (updatedOrder.Status)
+			{
+				case "Pending":
+				case "Processing":
+					order = new Order()
+					{
+						CustomerID = customer.ID,
+						Customer = customer,
+						OrdersProducts = productList,
+						Total = updatedOrder.Total,
+						DeliveryAddressID = updatedOrder.AddressID,
+						DeliveryAddress = address,
+						Status = updatedOrder.Status!,
+						OrderedAt = (DateTime)updatedOrder.OrderedAt!,
+						Payments = payments ?? new List<Payment>(),
+					};
+					break;
+				case "Shipped":
+					order = new Order()
+					{
+						CustomerID = customer.ID,
+						Customer = customer,
+						OrdersProducts = productList,
+						Total = updatedOrder.Total,
+						DeliveryAddressID = updatedOrder.AddressID,
+						DeliveryAddress = address,
+						Status = updatedOrder.Status!,
+						OrderedAt = (DateTime)updatedOrder.OrderedAt!,
+						SendAt = DateTime.Now,
+						Payments = payments ?? new List<Payment>()
+					};
+					break;
+				case "Delivered":
+				case "Returned":
+				case "Cancelled":
+					order = new Order()
+					{
+						CustomerID = customer.ID,
+						Customer = customer,
+						OrdersProducts = productList,
+						Total = updatedOrder.Total,
+						DeliveryAddressID = updatedOrder.AddressID,
+						DeliveryAddress = address,
+						Status = updatedOrder.Status!,
+						OrderedAt = (DateTime)updatedOrder.OrderedAt!,
+						SendAt = (DateTime)updatedOrder.SendAt!,
+						Payments = payments ?? new List<Payment>()
+					};
+					break;
+			}
+			if (order != null)
+			{
+				await _orderRepository.Update(id, order);
+			}
+			return new OrderResponse(id, customer.ID, updatedOrder.ProductIDList, updatedOrder.Total, updatedOrder.AddressID,
+				updatedOrder.Status!, (DateTime)updatedOrder.OrderedAt!, (DateTime)updatedOrder.SendAt!, payments.Select(x => x.ID).ToList() ?? new List<int>());
+		}
+
+		public async Task Delete(int id)
+		{
+			await _orderRepository.Delete(id);
 		}
 	}
 }

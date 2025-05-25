@@ -1,4 +1,5 @@
 ﻿using ComputerPartsShop.Domain.DTOs;
+using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -7,33 +8,79 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class ReviewController : ControllerBase
 	{
-		[HttpGet]
-		public ActionResult<List<ReviewResponse>> GetReviewList()
+
+		private readonly ReviewService _reviewService;
+		private readonly ProductService _productService;
+
+		public ReviewController(ReviewService reviewService, ProductService productService)
 		{
-			return Ok();
+			_reviewService = reviewService;
+			_productService = productService;
+		}
+
+		[HttpGet]
+		public async Task<ActionResult<List<ReviewResponse>>> GetReviewList()
+		{
+			var reviewList = await _reviewService.GetList();
+
+			return Ok(reviewList);
 		}
 
 		[HttpGet("{id:int}")]
-		public ActionResult<ReviewResponse> GetReview(int id)
+		public async Task<ActionResult<ReviewResponse>> GetReview(int id)
 		{
-			return Ok();
+			var review = await _reviewService.Get(id);
+
+			if (review == null)
+			{
+				return NotFound();
+			}
+
+			return Ok(review);
 		}
 
 		[HttpPost]
-		public ActionResult<ReviewResponse> CreateReview(ReviewRequest request)
+		public async Task<ActionResult<ReviewResponse>> CreateReview(ReviewRequest request)
 		{
-			return Ok();
+			var product = _productService.Get(request.ProductID);
+
+			if (product == null)
+			{
+				return BadRequest();
+			}
+
+			var review = await _reviewService.Create(request);
+
+			return CreatedAtAction(nameof(CreateReview), review);
 		}
 
 		[HttpPut("{id:int}")]
-		public ActionResult<ReviewResponse> UpdateReview(int id, ReviewRequest request)
+		public async Task<ActionResult<ReviewResponse>> UpdateReview(int id, ReviewRequest request)
 		{
-			return Ok();
+			var review = await _reviewService.Get(id);
+
+			if (review == null)
+			{
+				return NotFound();
+			}
+
+			var updatedReview = await _reviewService.Update(id, request);
+
+			return Ok(updatedReview);
 		}
 
 		[HttpDelete("{id:int}")]
-		public ActionResult DeleteReview(int id)
+		public async Task<ActionResult> DeleteReview(int id)
 		{
+			var review = await _reviewService.Get(id);
+
+			if (review == null)
+			{
+				return NotFound();
+			}
+
+			await _reviewService.Delete(id);
+
 			return Ok();
 		}
 	}

@@ -1,32 +1,118 @@
 ﻿using ComputerPartsShop.Domain.DTOs;
+using ComputerPartsShop.Domain.Models;
+using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
 	public class ReviewService : ICRUDService<ReviewRequest, ReviewResponse, ReviewResponse, int>
 	{
-		public List<ReviewResponse> GetList()
+		private readonly ReviewRepository _reviewRepository;
+		private readonly CustomerRepository _customerRepository;
+		private readonly ProductRepository _productRepository;
+
+		public ReviewService(ReviewRepository reviewRepository, CustomerRepository customerRepository, ProductRepository productRepository)
 		{
-			throw new NotImplementedException();
+			_reviewRepository = reviewRepository;
+			_customerRepository = customerRepository;
+			_productRepository = productRepository;
 		}
 
-		public ReviewResponse Get(int id)
+		public async Task<List<ReviewResponse>> GetList()
 		{
-			throw new NotImplementedException();
+			var reviewList = await _reviewRepository.GetList();
+
+			return reviewList.Select(r => new ReviewResponse(r.ID, r.Customer.Username, r.Product.Name, r.Rating, r.Description)).ToList();
 		}
 
-		public ReviewResponse Create(ReviewRequest request)
+		public async Task<ReviewResponse> Get(int id)
 		{
-			throw new NotImplementedException();
+			var review = await _reviewRepository.Get(id);
+
+			return review == null ? null! : new ReviewResponse(id, review.Customer.Username, review.Product.Name, review.Rating, review.Description);
 		}
 
-		public ReviewResponse Update(int id, ReviewRequest request)
+		public async Task<ReviewResponse> Create(ReviewRequest review)
 		{
-			throw new NotImplementedException();
+			Review newReview;
+			Customer? customer = null;
+			var product = await _productRepository.Get(review.ProductID);
+
+			if (!string.IsNullOrWhiteSpace(review.Username))
+			{
+				customer = await _customerRepository.GetByUsernameOrEmail(review.Username);
+			}
+
+			if (customer == null)
+			{
+				newReview = new()
+				{
+					ProductID = product.ID,
+					Product = product,
+					Rating = review.Rating,
+					Description = review.Description,
+				};
+			}
+
+			else
+			{
+				newReview = new()
+				{
+					CustomerID = customer.ID,
+					Customer = customer,
+					ProductID = product.ID,
+					Product = product,
+					Rating = review.Rating,
+					Description = review.Description,
+				};
+			}
+
+			var reviewID = await _reviewRepository.Create(newReview);
+			return new ReviewResponse(reviewID, review.Username, product.Name, review.Rating, review.Description);
 		}
 
-		public void Delete(int id)
+		public async Task<ReviewResponse> Update(int id, ReviewRequest updatedReview)
 		{
-			return;
+			Review review;
+			Customer? customer = null;
+			var product = await _productRepository.Get(updatedReview.ProductID);
+
+			if (!string.IsNullOrWhiteSpace(updatedReview.Username))
+			{
+				customer = await _customerRepository.GetByUsernameOrEmail(updatedReview.Username);
+			}
+
+			if (customer == null)
+			{
+				review = new()
+				{
+					ProductID = product.ID,
+					Product = product,
+					Rating = updatedReview.Rating,
+					Description = updatedReview.Description,
+				};
+			}
+
+			else
+			{
+				review = new()
+				{
+					CustomerID = customer.ID,
+					Customer = customer,
+					ProductID = product.ID,
+					Product = product,
+					Rating = updatedReview.Rating,
+					Description = updatedReview.Description,
+				};
+			}
+
+			await _reviewRepository.Update(id, review);
+
+			return new ReviewResponse(id, updatedReview.Username, product.Name, updatedReview.Rating, updatedReview.Description);
+		}
+
+		public async Task Delete(int id)
+		{
+			await _reviewRepository.Delete(id);
 		}
 	}
 }

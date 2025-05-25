@@ -4,29 +4,34 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class CategoryRepository : ICRUDRepository<Category, int>
 	{
-		public List<Category> GetList()
+		public Task<List<Category>> GetList()
 		{
 			throw new NotImplementedException();
 		}
 
-		public Category Get(int id)
+		public Task<Category> Get(int id)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Category Create(Category request)
+		public Task<Category> GetByName(string name)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Category Update(int id, Category request)
+		public Task<int> Create(Category request)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Delete(int id)
+		public Task<Category> Update(int id, Category request)
 		{
+			throw new NotImplementedException();
+		}
 
+		public Task Delete(int id)
+		{
+			return Task.CompletedTask;
 		}
 	}
 }

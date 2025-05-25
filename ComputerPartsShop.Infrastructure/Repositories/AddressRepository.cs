@@ -4,29 +4,29 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class AddressRepository : ICRUDRepository<Address, Guid>
 	{
-		public List<Address> GetList()
+		public Task<List<Address>> GetList()
 		{
 			throw new NotImplementedException();
 		}
 
-		public Address Get(Guid id)
+		public Task<Address> Get(Guid id)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Address Create(Address request)
+		public Task<Guid> Create(Address request)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Address Update(Guid id, Address request)
+		public Task<Address> Update(Guid id, Address request)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Delete(Guid id)
+		public Task Delete(Guid id)
 		{
-
+			return Task.CompletedTask;
 		}
 	}
 }

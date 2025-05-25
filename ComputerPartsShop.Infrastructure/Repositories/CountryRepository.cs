@@ -4,29 +4,34 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class CountryRepository : ICRUDRepository<Country, int>
 	{
-		public List<Country> GetList()
+		public Task<List<Country>> GetList()
 		{
 			throw new NotImplementedException();
 		}
 
-		public Country Get(int id)
+		public Task<Country> Get(int id)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Country Create(Country request)
+		public Task<Country> GetByCountry3Code(string Country3Code)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Country Update(int id, Country request)
+		public Task<int> Create(Country request)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Delete(int id)
+		public Task<Country> Update(int id, Country request)
 		{
+			throw new NotImplementedException();
+		}
 
+		public Task Delete(int id)
+		{
+			return Task.CompletedTask;
 		}
 	}
 }

@@ -1,30 +1,38 @@
 ﻿using ComputerPartsShop.Domain.DTOs;
+using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
 	public class PaymentService : ICRUDService<PaymentRequest, PaymentResponse, DetailedPaymentResponse, int>
 	{
-		public List<PaymentResponse> GetList()
+		private readonly PaymentRepository _paymentRepository;
+
+		public PaymentService(PaymentRepository paymentRepository)
+		{
+			_paymentRepository = paymentRepository;
+		}
+
+		public Task<List<PaymentResponse>> GetList()
 		{
 			throw new NotImplementedException();
 		}
 
-		public DetailedPaymentResponse Get(int id)
+		public Task<DetailedPaymentResponse> Get(int id)
 		{
 			throw new NotImplementedException();
 		}
 
-		public PaymentResponse Create(PaymentRequest request)
+		public Task<PaymentResponse> Create(PaymentRequest payment)
 		{
 			throw new NotImplementedException();
 		}
 
-		public PaymentResponse Update(int id, PaymentRequest request)
+		public Task<PaymentResponse> Update(int id, PaymentRequest updatedPayment)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Delete(int id)
+		public Task Delete(int id)
 		{
 			throw new NotImplementedException();
 		}

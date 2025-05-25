@@ -6,7 +6,7 @@
 		public Guid CustomerID { get; set; }
 		public Customer Customer { get; set; }
 		public int ProviderID { get; set; }
-		public PaymentProvder Provider { get; set; }
+		public PaymentProvider Provider { get; set; }
 		public string PaymentReference { get; set; }
 		public List<Payment> Payments { get; set; }
 	}

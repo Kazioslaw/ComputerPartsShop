@@ -1,4 +1,5 @@
 ﻿using ComputerPartsShop.Domain.DTOs;
+using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -7,33 +8,71 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class AddressController : ControllerBase
 	{
-		[HttpGet]
-		public ActionResult<List<AddressResponse>> GetAddressList()
+		private readonly AddressService _addressService;
+
+		public AddressController(AddressService addressService)
 		{
-			return Ok(new List<AddressResponse>());
+			_addressService = addressService;
+		}
+
+		[HttpGet]
+		public async Task<ActionResult<List<AddressResponse>>> GetAddressList()
+		{
+			var addressList = await _addressService.GetList();
+
+			return Ok(addressList);
+
 		}
 
 		[HttpGet("{id:Guid}")]
-		public ActionResult<AddressResponse> GetAddress(Guid id)
+		public async Task<ActionResult<AddressResponse>> GetAddress(Guid id)
 		{
-			return Ok();
+			var address = await _addressService.Get(id);
+
+			if (address == null)
+			{
+				return NotFound();
+			}
+
+			return Ok(address);
 		}
 
 		[HttpPost]
-		public ActionResult<AddressResponse> CreateAddress(AddressRequest request)
+		public async Task<ActionResult<AddressResponse>> CreateAddress(AddressRequest request)
 		{
-			return Ok();
+			var address = await _addressService.Create(request);
+
+			return CreatedAtAction(nameof(CreateAddress), address);
 		}
 
 		[HttpPut("{id:guid}")]
-		public ActionResult<AddressResponse> UpdateAddress(Guid id, AddressRequest request)
+		public async Task<ActionResult<AddressResponse>> UpdateAddress(Guid id, AddressRequest request)
 		{
-			return Ok();
+			var address = await _addressService.Get(id);
+
+			if (address == null)
+			{
+				return NotFound();
+			}
+
+			var updatedAddress = await _addressService.Update(id, request);
+
+			return Ok(updatedAddress);
+
 		}
 
 		[HttpDelete("{id:guid}")]
-		public ActionResult DeleteAddress(Guid id)
+		public async Task<ActionResult> DeleteAddress(Guid id)
 		{
+			var address = await _addressService.Get(id);
+
+			if (address == null)
+			{
+				return NotFound();
+			}
+
+			await _addressService.Delete(id);
+
 			return Ok();
 		}
 	}

@@ -2,31 +2,36 @@
 
 namespace ComputerPartsShop.Infrastructure
 {
-	public class PaymentProviderRepository : ICRUDRepository<PaymentProvder, int>
+	public class PaymentProviderRepository : ICRUDRepository<PaymentProvider, int>
 	{
-		public List<PaymentProvder> GetList()
+		public Task<List<PaymentProvider>> GetList()
 		{
 			throw new NotImplementedException();
 		}
 
-		public PaymentProvder Get(int id)
+		public Task<PaymentProvider> Get(int id)
 		{
 			throw new NotImplementedException();
 		}
 
-		public PaymentProvder Create(PaymentProvder request)
+		public Task<PaymentProvider> GetByName(string input)
 		{
 			throw new NotImplementedException();
 		}
 
-		public PaymentProvder Update(int id, PaymentProvder request)
+		public Task<int> Create(PaymentProvider request)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Delete(int id)
+		public Task<PaymentProvider> Update(int id, PaymentProvider request)
 		{
+			throw new NotImplementedException();
+		}
 
+		public Task Delete(int id)
+		{
+			return Task.CompletedTask;
 		}
 	}
 }

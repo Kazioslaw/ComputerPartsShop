@@ -4,29 +4,29 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class OrderRepository : ICRUDRepository<Order, int>
 	{
-		public List<Order> GetList()
+		public Task<List<Order>> GetList()
 		{
 			throw new NotImplementedException();
 		}
 
-		public Order Get(int id)
+		public Task<Order> Get(int id)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Order Create(Order request)
+		public Task<int> Create(Order request)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Order Update(int id, Order request)
+		public Task<Order> Update(int id, Order request)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void Delete(int id)
+		public Task Delete(int id)
 		{
-
+			return Task.CompletedTask;
 		}
 	}
 }

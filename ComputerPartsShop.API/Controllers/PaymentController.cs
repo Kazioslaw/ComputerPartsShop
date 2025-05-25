@@ -1,4 +1,5 @@
 ﻿using ComputerPartsShop.Domain.DTOs;
+using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -7,33 +8,64 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class PaymentController : ControllerBase
 	{
-		[HttpGet]
-		public ActionResult<List<PaymentResponse>> GetPaymentList()
+		private readonly PaymentService _paymentService;
+
+		public PaymentController(PaymentService paymentService)
 		{
-			return Ok();
+			_paymentService = paymentService;
 		}
 
-		[HttpGet("{id:Guid}")]
-		public ActionResult<DetailedPaymentResponse> GetPayment(Guid id)
+		[HttpGet]
+		public async Task<ActionResult<List<PaymentResponse>>> GetPaymentList()
 		{
-			return Ok();
+			var paymentList = await _paymentService.GetList();
+
+			return Ok(paymentList);
+		}
+
+		[HttpGet("{id:int}")]
+		public async Task<ActionResult<DetailedPaymentResponse>> GetPayment(int id)
+		{
+			var payment = await _paymentService.Get(id);
+
+			return Ok(payment);
 		}
 
 		[HttpPost]
-		public ActionResult<PaymentResponse> CreatePayment(PaymentRequest request)
+		public async Task<ActionResult<PaymentResponse>> CreatePayment(PaymentRequest request)
 		{
-			return Ok();
+			var payment = await _paymentService.Create(request);
+
+			return CreatedAtAction(nameof(CreatePayment), payment);
 		}
 
-		[HttpPut("{id:guid}")]
-		public ActionResult<PaymentResponse> UpdatePayment(Guid id, PaymentRequest request)
+		[HttpPut("{id:int}")]
+		public async Task<ActionResult<PaymentResponse>> UpdatePayment(int id, PaymentRequest request)
 		{
-			return Ok();
+			var payment = await _paymentService.Get(id);
+
+			if (payment == null)
+			{
+				return NotFound();
+			}
+
+			var updatedPayment = await _paymentService.Update(id, request);
+
+			return Ok(updatedPayment);
 		}
 
-		[HttpDelete("{id:guid}")]
-		public ActionResult<PaymentResponse> Delete(Guid id)
+		[HttpDelete("{id:int}")]
+		public async Task<ActionResult<PaymentResponse>> Delete(int id)
 		{
+			var payment = await _paymentService.Get(id);
+
+			if (payment == null)
+			{
+				return NotFound();
+			}
+
+			await _paymentService.Delete(id);
+
 			return Ok();
 		}
 	}

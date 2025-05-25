@@ -1,4 +1,5 @@
 ﻿using ComputerPartsShop.Domain.DTOs;
+using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -7,33 +8,70 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class CustomerController : ControllerBase
 	{
-		[HttpGet]
-		public ActionResult<List<CustomerResponse>> GetCustomerList()
+		public readonly CustomerService _customerService;
+
+		public CustomerController(CustomerService customerService)
 		{
-			return Ok();
+			_customerService = customerService;
+		}
+
+		[HttpGet]
+		public async Task<ActionResult<List<CustomerResponse>>> GetCustomerList()
+		{
+			var customerList = await _customerService.GetList();
+
+			return Ok(customerList);
 		}
 
 		[HttpGet("{id:guid}")]
-		public ActionResult<DetailedCustomerResponse> GetCustomer(Guid id)
+		public async Task<ActionResult<DetailedCustomerResponse>> GetCustomer(Guid id)
 		{
-			return Ok();
+			var customer = await _customerService.Get(id);
+
+			if (customer == null)
+			{
+				return NotFound();
+			}
+
+			return Ok(customer);
 		}
 
 		[HttpPost]
-		public ActionResult<CustomerResponse> CreateCustomer(CustomerRequest request)
+		public async Task<ActionResult<CustomerResponse>> CreateCustomer(CustomerRequest request)
 		{
-			return Ok();
+			var customer = await _customerService.Create(request);
+
+			return CreatedAtAction(nameof(CreateCustomer), customer);
 		}
 
 		[HttpPut("{id:guid}")]
-		public ActionResult<CustomerResponse> UpdateCustomer(Guid id, CustomerResponse request)
+		public async Task<ActionResult<CustomerResponse>> UpdateCustomer(Guid id, CustomerRequest request)
 		{
-			return Ok();
+			var customer = await _customerService.Get(id);
+
+			if (customer == null)
+			{
+				return NotFound();
+			}
+
+			var updatedCustomer = await _customerService.Update(id, request);
+
+			return Ok(updatedCustomer);
+
 		}
 
 		[HttpDelete("{id:guid}")]
-		public ActionResult DeleteCustomer(Guid id)
+		public async Task<ActionResult> DeleteCustomer(Guid id)
 		{
+			var customer = await _customerService.Get(id);
+
+			if (customer == null)
+			{
+				return NotFound();
+			}
+
+			await _customerService.Delete(id);
+
 			return Ok();
 		}
 	}

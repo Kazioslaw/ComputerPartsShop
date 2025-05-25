@@ -1,32 +1,65 @@
 ﻿using ComputerPartsShop.Domain.DTOs;
+using ComputerPartsShop.Domain.Models;
+using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
 	public class PaymentProviderService : ICRUDService<PaymentProviderRequest, PaymentProviderResponse, DetailedPaymentProviderResponse, int>
 	{
-		public List<PaymentProviderResponse> GetList()
+		private readonly PaymentProviderRepository _providerRepository;
+		private readonly CustomerPaymentSystemRepository _cpsRepository;
+
+		public PaymentProviderService(PaymentProviderRepository providerRepository, CustomerPaymentSystemRepository cpsRepository)
 		{
-			throw new NotImplementedException();
+			_providerRepository = providerRepository;
+			_cpsRepository = cpsRepository;
 		}
 
-		public DetailedPaymentProviderResponse Get(int id)
+		public async Task<List<PaymentProviderResponse>> GetList()
 		{
-			throw new NotImplementedException();
+			var paymentProviderList = await _providerRepository.GetList();
+
+			return paymentProviderList.Select(pp => new PaymentProviderResponse(pp.ID, pp.Name, pp.CustomerPayments.Select(x => x.ID).ToList())).ToList();
 		}
 
-		public PaymentProviderResponse Create(PaymentProviderRequest request)
+		public async Task<DetailedPaymentProviderResponse> Get(int id)
 		{
-			throw new NotImplementedException();
+			var paymentProvider = await _providerRepository.Get(id);
+
+			var cps = paymentProvider.CustomerPayments;
+
+			return paymentProvider == null ? null! :
+				new DetailedPaymentProviderResponse(paymentProvider.ID, paymentProvider.Name,
+				cps.Select(cps => new CustomerPaymentSystemResponse(cps.ID, cps.Customer.Username, cps.Customer.Email, cps.Provider.Name, cps.PaymentReference)).ToList());
 		}
 
-		public PaymentProviderResponse Update(int id, PaymentProviderRequest request)
+		public async Task<PaymentProviderResponse> Create(PaymentProviderRequest paymentProvider)
 		{
-			throw new NotImplementedException();
+			var newPaymentProvider = new PaymentProvider()
+			{
+				Name = paymentProvider.Name
+			};
+
+			var paymentProviderID = await _providerRepository.Create(newPaymentProvider);
+
+			return new PaymentProviderResponse(paymentProviderID, paymentProvider.Name, new List<Guid>());
 		}
 
-		public void Delete(int id)
+		public async Task<PaymentProviderResponse> Update(int id, PaymentProviderRequest updatedPaymentProvider)
 		{
-			return;
+			var paymentProvider = new PaymentProvider()
+			{
+				Name = updatedPaymentProvider.Name,
+			};
+
+			await _providerRepository.Update(id, paymentProvider);
+
+			return new PaymentProviderResponse(id, updatedPaymentProvider.Name, new List<Guid>());
+		}
+
+		public Task Delete(int id)
+		{
+			return Task.CompletedTask;
 		}
 	}
 }
