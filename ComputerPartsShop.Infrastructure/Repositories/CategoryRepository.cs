@@ -4,7 +4,7 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class CategoryRepository : ICategoryRepository
 	{
-		readonly TempData _dbContext;
+		private readonly TempData _dbContext;
 		public CategoryRepository(TempData dbContext)
 		{
 			_dbContext = dbContext;
@@ -13,6 +13,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<List<Category>> GetListAsync(CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
+
 			return _dbContext.CategoryList;
 		}
 

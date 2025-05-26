@@ -1,4 +1,5 @@
 ﻿using ComputerPartsShop.Domain.DTO;
+using ComputerPartsShop.Domain.Enums;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 using System.Data;
@@ -44,7 +45,7 @@ namespace ComputerPartsShop.Services
 				OrderId = entity.OrderId,
 				Total = entity.Total,
 				Method = entity.Method,
-				Status = "Pending",
+				Status = PaymentStatus.Pending,
 				PaymentStartAt = DateTime.Now
 			};
 
@@ -66,17 +67,17 @@ namespace ComputerPartsShop.Services
 
 			switch (entity.Status)
 			{
-				case "Pending":
-				case "Authorized":
-				case "Failed":
-				case "Cancelled":
+				case PaymentStatus.Pending:
+				case PaymentStatus.Authorized:
+				case PaymentStatus.Failed:
+				case PaymentStatus.Cancelled:
 					payment.PaymentStartAt = (DateTime)entity.PaymentStartAt!;
 					break;
-				case "Completed":
+				case PaymentStatus.Completed:
 					payment.PaymentStartAt = (DateTime)entity.PaymentStartAt!;
 					payment.PaidAt = DateTime.Now;
 					break;
-				case "Refunded":
+				case PaymentStatus.Refunded:
 					payment.PaymentStartAt = (DateTime)entity.PaymentStartAt!;
 					payment.PaidAt = (DateTime)entity.PaidAt!;
 					break;
@@ -85,7 +86,7 @@ namespace ComputerPartsShop.Services
 			await _paymentRepository.UpdateAsync(id, payment, ct);
 
 			return new PaymentResponse(id, entity.CustomerPaymentSystemId, entity.OrderId, entity.Total, entity.Method,
-				entity.Status!, entity.PaymentStartAt, entity.PaidAt);
+				entity.Status, entity.PaymentStartAt, entity.PaidAt);
 		}
 
 		public async Task DeleteAsync(int id, CancellationToken ct)

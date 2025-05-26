@@ -4,7 +4,7 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class ProductRepository : IProductRepository
 	{
-		readonly TempData _dbContext;
+		private readonly TempData _dbContext;
 
 		public ProductRepository(TempData dbContext)
 		{
@@ -14,6 +14,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<List<Product>> GetListAsync(CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
+
 			return _dbContext.ProductList;
 		}
 

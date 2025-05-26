@@ -1,4 +1,6 @@
-﻿namespace ComputerPartsShop.Domain.Models
+﻿using ComputerPartsShop.Domain.Enums;
+
+namespace ComputerPartsShop.Domain.Models
 {
 	public class Payment
 	{
@@ -8,8 +10,8 @@
 		public int OrderId { get; set; }
 		public Order Order { get; set; }
 		public decimal Total { get; set; }
-		public string Method { get; set; }
-		public string Status { get; set; }
+		public PaymentMethod Method { get; set; }
+		public PaymentStatus Status { get; set; }
 		public DateTime PaymentStartAt { get; set; }
 		public DateTime? PaidAt { get; set; }
 	}

@@ -4,7 +4,7 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class CountryRepository : ICountryRepository
 	{
-		readonly TempData _dbContext;
+		private readonly TempData _dbContext;
 
 		public CountryRepository(TempData dbContext)
 		{
@@ -14,6 +14,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<List<Country>> GetListAsync(CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
+
 			return _dbContext.CountryList;
 		}
 

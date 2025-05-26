@@ -4,7 +4,7 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public class PaymentProviderRepository : IPaymentProviderRepository
 	{
-		readonly TempData _dbContext;
+		private readonly TempData _dbContext;
 
 		public PaymentProviderRepository(TempData dbContext)
 		{
@@ -14,6 +14,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<List<PaymentProvider>> GetListAsync(CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
+
 			return _dbContext.PaymentProviderList;
 		}
 

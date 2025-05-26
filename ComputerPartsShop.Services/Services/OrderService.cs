@@ -1,4 +1,5 @@
 ﻿using ComputerPartsShop.Domain.DTO;
+using ComputerPartsShop.Domain.Enums;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
@@ -77,7 +78,7 @@ namespace ComputerPartsShop.Services
 				Total = entity.Total,
 				DeliveryAddressId = entity.AddressId,
 				DeliveryAddress = address,
-				Status = "Pending",
+				Status = DeliveryStatus.Pending,
 				OrderedAt = DateTime.Now,
 			};
 
@@ -116,8 +117,8 @@ namespace ComputerPartsShop.Services
 
 			switch (entity.Status)
 			{
-				case "Pending":
-				case "Processing":
+				case DeliveryStatus.Pending:
+				case DeliveryStatus.Processing:
 					order = new Order()
 					{
 						CustomerId = customer.Id,
@@ -126,12 +127,12 @@ namespace ComputerPartsShop.Services
 						Total = entity.Total,
 						DeliveryAddressId = entity.AddressId,
 						DeliveryAddress = address,
-						Status = entity.Status!,
+						Status = (DeliveryStatus)entity.Status,
 						OrderedAt = (DateTime)entity.OrderedAt!,
 						Payments = payments ?? new List<Payment>(),
 					};
 					break;
-				case "Shipped":
+				case DeliveryStatus.Shipped:
 					order = new Order()
 					{
 						CustomerId = customer.Id,
@@ -140,15 +141,15 @@ namespace ComputerPartsShop.Services
 						Total = entity.Total,
 						DeliveryAddressId = entity.AddressId,
 						DeliveryAddress = address,
-						Status = entity.Status!,
+						Status = (DeliveryStatus)entity.Status,
 						OrderedAt = (DateTime)entity.OrderedAt!,
 						SendAt = DateTime.Now,
 						Payments = payments ?? new List<Payment>()
 					};
 					break;
-				case "Delivered":
-				case "Returned":
-				case "Cancelled":
+				case DeliveryStatus.Delivered:
+				case DeliveryStatus.Returned:
+				case DeliveryStatus.Cancelled:
 					order = new Order()
 					{
 						CustomerId = customer.Id,
@@ -157,7 +158,7 @@ namespace ComputerPartsShop.Services
 						Total = entity.Total,
 						DeliveryAddressId = entity.AddressId,
 						DeliveryAddress = address,
-						Status = entity.Status!,
+						Status = (DeliveryStatus)entity.Status,
 						OrderedAt = (DateTime)entity.OrderedAt!,
 						SendAt = (DateTime)entity.SendAt!,
 						Payments = payments ?? new List<Payment>()
@@ -169,7 +170,7 @@ namespace ComputerPartsShop.Services
 				await _orderRepository.UpdateAsync(id, order, ct);
 			}
 			return new OrderResponse(id, customer.Id, entity.ProductIdList, entity.Total, entity.AddressId,
-				entity.Status!, entity.OrderedAt, entity.SendAt, payments?.Select(x => x.Id).ToList() ?? new List<int>());
+				order.Status, entity.OrderedAt, entity.SendAt, payments?.Select(x => x.Id).ToList() ?? new List<int>());
 		}
 
 		public async Task DeleteAsync(int id, CancellationToken ct)
