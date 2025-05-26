@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ComputerPartsShop.API.Controllers
 {
 	[ApiController]
-	[Route("/[controller]")]
+	[Route("[controller]")]
 	public class AddressController : ControllerBase
 	{
 		private readonly IAddressService _addressService;

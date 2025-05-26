@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ComputerPartsShop.API.Controllers
 {
 	[ApiController]
-	[Route("/[controller]")]
+	[Route("[controller]")]
 	public class PaymentProviderController : ControllerBase
 	{
 
