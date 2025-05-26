@@ -17,23 +17,23 @@ namespace ComputerPartsShop.Services
 		}
 
 
-		public async Task<List<AddressResponse>> GetList()
+		public async Task<List<AddressResponse>> GetListAsync()
 		{
-			var addressList = await _addressRepository.GetList();
+			var addressList = await _addressRepository.GetListAsync();
 
 			return addressList.Select(a => new AddressResponse(a.ID, a.Street, a.City, a.Region, a.ZipCode, a.Country.Alpha3)).ToList();
 		}
 
-		public async Task<AddressResponse> Get(Guid id)
+		public async Task<AddressResponse> GetAsync(Guid id)
 		{
-			var address = await _addressRepository.Get(id);
+			var address = await _addressRepository.GetAsync(id);
 
 			return address == null ? null! : new AddressResponse(address.ID, address.Street, address.City, address.Region, address.ZipCode, address.Country.Alpha3);
 		}
 
-		public async Task<AddressResponse> Create(AddressRequest address)
+		public async Task<AddressResponse> CreateAsync(AddressRequest address)
 		{
-			var country = await _countryRepository.GetByCountry3Code(address.Country3Code);
+			var country = await _countryRepository.GetByCountry3CodeAsync(address.Country3Code);
 
 			var newAddres = new Address()
 			{
@@ -45,14 +45,14 @@ namespace ComputerPartsShop.Services
 				Country = country
 			};
 
-			var createdAddressID = await _addressRepository.Create(newAddres);
+			var createdAddressID = await _addressRepository.CreateAsync(newAddres);
 
 			return new AddressResponse(createdAddressID, address.Street, address.City, address.Region, address.ZipCode, address.Country3Code);
 		}
 
-		public async Task<AddressResponse> Update(Guid id, AddressRequest updatedAddress)
+		public async Task<AddressResponse> UpdateAsync(Guid id, AddressRequest updatedAddress)
 		{
-			var country = await _countryRepository.GetByCountry3Code(updatedAddress.Country3Code);
+			var country = await _countryRepository.GetByCountry3CodeAsync(updatedAddress.Country3Code);
 
 			var address = new Address()
 			{
@@ -64,14 +64,14 @@ namespace ComputerPartsShop.Services
 				Country = country
 			};
 
-			await _addressRepository.Update(id, address);
+			await _addressRepository.UpdateAsync(id, address);
 
 			return new AddressResponse(id, updatedAddress.Street, updatedAddress.City, updatedAddress.Region, updatedAddress.ZipCode, updatedAddress.Country3Code);
 		}
 
-		public async Task Delete(Guid id)
+		public async Task DeleteAsync(Guid id)
 		{
-			await _addressRepository.Delete(id);
+			await _addressRepository.DeleteAsync(id);
 		}
 	}
 }

@@ -15,24 +15,24 @@ namespace ComputerPartsShop.Services
 			_categoryRepository = categoryRepository;
 		}
 
-		public async Task<List<ProductResponse>> GetList()
+		public async Task<List<ProductResponse>> GetListAsync()
 		{
-			var productList = await _productRepository.GetList();
+			var productList = await _productRepository.GetListAsync();
 
 			return productList.Select(p => new ProductResponse(p.ID, p.Name, p.Description, p.UnitPrice, p.Stock, p.Category.Name, p.InternalCode)).ToList();
 		}
 
-		public async Task<ProductResponse> Get(int id)
+		public async Task<ProductResponse> GetAsync(int id)
 		{
-			var product = await _productRepository.Get(id);
+			var product = await _productRepository.GetAsync(id);
 
 			return product == null ? null! :
 				new ProductResponse(product.ID, product.Name, product.Description, product.UnitPrice, product.Stock, product.Category.Name, product.InternalCode);
 		}
 
-		public async Task<ProductResponse> Create(ProductRequest product)
+		public async Task<ProductResponse> CreateAsync(ProductRequest product)
 		{
-			var category = await _categoryRepository.GetByName(product.CategoryName);
+			var category = await _categoryRepository.GetByNameAsync(product.CategoryName);
 
 			var newProduct = new Product()
 			{
@@ -45,14 +45,14 @@ namespace ComputerPartsShop.Services
 				InternalCode = product.InternalCode,
 			};
 
-			var productID = await _productRepository.Create(newProduct);
+			var productID = await _productRepository.CreateAsync(newProduct);
 
 			return new ProductResponse(productID, product.Name, product.Description, product.UnitPrice, product.Stock, product.CategoryName, product.InternalCode);
 		}
 
-		public async Task<ProductResponse> Update(int id, ProductRequest updatedProduct)
+		public async Task<ProductResponse> UpdateAsync(int id, ProductRequest updatedProduct)
 		{
-			var category = await _categoryRepository.GetByName(updatedProduct.CategoryName);
+			var category = await _categoryRepository.GetByNameAsync(updatedProduct.CategoryName);
 
 			var product = new Product()
 			{
@@ -65,15 +65,15 @@ namespace ComputerPartsShop.Services
 				InternalCode = updatedProduct.InternalCode,
 			};
 
-			await _productRepository.Update(id, product);
+			await _productRepository.UpdateAsync(id, product);
 
 			return new ProductResponse(id, updatedProduct.Name, updatedProduct.Description, updatedProduct.UnitPrice,
 				updatedProduct.Stock, updatedProduct.CategoryName, updatedProduct.InternalCode);
 		}
 
-		public async Task Delete(int id)
+		public async Task DeleteAsync(int id)
 		{
-			await _productRepository.Delete(id);
+			await _productRepository.DeleteAsync(id);
 		}
 	}
 }

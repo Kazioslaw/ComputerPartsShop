@@ -10,26 +10,26 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<Category>> GetList()
+		public async Task<List<Category>> GetListAsync()
 		{
 			return _dbContext.CategoryList;
 		}
 
-		public async Task<Category> Get(int id)
+		public async Task<Category> GetAsync(int id)
 		{
 			var category = _dbContext.CategoryList.FirstOrDefault(c => c.ID == id);
 
 			return category;
 		}
 
-		public async Task<Category> GetByName(string name)
+		public async Task<Category> GetByNameAsync(string name)
 		{
 			var category = _dbContext.CategoryList.FirstOrDefault(c => c.Name == name);
 
 			return category;
 		}
 
-		public async Task<int> Create(Category request)
+		public async Task<int> CreateAsync(Category request)
 		{
 			var last = _dbContext.CategoryList.OrderBy(x => x.ID).LastOrDefault();
 
@@ -47,7 +47,7 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<Category> Update(int id, Category request)
+		public async Task<Category> UpdateAsync(int id, Category request)
 		{
 			var category = _dbContext.CategoryList.FirstOrDefault(c => c.ID == id);
 
@@ -60,7 +60,7 @@ namespace ComputerPartsShop.Infrastructure
 			return category;
 		}
 
-		public async Task Delete(int id)
+		public async Task DeleteAsync(int id)
 		{
 			var category = _dbContext.CategoryList.FirstOrDefault(c => c.ID == id);
 

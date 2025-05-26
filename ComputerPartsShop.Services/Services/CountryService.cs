@@ -13,25 +13,25 @@ namespace ComputerPartsShop.Services
 			_countryRepository = countryRepository;
 		}
 
-		public async Task<List<CountryResponse>> GetList()
+		public async Task<List<CountryResponse>> GetListAsync()
 		{
-			var countryList = await _countryRepository.GetList();
+			var countryList = await _countryRepository.GetListAsync();
 
 			return countryList.Select(c => new CountryResponse(c.ID, c.Alpha2, c.Alpha3, c.Name)).ToList();
 
 
 		}
 
-		public async Task<DetailedCountryResponse> Get(int id)
+		public async Task<DetailedCountryResponse> GetAsync(int id)
 		{
-			var country = await _countryRepository.Get(id);
+			var country = await _countryRepository.GetAsync(id);
 			var addressList = country.Addresses;
 
 			return country == null ? null! : new DetailedCountryResponse(country.ID, country.Alpha2, country.Alpha3, country.Name,
 				addressList.Select(a => new AddressInCountryResponse(a.ID, a.Street, a.City, a.Region, a.ZipCode)).ToList());
 		}
 
-		public async Task<CountryResponse> Create(CountryRequest country)
+		public async Task<CountryResponse> CreateAsync(CountryRequest country)
 		{
 			var newCountry = new Country()
 			{
@@ -40,11 +40,11 @@ namespace ComputerPartsShop.Services
 				Name = country.Name,
 			};
 
-			var createdCountryID = await _countryRepository.Create(newCountry);
+			var createdCountryID = await _countryRepository.CreateAsync(newCountry);
 			return new CountryResponse(createdCountryID, country.Alpha2, country.Alpha3, country.Name);
 		}
 
-		public async Task<CountryResponse> Update(int id, CountryRequest updatedCountry)
+		public async Task<CountryResponse> UpdateAsync(int id, CountryRequest updatedCountry)
 		{
 			var country = new Country()
 			{
@@ -53,14 +53,14 @@ namespace ComputerPartsShop.Services
 				Name = updatedCountry.Name
 			};
 
-			await _countryRepository.Update(id, country);
+			await _countryRepository.UpdateAsync(id, country);
 
 			return new CountryResponse(id, updatedCountry.Alpha2, updatedCountry.Alpha3, updatedCountry.Name);
 		}
 
-		public async Task Delete(int id)
+		public async Task DeleteAsync(int id)
 		{
-			await _countryRepository.Delete(id);
+			await _countryRepository.DeleteAsync(id);
 		}
 
 	}

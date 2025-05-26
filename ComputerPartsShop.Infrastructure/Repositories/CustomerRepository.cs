@@ -11,19 +11,19 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<Customer>> GetList()
+		public async Task<List<Customer>> GetListAsync()
 		{
 			return _dbContext.CustomerList;
 		}
 
-		public async Task<Customer> Get(Guid id)
+		public async Task<Customer> GetAsync(Guid id)
 		{
 			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.ID == id);
 
 			return customer;
 		}
 
-		public async Task<Customer> GetByUsernameOrEmail(string input)
+		public async Task<Customer> GetByUsernameOrEmailAsync(string input)
 		{
 			Customer? customer = null;
 
@@ -44,7 +44,7 @@ namespace ComputerPartsShop.Infrastructure
 			return customer;
 		}
 
-		public async Task<Guid> Create(Customer request)
+		public async Task<Guid> CreateAsync(Customer request)
 		{
 			request.ID = Guid.NewGuid();
 
@@ -53,7 +53,7 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<Customer> Update(Guid id, Customer request)
+		public async Task<Customer> UpdateAsync(Guid id, Customer request)
 		{
 			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.ID == id);
 
@@ -69,7 +69,7 @@ namespace ComputerPartsShop.Infrastructure
 			return customer;
 		}
 
-		public async Task Delete(Guid id)
+		public async Task DeleteAsync(Guid id)
 		{
 			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.ID == id);
 

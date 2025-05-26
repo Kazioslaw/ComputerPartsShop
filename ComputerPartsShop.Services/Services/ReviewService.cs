@@ -17,29 +17,29 @@ namespace ComputerPartsShop.Services
 			_productRepository = productRepository;
 		}
 
-		public async Task<List<ReviewResponse>> GetList()
+		public async Task<List<ReviewResponse>> GetListAsync()
 		{
-			var reviewList = await _reviewRepository.GetList();
+			var reviewList = await _reviewRepository.GetListAsync();
 
 			return reviewList.Select(r => new ReviewResponse(r.ID, r.Customer.Username, r.Product.Name, r.Rating, r.Description)).ToList();
 		}
 
-		public async Task<ReviewResponse> Get(int id)
+		public async Task<ReviewResponse> GetAsync(int id)
 		{
-			var review = await _reviewRepository.Get(id);
+			var review = await _reviewRepository.GetAsync(id);
 
 			return review == null ? null! : new ReviewResponse(id, review.Customer.Username, review.Product.Name, review.Rating, review.Description);
 		}
 
-		public async Task<ReviewResponse> Create(ReviewRequest review)
+		public async Task<ReviewResponse> CreateAsync(ReviewRequest review)
 		{
 			Review newReview;
 			Customer? customer = null;
-			var product = await _productRepository.Get(review.ProductID);
+			var product = await _productRepository.GetAsync(review.ProductID);
 
 			if (!string.IsNullOrWhiteSpace(review.Username))
 			{
-				customer = await _customerRepository.GetByUsernameOrEmail(review.Username);
+				customer = await _customerRepository.GetByUsernameOrEmailAsync(review.Username);
 			}
 
 			if (customer == null)
@@ -66,19 +66,19 @@ namespace ComputerPartsShop.Services
 				};
 			}
 
-			var reviewID = await _reviewRepository.Create(newReview);
+			var reviewID = await _reviewRepository.CreateAsync(newReview);
 			return new ReviewResponse(reviewID, review.Username, product.Name, review.Rating, review.Description);
 		}
 
-		public async Task<ReviewResponse> Update(int id, ReviewRequest updatedReview)
+		public async Task<ReviewResponse> UpdateAsync(int id, ReviewRequest updatedReview)
 		{
 			Review review;
 			Customer? customer = null;
-			var product = await _productRepository.Get(updatedReview.ProductID);
+			var product = await _productRepository.GetAsync(updatedReview.ProductID);
 
 			if (!string.IsNullOrWhiteSpace(updatedReview.Username))
 			{
-				customer = await _customerRepository.GetByUsernameOrEmail(updatedReview.Username);
+				customer = await _customerRepository.GetByUsernameOrEmailAsync(updatedReview.Username);
 			}
 
 			if (customer == null)
@@ -105,14 +105,14 @@ namespace ComputerPartsShop.Services
 				};
 			}
 
-			await _reviewRepository.Update(id, review);
+			await _reviewRepository.UpdateAsync(id, review);
 
 			return new ReviewResponse(id, updatedReview.Username, product.Name, updatedReview.Rating, updatedReview.Description);
 		}
 
-		public async Task Delete(int id)
+		public async Task DeleteAsync(int id)
 		{
-			await _reviewRepository.Delete(id);
+			await _reviewRepository.DeleteAsync(id);
 		}
 	}
 }

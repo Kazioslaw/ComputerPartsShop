@@ -4,6 +4,6 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public interface ICountryRepository : IRepository<Country, int>
 	{
-		public Task<Country> GetByCountry3Code(string Country3Code);
+		public Task<Country> GetByCountry3CodeAsync(string Country3Code);
 	}
 }

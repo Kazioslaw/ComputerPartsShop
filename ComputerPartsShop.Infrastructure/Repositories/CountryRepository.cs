@@ -11,26 +11,26 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<Country>> GetList()
+		public async Task<List<Country>> GetListAsync()
 		{
 			return _dbContext.CountryList;
 		}
 
-		public async Task<Country> Get(int id)
+		public async Task<Country> GetAsync(int id)
 		{
 			var country = _dbContext.CountryList.FirstOrDefault(c => c.ID == id);
 
 			return country;
 		}
 
-		public async Task<Country> GetByCountry3Code(string Country3Code)
+		public async Task<Country> GetByCountry3CodeAsync(string Country3Code)
 		{
 			var country = _dbContext.CountryList.FirstOrDefault(x => x.Alpha3 == Country3Code);
 
 			return country;
 		}
 
-		public async Task<int> Create(Country request)
+		public async Task<int> CreateAsync(Country request)
 		{
 			var last = _dbContext.CountryList.OrderBy(x => x.ID).LastOrDefault();
 
@@ -48,7 +48,7 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<Country> Update(int id, Country request)
+		public async Task<Country> UpdateAsync(int id, Country request)
 		{
 			var country = _dbContext.CountryList.FirstOrDefault(x => x.ID == id);
 
@@ -62,7 +62,7 @@ namespace ComputerPartsShop.Infrastructure
 			return request;
 		}
 
-		public async Task Delete(int id)
+		public async Task DeleteAsync(int id)
 		{
 			var country = _dbContext.CountryList.FirstOrDefault(x => x.ID == id);
 

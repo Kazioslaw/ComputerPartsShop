@@ -11,19 +11,19 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<CustomerPaymentSystem>> GetList()
+		public async Task<List<CustomerPaymentSystem>> GetListAsync()
 		{
 			return _dbContext.CustomerPaymentSystemList;
 		}
 
-		public async Task<CustomerPaymentSystem> Get(Guid id)
+		public async Task<CustomerPaymentSystem> GetAsync(Guid id)
 		{
 			var cps = _dbContext.CustomerPaymentSystemList.FirstOrDefault(x => x.ID == id);
 
 			return cps;
 		}
 
-		public async Task<Guid> Create(CustomerPaymentSystem request)
+		public async Task<Guid> CreateAsync(CustomerPaymentSystem request)
 		{
 			request.ID = Guid.NewGuid();
 
@@ -32,7 +32,7 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<CustomerPaymentSystem> Update(Guid id, CustomerPaymentSystem request)
+		public async Task<CustomerPaymentSystem> UpdateAsync(Guid id, CustomerPaymentSystem request)
 		{
 			var cps = _dbContext.CustomerPaymentSystemList.FirstOrDefault(x => x.ID == id);
 
@@ -46,7 +46,7 @@ namespace ComputerPartsShop.Infrastructure
 			return cps;
 		}
 
-		public async Task Delete(Guid id)
+		public async Task DeleteAsync(Guid id)
 		{
 			var cps = _dbContext.CustomerPaymentSystemList.FirstOrDefault(x => x.ID == id);
 

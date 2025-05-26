@@ -13,21 +13,21 @@ namespace ComputerPartsShop.Services
 			_categoryRepository = categoryRepository;
 		}
 
-		public async Task<List<CategoryResponse>> GetList()
+		public async Task<List<CategoryResponse>> GetListAsync()
 		{
-			var categoryList = await _categoryRepository.GetList();
+			var categoryList = await _categoryRepository.GetListAsync();
 
 			return categoryList.Select(c => new CategoryResponse(c.ID, c.Name, c.Description)).ToList();
 		}
 
-		public async Task<CategoryResponse> Get(int id)
+		public async Task<CategoryResponse> GetAsync(int id)
 		{
-			var category = await _categoryRepository.Get(id);
+			var category = await _categoryRepository.GetAsync(id);
 
 			return category == null ? null! : new CategoryResponse(id, category.Name, category.Description);
 		}
 
-		public async Task<CategoryResponse> Create(CategoryRequest category)
+		public async Task<CategoryResponse> CreateAsync(CategoryRequest category)
 		{
 			var newCategory = new Category()
 			{
@@ -35,12 +35,12 @@ namespace ComputerPartsShop.Services
 				Description = category.Description,
 			};
 
-			var createdCategoryID = await _categoryRepository.Create(newCategory);
+			var createdCategoryID = await _categoryRepository.CreateAsync(newCategory);
 
 			return new CategoryResponse(createdCategoryID, category.Name, category.Description);
 		}
 
-		public async Task<CategoryResponse> Update(int id, CategoryRequest updatedCategory)
+		public async Task<CategoryResponse> UpdateAsync(int id, CategoryRequest updatedCategory)
 		{
 			var category = new Category()
 			{
@@ -48,14 +48,14 @@ namespace ComputerPartsShop.Services
 				Description = updatedCategory.Description,
 			};
 
-			await _categoryRepository.Update(id, category);
+			await _categoryRepository.UpdateAsync(id, category);
 
 			return new CategoryResponse(id, updatedCategory.Name, updatedCategory.Description);
 		}
 
-		public async Task Delete(int id)
+		public async Task DeleteAsync(int id)
 		{
-			await _categoryRepository.Delete(id);
+			await _categoryRepository.DeleteAsync(id);
 		}
 	}
 }

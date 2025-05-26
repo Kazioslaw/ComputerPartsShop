@@ -1,4 +1,4 @@
 ﻿namespace ComputerPartsShop.Domain.DTO
 {
-	public record PaymentRequest(Guid CustomerPaymentSystemID, int OrderID, decimal Total, string Method);
+	public record PaymentRequest(Guid CustomerPaymentSystemID, int OrderID, decimal Total, string Method, string? Status, DateTime? PaymentStartAt, DateTime? PaidAt);
 }

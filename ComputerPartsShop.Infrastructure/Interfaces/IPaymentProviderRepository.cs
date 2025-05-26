@@ -4,6 +4,6 @@ namespace ComputerPartsShop.Infrastructure
 {
 	public interface IPaymentProviderRepository : IRepository<PaymentProvider, int>
 	{
-		public Task<PaymentProvider> GetByName(string input);
+		public Task<PaymentProvider> GetByNameAsync(string input);
 	}
 }

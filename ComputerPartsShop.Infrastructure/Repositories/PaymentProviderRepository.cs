@@ -11,26 +11,26 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<PaymentProvider>> GetList()
+		public async Task<List<PaymentProvider>> GetListAsync()
 		{
 			return _dbContext.PaymentProviderList;
 		}
 
-		public async Task<PaymentProvider> Get(int id)
+		public async Task<PaymentProvider> GetAsync(int id)
 		{
 			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.ID == id);
 
 			return paymentProvider;
 		}
 
-		public async Task<PaymentProvider> GetByName(string input)
+		public async Task<PaymentProvider> GetByNameAsync(string input)
 		{
 			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Name == input);
 
 			return paymentProvider;
 		}
 
-		public async Task<int> Create(PaymentProvider request)
+		public async Task<int> CreateAsync(PaymentProvider request)
 		{
 			var last = _dbContext.PaymentProviderList.OrderBy(x => x.ID).FirstOrDefault();
 
@@ -48,7 +48,7 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<PaymentProvider> Update(int id, PaymentProvider request)
+		public async Task<PaymentProvider> UpdateAsync(int id, PaymentProvider request)
 		{
 			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.ID == id);
 
@@ -60,7 +60,7 @@ namespace ComputerPartsShop.Infrastructure
 			return paymentProvider;
 		}
 
-		public async Task Delete(int id)
+		public async Task DeleteAsync(int id)
 		{
 			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.ID == id);
 

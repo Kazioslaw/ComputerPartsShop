@@ -12,19 +12,19 @@ namespace ComputerPartsShop.Infrastructure
 		}
 
 
-		public async Task<List<Order>> GetList()
+		public async Task<List<Order>> GetListAsync()
 		{
 			return _dbContext.OrderList;
 		}
 
-		public async Task<Order> Get(int id)
+		public async Task<Order> GetAsync(int id)
 		{
 			var order = _dbContext.OrderList.FirstOrDefault(x => x.ID == id);
 
 			return order;
 		}
 
-		public async Task<int> Create(Order request)
+		public async Task<int> CreateAsync(Order request)
 		{
 			var last = _dbContext.OrderList.OrderBy(x => x.ID).LastOrDefault();
 
@@ -42,7 +42,7 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<Order> Update(int id, Order request)
+		public async Task<Order> UpdateAsync(int id, Order request)
 		{
 			var order = _dbContext.OrderList.FirstOrDefault(x => x.ID == id);
 
@@ -61,7 +61,7 @@ namespace ComputerPartsShop.Infrastructure
 			return order;
 		}
 
-		public async Task Delete(int id)
+		public async Task DeleteAsync(int id)
 		{
 			var order = _dbContext.OrderList.FirstOrDefault(x => x.ID == id);
 

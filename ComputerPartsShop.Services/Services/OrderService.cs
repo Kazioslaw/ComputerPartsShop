@@ -23,17 +23,17 @@ namespace ComputerPartsShop.Services
 			_cpsRepository = cpsRepository;
 		}
 
-		public async Task<List<OrderResponse>> GetList()
+		public async Task<List<OrderResponse>> GetListAsync()
 		{
-			var orderList = await _orderRepository.GetList();
+			var orderList = await _orderRepository.GetListAsync();
 
 			return orderList.Select(o => new OrderResponse(o.ID, o.CustomerID, o.OrdersProducts.Select(p => p.ProductID).ToList(), o.Total, o.DeliveryAddress.ID,
 				o.Status, o.OrderedAt, o.SendAt, o.Payments.Select(p => p.ID).ToList())).ToList();
 		}
 
-		public async Task<DetailedOrderResponse> Get(int id)
+		public async Task<DetailedOrderResponse> GetAsync(int id)
 		{
-			var order = await _orderRepository.Get(id);
+			var order = await _orderRepository.GetAsync(id);
 			var productList = order.OrdersProducts.Select(o => o.Product).ToList();
 			var paymentList = order.Payments;
 
@@ -50,16 +50,16 @@ namespace ComputerPartsShop.Services
 				p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt)).ToList());
 		}
 
-		public async Task<OrderResponse> Create(OrderRequest order)
+		public async Task<OrderResponse> CreateAsync(OrderRequest order)
 		{
-			var customer = await _customerRepository.GetByUsernameOrEmail(order.Username! ?? order.Email!);
-			var address = await _addressRepository.Get(order.AddressID);
+			var customer = await _customerRepository.GetByUsernameOrEmailAsync(order.Username! ?? order.Email!);
+			var address = await _addressRepository.GetAsync(order.AddressID);
 			var productsID = order.ProductIDList;
 			var productsIDDistinct = productsID.Distinct();
 			var productList = new List<OrderProduct>();
 			foreach (var productID in productsIDDistinct)
 			{
-				var product = await _productRepository.Get(productID);
+				var product = await _productRepository.GetAsync(productID);
 				var orderProduct = new OrderProduct()
 				{
 					ProductID = productID,
@@ -81,27 +81,27 @@ namespace ComputerPartsShop.Services
 				OrderedAt = DateTime.Now,
 			};
 
-			var orderID = await _orderRepository.Create(newOrder);
+			var orderID = await _orderRepository.CreateAsync(newOrder);
 
 			return new OrderResponse(orderID, newOrder.CustomerID, order.ProductIDList, order.Total, order.AddressID, newOrder.Status, newOrder.OrderedAt, null, newOrder.Payments.Select(p => p.ID).ToList());
 		}
 
-		public async Task<OrderResponse> Update(int id, OrderRequest updatedOrder)
+		public async Task<OrderResponse> UpdateAsync(int id, OrderRequest updatedOrder)
 		{
-			var customer = await _customerRepository.GetByUsernameOrEmail(updatedOrder.Username! ?? updatedOrder.Email!);
-			var address = await _addressRepository.Get(updatedOrder.AddressID);
+			var customer = await _customerRepository.GetByUsernameOrEmailAsync(updatedOrder.Username! ?? updatedOrder.Email!);
+			var address = await _addressRepository.GetAsync(updatedOrder.AddressID);
 
 			var productIDList = updatedOrder.ProductIDList;
 			var productsIDDistinct = productIDList.Distinct();
 			var productList = new List<OrderProduct>();
 
-			var cps = await _cpsRepository.Get(updatedOrder.CustomerPaymentSystemID);
+			var cps = await _cpsRepository.GetAsync(updatedOrder.CustomerPaymentSystemID);
 
 			var payments = cps.Payments.Where(x => x.OrderID == id).ToList();
 
 			foreach (var productID in productsIDDistinct)
 			{
-				var product = await _productRepository.Get(productID);
+				var product = await _productRepository.GetAsync(productID);
 				var orderProduct = new OrderProduct()
 				{
 					ProductID = productID,
@@ -165,15 +165,15 @@ namespace ComputerPartsShop.Services
 			}
 			if (order != null)
 			{
-				await _orderRepository.Update(id, order);
+				await _orderRepository.UpdateAsync(id, order);
 			}
 			return new OrderResponse(id, customer.ID, updatedOrder.ProductIDList, updatedOrder.Total, updatedOrder.AddressID,
 				updatedOrder.Status!, (DateTime)updatedOrder.OrderedAt!, (DateTime)updatedOrder.SendAt!, payments.Select(x => x.ID).ToList() ?? new List<int>());
 		}
 
-		public async Task Delete(int id)
+		public async Task DeleteAsync(int id)
 		{
-			await _orderRepository.Delete(id);
+			await _orderRepository.DeleteAsync(id);
 		}
 	}
 }

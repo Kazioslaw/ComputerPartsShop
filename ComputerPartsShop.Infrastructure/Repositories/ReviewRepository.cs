@@ -11,19 +11,19 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<Review>> GetList()
+		public async Task<List<Review>> GetListAsync()
 		{
 			return _dbContext.ReviewList;
 		}
 
-		public async Task<Review> Get(int id)
+		public async Task<Review> GetAsync(int id)
 		{
 			var review = _dbContext.ReviewList.FirstOrDefault(x => x.ID == id);
 
 			return review;
 		}
 
-		public async Task<int> Create(Review request)
+		public async Task<int> CreateAsync(Review request)
 		{
 			var last = _dbContext.ReviewList.LastOrDefault();
 
@@ -41,7 +41,7 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<Review> Update(int id, Review request)
+		public async Task<Review> UpdateAsync(int id, Review request)
 		{
 			var review = _dbContext.ReviewList.FirstOrDefault(x => x.ID == id);
 
@@ -56,7 +56,7 @@ namespace ComputerPartsShop.Infrastructure
 			return review;
 		}
 
-		public async Task Delete(int id)
+		public async Task DeleteAsync(int id)
 		{
 			var review = _dbContext.ReviewList.FirstOrDefault(x => x.ID == id);
 
