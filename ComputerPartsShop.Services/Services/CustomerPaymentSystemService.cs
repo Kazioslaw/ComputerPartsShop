@@ -39,18 +39,10 @@ namespace ComputerPartsShop.Services
 
 		public async Task<CustomerPaymentSystemResponse> CreateAsync(CustomerPaymentSystemRequest entity, CancellationToken ct)
 		{
-			Customer customer = new();
+
 			var provider = await _providerRepository.GetByNameAsync(entity.ProviderName, ct);
 
-			if (!string.IsNullOrWhiteSpace(entity.Username))
-			{
-				customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username, ct);
-			}
-
-			if (!string.IsNullOrWhiteSpace(entity.Email) && string.IsNullOrWhiteSpace(entity.Username))
-			{
-				customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Email, ct);
-			}
+			var customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username ?? entity.Email, ct);
 
 
 			var newCustomerPaymentSystem = new CustomerPaymentSystem()
