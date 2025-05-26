@@ -33,7 +33,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (OperationCanceledException)
 			{
-				return BadRequest();
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
 			}
 		}
 
@@ -53,7 +53,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (OperationCanceledException)
 			{
-				return BadRequest();
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
 			}
 		}
 
@@ -86,7 +86,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (OperationCanceledException)
 			{
-				return BadRequest();
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
 			}
 		}
 
@@ -121,7 +121,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (OperationCanceledException)
 			{
-				return BadRequest();
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
 			}
 		}
 
@@ -143,7 +143,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (OperationCanceledException)
 			{
-				return BadRequest();
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
 			}
 		}
 	}
