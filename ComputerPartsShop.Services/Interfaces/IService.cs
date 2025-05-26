@@ -1,6 +1,6 @@
 ﻿namespace ComputerPartsShop.Services
 {
-	public interface ICRUDService<TRequest, TSimpleResponse, TDetailResponse, TKey> where TRequest : class where TSimpleResponse : class where TDetailResponse : class
+	public interface IService<TRequest, TSimpleResponse, TDetailResponse, TKey> where TRequest : class where TSimpleResponse : class where TDetailResponse : class
 	{
 		public Task<List<TSimpleResponse>> GetList();
 		public Task<TDetailResponse> Get(TKey id);

@@ -2,7 +2,7 @@
 
 namespace ComputerPartsShop.Infrastructure
 {
-	public class PaymentProviderRepository : ICRUDRepository<PaymentProvider, int>
+	public class PaymentProviderRepository : IPaymentProviderRepository
 	{
 		readonly TempData _dbContext;
 

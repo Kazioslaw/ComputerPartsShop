@@ -1,4 +1,4 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,9 +8,9 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class CustomerController : ControllerBase
 	{
-		public readonly CustomerService _customerService;
+		public readonly IService<CustomerRequest, CustomerResponse, DetailedCustomerResponse, Guid> _customerService;
 
-		public CustomerController(CustomerService customerService)
+		public CustomerController(IService<CustomerRequest, CustomerResponse, DetailedCustomerResponse, Guid> customerService)
 		{
 			_customerService = customerService;
 		}

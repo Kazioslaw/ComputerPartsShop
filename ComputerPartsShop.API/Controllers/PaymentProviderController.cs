@@ -1,4 +1,4 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,9 +9,9 @@ namespace ComputerPartsShop.API.Controllers
 	public class PaymentProviderController : ControllerBase
 	{
 
-		private readonly PaymentProviderService _ppService;
+		private readonly IService<PaymentProviderRequest, PaymentProviderResponse, DetailedPaymentProviderResponse, int> _ppService;
 
-		public PaymentProviderController(PaymentProviderService ppService)
+		public PaymentProviderController(IService<PaymentProviderRequest, PaymentProviderResponse, DetailedPaymentProviderResponse, int> ppService)
 		{
 			_ppService = ppService;
 		}

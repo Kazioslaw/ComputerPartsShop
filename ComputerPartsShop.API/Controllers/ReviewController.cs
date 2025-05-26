@@ -1,4 +1,4 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,10 +9,11 @@ namespace ComputerPartsShop.API.Controllers
 	public class ReviewController : ControllerBase
 	{
 
-		private readonly ReviewService _reviewService;
-		private readonly ProductService _productService;
+		private readonly IService<ReviewRequest, ReviewResponse, ReviewResponse, int> _reviewService;
+		private readonly IService<ProductRequest, ProductResponse, ProductResponse, int> _productService;
 
-		public ReviewController(ReviewService reviewService, ProductService productService)
+		public ReviewController(IService<ReviewRequest, ReviewResponse, ReviewResponse, int> reviewService,
+			IService<ProductRequest, ProductResponse, ProductResponse, int> productService)
 		{
 			_reviewService = reviewService;
 			_productService = productService;

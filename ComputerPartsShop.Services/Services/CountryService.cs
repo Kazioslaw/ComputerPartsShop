@@ -1,14 +1,14 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class CountryService : ICRUDService<CountryRequest, CountryResponse, DetailedCountryResponse, int>
+	public class CountryService : IService<CountryRequest, CountryResponse, DetailedCountryResponse, int>
 	{
-		private readonly CountryRepository _countryRepository;
+		private readonly ICountryRepository _countryRepository;
 
-		public CountryService(CountryRepository countryRepository)
+		public CountryService(ICountryRepository countryRepository)
 		{
 			_countryRepository = countryRepository;
 		}

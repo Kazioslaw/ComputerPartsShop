@@ -1,15 +1,15 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class ProductService : ICRUDService<ProductRequest, ProductResponse, ProductResponse, int>
+	public class ProductService : IService<ProductRequest, ProductResponse, ProductResponse, int>
 	{
-		private readonly CategoryRepository _categoryRepository;
-		private readonly ProductRepository _productRepository;
+		private readonly ICategoryRepository _categoryRepository;
+		private readonly IRepository<Product, int> _productRepository;
 
-		public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository)
+		public ProductService(IRepository<Product, int> productRepository, ICategoryRepository categoryRepository)
 		{
 			_productRepository = productRepository;
 			_categoryRepository = categoryRepository;

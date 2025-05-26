@@ -1,4 +1,4 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -9,12 +9,14 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class OrderController : ControllerBase
 	{
-		private readonly OrderService _orderService;
-		private readonly CustomerRepository _customerRepository;
-		private readonly AddressService _addressService;
+		private readonly IService<OrderRequest, OrderResponse, DetailedOrderResponse, int> _orderService;
+		private readonly ICustomerRepository _customerRepository;
+		private readonly IService<AddressRequest, AddressResponse, AddressResponse, Guid> _addressService;
 
 
-		public OrderController(OrderService orderService, CustomerRepository customerRepository, AddressService addressService)
+		public OrderController(IService<OrderRequest, OrderResponse, DetailedOrderResponse, int> orderService,
+			ICustomerRepository customerRepository,
+			IService<AddressRequest, AddressResponse, AddressResponse, Guid> addressService)
 		{
 			_orderService = orderService;
 			_customerRepository = customerRepository;

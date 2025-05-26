@@ -1,6 +1,5 @@
-﻿namespace ComputerPartsShop.Domain.DTOs
+﻿namespace ComputerPartsShop.Domain.DTO
 {
-	public record OrderRequest(string? Username, string? Email, List<int> ProductIDList, decimal Total, Guid AddressID, string? Status, DateTime? OrderedAt, DateTime? SendAt, Guid CustomerPaymentSystemID);
 	public record OrderResponse(int ID, Guid CustomerID, List<int> ProductIDList, decimal Total, Guid AddressID, string Status,
 		DateTime OrderedAt, DateTime? SendAt, List<int> PaymentIDList);
 	public record DetailedOrderResponse(int ID, CustomerResponse Customer, List<ProductInOrderResponse> Products, decimal Total, AddressResponse Address, string Status,

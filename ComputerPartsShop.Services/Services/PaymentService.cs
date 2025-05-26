@@ -1,13 +1,14 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
+using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class PaymentService : ICRUDService<PaymentRequest, PaymentResponse, DetailedPaymentResponse, int>
+	public class PaymentService : IService<PaymentRequest, PaymentResponse, DetailedPaymentResponse, int>
 	{
-		private readonly PaymentRepository _paymentRepository;
+		private readonly IRepository<Payment, int> _paymentRepository;
 
-		public PaymentService(PaymentRepository paymentRepository)
+		public PaymentService(IRepository<Payment, int> paymentRepository)
 		{
 			_paymentRepository = paymentRepository;
 		}

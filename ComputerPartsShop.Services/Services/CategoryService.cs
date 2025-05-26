@@ -1,14 +1,14 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class CategoryService : ICRUDService<CategoryRequest, CategoryResponse, CategoryResponse, int>
+	public class CategoryService : IService<CategoryRequest, CategoryResponse, CategoryResponse, int>
 	{
-		private readonly CategoryRepository _categoryRepository;
+		private readonly ICategoryRepository _categoryRepository;
 
-		public CategoryService(CategoryRepository categoryRepository)
+		public CategoryService(ICategoryRepository categoryRepository)
 		{
 			_categoryRepository = categoryRepository;
 		}

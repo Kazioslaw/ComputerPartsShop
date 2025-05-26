@@ -1,6 +1,7 @@
-using ComputerPartsShop.Domain.DTOs;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
+using ComputerPartsShop.Infrastructure.Interfaces;
 using ComputerPartsShop.Services;
 
 namespace ComputerPartsShop
@@ -17,28 +18,28 @@ namespace ComputerPartsShop
 			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddOpenApi();
-			builder.Services.AddScoped<ICRUDService<AddressRequest, AddressResponse, AddressResponse, Guid>, AddressService>();
-			builder.Services.AddScoped<ICRUDService<CategoryRequest, CategoryResponse, CategoryResponse, int>, CategoryService>();
-			builder.Services.AddScoped<ICRUDService<CountryRequest, CountryResponse, DetailedCountryResponse, int>, CountryService>();
-			builder.Services.AddScoped<ICRUDService<CustomerPaymentSystemRequest,
+			builder.Services.AddScoped<IService<AddressRequest, AddressResponse, AddressResponse, Guid>, AddressService>();
+			builder.Services.AddScoped<IService<CategoryRequest, CategoryResponse, CategoryResponse, int>, CategoryService>();
+			builder.Services.AddScoped<IService<CountryRequest, CountryResponse, DetailedCountryResponse, int>, CountryService>();
+			builder.Services.AddScoped<IService<CustomerPaymentSystemRequest,
 				CustomerPaymentSystemResponse, DetailedCustomerPaymentSystemResponse, Guid>, CustomerPaymentSystemService>();
-			builder.Services.AddScoped<ICRUDService<CustomerRequest, CustomerResponse,
+			builder.Services.AddScoped<IService<CustomerRequest, CustomerResponse,
 				DetailedCustomerResponse, Guid>, CustomerService>();
-			builder.Services.AddScoped<ICRUDService<OrderRequest, OrderResponse, DetailedOrderResponse, int>, OrderService>();
-			builder.Services.AddScoped<ICRUDService<PaymentRequest, PaymentResponse, DetailedPaymentResponse, int>, PaymentService>();
-			builder.Services.AddScoped<ICRUDService<PaymentProviderRequest, PaymentProviderResponse, DetailedPaymentProviderResponse, int>, PaymentProviderService>();
-			builder.Services.AddScoped<ICRUDService<ProductRequest, ProductResponse, ProductResponse, int>, ProductService>();
-			builder.Services.AddScoped<ICRUDService<ReviewRequest, ReviewResponse, ReviewResponse, int>, ReviewService>();
-			builder.Services.AddScoped<ICRUDRepository<Address, Guid>, AddressRepository>();
-			builder.Services.AddScoped<ICRUDRepository<Category, int>, CategoryRepository>();
-			builder.Services.AddScoped<ICRUDRepository<Country, int>, CountryRepository>();
-			builder.Services.AddScoped<ICRUDRepository<Customer, Guid>, CustomerRepository>();
-			builder.Services.AddScoped<ICRUDRepository<CustomerPaymentSystem, Guid>, CustomerPaymentSystemRepository>();
-			builder.Services.AddScoped<ICRUDRepository<Order, int>, OrderRepository>();
-			builder.Services.AddScoped<ICRUDRepository<Payment, int>, PaymentRepository>();
-			builder.Services.AddScoped<ICRUDRepository<PaymentProvider, int>, PaymentProviderRepository>();
-			builder.Services.AddScoped<ICRUDRepository<Product, int>, ProductRepository>();
-			builder.Services.AddScoped<ICRUDRepository<Review, int>, ReviewRepository>();
+			builder.Services.AddScoped<IService<OrderRequest, OrderResponse, DetailedOrderResponse, int>, OrderService>();
+			builder.Services.AddScoped<IService<PaymentRequest, PaymentResponse, DetailedPaymentResponse, int>, PaymentService>();
+			builder.Services.AddScoped<IService<PaymentProviderRequest, PaymentProviderResponse, DetailedPaymentProviderResponse, int>, PaymentProviderService>();
+			builder.Services.AddScoped<IService<ProductRequest, ProductResponse, ProductResponse, int>, ProductService>();
+			builder.Services.AddScoped<IService<ReviewRequest, ReviewResponse, ReviewResponse, int>, ReviewService>();
+			builder.Services.AddScoped<IRepository<Address, Guid>, AddressRepository>();
+			builder.Services.AddScoped<IRepository<Category, int>, CategoryRepository>();
+			builder.Services.AddScoped<IRepository<Country, int>, CountryRepository>();
+			builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+			builder.Services.AddScoped<IRepository<CustomerPaymentSystem, Guid>, CustomerPaymentSystemRepository>();
+			builder.Services.AddScoped<IRepository<Order, int>, OrderRepository>();
+			builder.Services.AddScoped<IRepository<Payment, int>, PaymentRepository>();
+			builder.Services.AddScoped<IPaymentProviderRepository, PaymentProviderRepository>();
+			builder.Services.AddScoped<IRepository<Product, int>, ProductRepository>();
+			builder.Services.AddScoped<IRepository<Review, int>, ReviewRepository>();
 
 			var app = builder.Build();
 

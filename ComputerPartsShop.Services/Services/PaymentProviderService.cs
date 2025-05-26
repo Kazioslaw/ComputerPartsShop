@@ -1,18 +1,16 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class PaymentProviderService : ICRUDService<PaymentProviderRequest, PaymentProviderResponse, DetailedPaymentProviderResponse, int>
+	public class PaymentProviderService : IService<PaymentProviderRequest, PaymentProviderResponse, DetailedPaymentProviderResponse, int>
 	{
-		private readonly PaymentProviderRepository _providerRepository;
-		private readonly CustomerPaymentSystemRepository _cpsRepository;
+		private readonly IPaymentProviderRepository _providerRepository;
 
-		public PaymentProviderService(PaymentProviderRepository providerRepository, CustomerPaymentSystemRepository cpsRepository)
+		public PaymentProviderService(IPaymentProviderRepository providerRepository)
 		{
 			_providerRepository = providerRepository;
-			_cpsRepository = cpsRepository;
 		}
 
 		public async Task<List<PaymentProviderResponse>> GetList()

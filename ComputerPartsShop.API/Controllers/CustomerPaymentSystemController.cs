@@ -1,4 +1,4 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -9,11 +9,13 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class CustomerPaymentSystemController : ControllerBase
 	{
-		private readonly CustomerPaymentSystemService _cpsService;
-		private readonly PaymentProviderRepository _providerRepository;
-		private readonly CustomerRepository _customerRepository;
 
-		public CustomerPaymentSystemController(CustomerPaymentSystemService cpsService, PaymentProviderRepository providerRepository, CustomerRepository customerRepository)
+		private readonly IService<CustomerPaymentSystemRequest, CustomerPaymentSystemResponse, DetailedCustomerPaymentSystemResponse, Guid> _cpsService;
+		private readonly IPaymentProviderRepository _providerRepository;
+		private readonly ICustomerRepository _customerRepository;
+
+		public CustomerPaymentSystemController(IService<CustomerPaymentSystemRequest, CustomerPaymentSystemResponse, DetailedCustomerPaymentSystemResponse, Guid> cpsService,
+			IPaymentProviderRepository providerRepository, ICustomerRepository customerRepository)
 		{
 			_cpsService = cpsService;
 			_providerRepository = providerRepository;

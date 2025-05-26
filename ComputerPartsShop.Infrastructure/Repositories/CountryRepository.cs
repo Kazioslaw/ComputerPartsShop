@@ -2,7 +2,7 @@
 
 namespace ComputerPartsShop.Infrastructure
 {
-	public class CountryRepository : ICRUDRepository<Country, int>
+	public class CountryRepository : ICountryRepository
 	{
 		readonly TempData _dbContext;
 

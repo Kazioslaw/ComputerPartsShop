@@ -1,4 +1,4 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,9 +8,9 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class AddressController : ControllerBase
 	{
-		private readonly AddressService _addressService;
+		private readonly IService<AddressRequest, AddressResponse, AddressResponse, Guid> _addressService;
 
-		public AddressController(AddressService addressService)
+		public AddressController(IService<AddressRequest, AddressResponse, AddressResponse, Guid> addressService)
 		{
 			_addressService = addressService;
 		}

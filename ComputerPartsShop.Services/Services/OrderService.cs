@@ -1,26 +1,25 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class OrderService : ICRUDService<OrderRequest, OrderResponse, DetailedOrderResponse, int>
+	public class OrderService : IService<OrderRequest, OrderResponse, DetailedOrderResponse, int>
 	{
-		private readonly OrderRepository _orderRepository;
-		private readonly CustomerRepository _customerRepository;
-		private readonly ProductRepository _productRepository;
-		private readonly AddressRepository _addressRepository;
-		private readonly PaymentRepository _paymentRepository;
-		private readonly CustomerPaymentSystemRepository _cpsRepository;
+		private readonly IRepository<Order, int> _orderRepository;
+		private readonly ICustomerRepository _customerRepository;
+		private readonly IRepository<Product, int> _productRepository;
+		private readonly IRepository<Address, Guid> _addressRepository;
+		private readonly IRepository<CustomerPaymentSystem, Guid> _cpsRepository;
 
-		public OrderService(OrderRepository orderRepository, CustomerRepository customerRepository,
-			ProductRepository productRepository, AddressRepository addressRepository, PaymentRepository paymentRepository, CustomerPaymentSystemRepository cpsRepository)
+		public OrderService(IRepository<Order, int> orderRepository, ICustomerRepository customerRepository,
+			IRepository<Product, int> productRepository, IRepository<Address, Guid> addressRepository,
+			IRepository<CustomerPaymentSystem, Guid> cpsRepository)
 		{
 			_orderRepository = orderRepository;
 			_customerRepository = customerRepository;
 			_productRepository = productRepository;
 			_addressRepository = addressRepository;
-			_paymentRepository = paymentRepository;
 			_cpsRepository = cpsRepository;
 		}
 

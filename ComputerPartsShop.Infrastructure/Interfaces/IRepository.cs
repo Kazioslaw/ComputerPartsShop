@@ -1,6 +1,6 @@
 ﻿namespace ComputerPartsShop.Infrastructure
 {
-	public interface ICRUDRepository<T, TKey> where T : class
+	public interface IRepository<T, TKey> where T : class
 	{
 		public Task<List<T>> GetList();
 		public Task<T> Get(TKey id);

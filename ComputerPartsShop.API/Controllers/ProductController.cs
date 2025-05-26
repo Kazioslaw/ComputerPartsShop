@@ -1,4 +1,4 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -9,10 +9,10 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class ProductController : ControllerBase
 	{
-		private readonly CategoryRepository _categoryRepository;
-		private readonly ProductService _productService;
+		private readonly ICategoryRepository _categoryRepository;
+		private readonly IService<ProductRequest, ProductResponse, ProductResponse, int> _productService;
 
-		public ProductController(ProductService productService, CategoryRepository categoryRepository)
+		public ProductController(IService<ProductRequest, ProductResponse, ProductResponse, int> productService, ICategoryRepository categoryRepository)
 		{
 			_categoryRepository = categoryRepository;
 			_productService = productService;

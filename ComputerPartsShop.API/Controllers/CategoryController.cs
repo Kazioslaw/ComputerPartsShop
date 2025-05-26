@@ -1,4 +1,4 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,9 +8,9 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class CategoryController : ControllerBase
 	{
-		private readonly CategoryService _categoryService;
+		private readonly IService<CategoryRequest, CategoryResponse, CategoryResponse, int> _categoryService;
 
-		public CategoryController(CategoryService categoryService)
+		public CategoryController(IService<CategoryRequest, CategoryResponse, CategoryResponse, int> categoryService)
 		{
 			_categoryService = categoryService;
 		}

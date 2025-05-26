@@ -1,6 +1,5 @@
-﻿namespace ComputerPartsShop.Domain.DTOs
+﻿namespace ComputerPartsShop.Domain.DTO
 {
-	public record CustomerPaymentSystemRequest(string? Username, string? Email, string ProviderName, string PaymentReference);
 	public record CustomerPaymentSystemResponse(Guid ID, string? Username, string? Email, string ProviderName, string PaymentReference);
 	public record DetailedCustomerPaymentSystemResponse(Guid ID, string? Username, string? Email, string ProviderName, string PaymentReference,
 		List<PaymentInCustomerPaymentSystemResponse> Payments);

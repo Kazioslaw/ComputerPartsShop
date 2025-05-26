@@ -1,4 +1,4 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,9 +8,9 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class CountryController : ControllerBase
 	{
-		private readonly CountryService _countryService;
+		private readonly IService<CountryRequest, CountryResponse, DetailedCountryResponse, int> _countryService;
 
-		public CountryController(CountryService countryService)
+		public CountryController(IService<CountryRequest, CountryResponse, DetailedCountryResponse, int> countryService)
 		{
 			_countryService = countryService;
 		}

@@ -1,16 +1,16 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class ReviewService : ICRUDService<ReviewRequest, ReviewResponse, ReviewResponse, int>
+	public class ReviewService : IService<ReviewRequest, ReviewResponse, ReviewResponse, int>
 	{
-		private readonly ReviewRepository _reviewRepository;
-		private readonly CustomerRepository _customerRepository;
-		private readonly ProductRepository _productRepository;
+		private readonly IRepository<Review, int> _reviewRepository;
+		private readonly ICustomerRepository _customerRepository;
+		private readonly IRepository<Product, int> _productRepository;
 
-		public ReviewService(ReviewRepository reviewRepository, CustomerRepository customerRepository, ProductRepository productRepository)
+		public ReviewService(IRepository<Review, int> reviewRepository, ICustomerRepository customerRepository, IRepository<Product, int> productRepository)
 		{
 			_reviewRepository = reviewRepository;
 			_customerRepository = customerRepository;

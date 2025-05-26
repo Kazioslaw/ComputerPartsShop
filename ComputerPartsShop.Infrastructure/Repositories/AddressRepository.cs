@@ -2,7 +2,7 @@
 
 namespace ComputerPartsShop.Infrastructure
 {
-	public class AddressRepository : ICRUDRepository<Address, Guid>
+	public class AddressRepository : IRepository<Address, Guid>
 	{
 		readonly TempData _dbContext;
 

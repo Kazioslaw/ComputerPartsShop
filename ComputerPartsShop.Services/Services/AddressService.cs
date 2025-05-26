@@ -1,16 +1,16 @@
-﻿using ComputerPartsShop.Domain.DTOs;
+﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
 
 namespace ComputerPartsShop.Services
 {
-	public class AddressService : ICRUDService<AddressRequest, AddressResponse, AddressResponse, Guid>
+	public class AddressService : IService<AddressRequest, AddressResponse, AddressResponse, Guid>
 	{
-		private readonly AddressRepository _addressRepository;
-		private readonly CountryRepository _countryRepository;
+		private readonly IRepository<Address, Guid> _addressRepository;
+		private readonly ICountryRepository _countryRepository;
 
-		public AddressService(AddressRepository addressRepository, CountryRepository countryRepository)
+		public AddressService(IRepository<Address, Guid> addressRepository, ICountryRepository countryRepository)
 		{
 			_addressRepository = addressRepository;
 			_countryRepository = countryRepository;
