@@ -35,6 +35,7 @@ namespace ComputerPartsShop
 			builder.Services.AddScoped<IPaymentProviderRepository, PaymentProviderRepository>();
 			builder.Services.AddScoped<IProductRepository, ProductRepository>();
 			builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+			builder.Services.AddScoped<TempData>();
 
 			var app = builder.Build();
 
