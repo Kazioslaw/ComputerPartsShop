@@ -4,17 +4,17 @@ using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class OrderService : IService<OrderRequest, OrderResponse, DetailedOrderResponse, int>
+	public class OrderService : IOrderService
 	{
-		private readonly IRepository<Order, int> _orderRepository;
+		private readonly IOrderRepository _orderRepository;
 		private readonly ICustomerRepository _customerRepository;
-		private readonly IRepository<Product, int> _productRepository;
-		private readonly IRepository<Address, Guid> _addressRepository;
-		private readonly IRepository<CustomerPaymentSystem, Guid> _cpsRepository;
+		private readonly IProductRepository _productRepository;
+		private readonly IAddressRepository _addressRepository;
+		private readonly ICustomerPaymentSystemRepository _cpsRepository;
 
-		public OrderService(IRepository<Order, int> orderRepository, ICustomerRepository customerRepository,
-			IRepository<Product, int> productRepository, IRepository<Address, Guid> addressRepository,
-			IRepository<CustomerPaymentSystem, Guid> cpsRepository)
+		public OrderService(IOrderRepository orderRepository, ICustomerRepository customerRepository,
+			IProductRepository productRepository, IAddressRepository addressRepository,
+			ICustomerPaymentSystemRepository cpsRepository)
 		{
 			_orderRepository = orderRepository;
 			_customerRepository = customerRepository;

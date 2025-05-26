@@ -4,13 +4,13 @@ using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class ReviewService : IService<ReviewRequest, ReviewResponse, ReviewResponse, int>
+	public class ReviewService : IReviewService
 	{
-		private readonly IRepository<Review, int> _reviewRepository;
+		private readonly IReviewRepository _reviewRepository;
 		private readonly ICustomerRepository _customerRepository;
-		private readonly IRepository<Product, int> _productRepository;
+		private readonly IProductRepository _productRepository;
 
-		public ReviewService(IRepository<Review, int> reviewRepository, ICustomerRepository customerRepository, IRepository<Product, int> productRepository)
+		public ReviewService(IReviewRepository reviewRepository, ICustomerRepository customerRepository, IProductRepository productRepository)
 		{
 			_reviewRepository = reviewRepository;
 			_customerRepository = customerRepository;

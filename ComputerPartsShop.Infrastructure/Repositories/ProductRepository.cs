@@ -2,7 +2,7 @@
 
 namespace ComputerPartsShop.Infrastructure
 {
-	public class ProductRepository : IRepository<Product, int>
+	public class ProductRepository : IProductRepository
 	{
 		readonly TempData _dbContext;
 

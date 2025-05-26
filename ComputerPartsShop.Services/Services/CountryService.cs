@@ -4,7 +4,7 @@ using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class CountryService : IService<CountryRequest, CountryResponse, DetailedCountryResponse, int>
+	public class CountryService : ICountryService
 	{
 		private readonly ICountryRepository _countryRepository;
 

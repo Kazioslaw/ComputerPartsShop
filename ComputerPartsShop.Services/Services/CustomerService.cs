@@ -1,10 +1,11 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
+using ComputerPartsShop.Services.Interfaces;
 
 namespace ComputerPartsShop.Services
 {
-	public class CustomerService : IService<CustomerRequest, CustomerResponse, DetailedCustomerResponse, Guid>
+	public class CustomerService : ICustomerService
 	{
 		private readonly ICustomerRepository _customerRepository;
 

@@ -8,26 +8,26 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class AddressController : ControllerBase
 	{
-		private readonly IService<AddressRequest, AddressResponse, AddressResponse, Guid> _addressService;
+		private readonly IAddressService _addressService;
 
-		public AddressController(IService<AddressRequest, AddressResponse, AddressResponse, Guid> addressService)
+		public AddressController(IAddressService addressService)
 		{
 			_addressService = addressService;
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<AddressResponse>>> GetAddressList()
+		public async Task<ActionResult<List<AddressResponse>>> GetAddressListAsync()
 		{
-			var addressList = await _addressService.GetList();
+			var addressList = await _addressService.GetListAsync();
 
 			return Ok(addressList);
 
 		}
 
 		[HttpGet("{id:Guid}")]
-		public async Task<ActionResult<AddressResponse>> GetAddress(Guid id)
+		public async Task<ActionResult<AddressResponse>> GetAddressAsync(Guid id)
 		{
-			var address = await _addressService.Get(id);
+			var address = await _addressService.GetAsync(id);
 
 			if (address == null)
 			{
@@ -38,40 +38,40 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<AddressResponse>> CreateAddress(AddressRequest request)
+		public async Task<ActionResult<AddressResponse>> CreateAddressAsync(AddressRequest request)
 		{
-			var address = await _addressService.Create(request);
+			var address = await _addressService.CreateAsync(request);
 
-			return CreatedAtAction(nameof(CreateAddress), address);
+			return CreatedAtAction(nameof(CreateAddressAsync), address);
 		}
 
 		[HttpPut("{id:guid}")]
-		public async Task<ActionResult<AddressResponse>> UpdateAddress(Guid id, AddressRequest request)
+		public async Task<ActionResult<AddressResponse>> UpdateAddressAsync(Guid id, AddressRequest request)
 		{
-			var address = await _addressService.Get(id);
+			var address = await _addressService.GetAsync(id);
 
 			if (address == null)
 			{
 				return NotFound();
 			}
 
-			var updatedAddress = await _addressService.Update(id, request);
+			var updatedAddress = await _addressService.UpdateAsync(id, request);
 
 			return Ok(updatedAddress);
 
 		}
 
 		[HttpDelete("{id:guid}")]
-		public async Task<ActionResult> DeleteAddress(Guid id)
+		public async Task<ActionResult> DeleteAddressAsync(Guid id)
 		{
-			var address = await _addressService.Get(id);
+			var address = await _addressService.GetAsync(id);
 
 			if (address == null)
 			{
 				return NotFound();
 			}
 
-			await _addressService.Delete(id);
+			await _addressService.DeleteAsync(id);
 
 			return Ok();
 		}

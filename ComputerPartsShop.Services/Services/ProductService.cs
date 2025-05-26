@@ -4,12 +4,12 @@ using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class ProductService : IService<ProductRequest, ProductResponse, ProductResponse, int>
+	public class ProductService : IProductService
 	{
 		private readonly ICategoryRepository _categoryRepository;
-		private readonly IRepository<Product, int> _productRepository;
+		private readonly IProductRepository _productRepository;
 
-		public ProductService(IRepository<Product, int> productRepository, ICategoryRepository categoryRepository)
+		public ProductService(IProductRepository productRepository, ICategoryRepository categoryRepository)
 		{
 			_productRepository = productRepository;
 			_categoryRepository = categoryRepository;

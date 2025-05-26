@@ -4,7 +4,7 @@ using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class PaymentProviderService : IService<PaymentProviderRequest, PaymentProviderResponse, DetailedPaymentProviderResponse, int>
+	public class PaymentProviderService : IPaymentProviderService
 	{
 		private readonly IPaymentProviderRepository _providerRepository;
 

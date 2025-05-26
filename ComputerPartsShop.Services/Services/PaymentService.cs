@@ -5,11 +5,11 @@ using System.Data;
 
 namespace ComputerPartsShop.Services
 {
-	public class PaymentService : IService<PaymentRequest, PaymentResponse, DetailedPaymentResponse, int>
+	public class PaymentService : IPaymentService
 	{
-		private readonly IRepository<Payment, int> _paymentRepository;
+		private readonly IPaymentRepository _paymentRepository;
 
-		public PaymentService(IRepository<Payment, int> paymentRepository)
+		public PaymentService(IPaymentRepository paymentRepository)
 		{
 			_paymentRepository = paymentRepository;
 		}

@@ -4,14 +4,13 @@ using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class CustomerPaymentSystemService : IService<CustomerPaymentSystemRequest, CustomerPaymentSystemResponse, DetailedCustomerPaymentSystemResponse, Guid>
+	public class CustomerPaymentSystemService : ICustomerPaymentSystemService
 	{
-		private readonly IRepository<CustomerPaymentSystem, Guid> _cpsRepository;
+		private readonly ICustomerPaymentSystemRepository _cpsRepository;
 		private readonly ICustomerRepository _customerRepository;
 		private readonly IPaymentProviderRepository _providerRepository;
 
-		public CustomerPaymentSystemService(IRepository<CustomerPaymentSystem, Guid> cpsRepository,
-			ICustomerRepository customerRepository, IPaymentProviderRepository providerRepository)
+		public CustomerPaymentSystemService(ICustomerPaymentSystemRepository cpsRepository, ICustomerRepository customerRepository, IPaymentProviderRepository providerRepository)
 		{
 			_cpsRepository = cpsRepository;
 			_customerRepository = customerRepository;

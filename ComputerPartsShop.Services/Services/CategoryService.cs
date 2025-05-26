@@ -4,7 +4,7 @@ using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class CategoryService : IService<CategoryRequest, CategoryResponse, CategoryResponse, int>
+	public class CategoryService : ICategoryService
 	{
 		private readonly ICategoryRepository _categoryRepository;
 

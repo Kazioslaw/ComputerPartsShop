@@ -8,63 +8,63 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class PaymentController : ControllerBase
 	{
-		private readonly IService<PaymentRequest, PaymentResponse, DetailedPaymentResponse, int> _paymentService;
+		private readonly IPaymentService _paymentService;
 
-		public PaymentController(IService<PaymentRequest, PaymentResponse, DetailedPaymentResponse, int> paymentService)
+		public PaymentController(IPaymentService paymentService)
 		{
 			_paymentService = paymentService;
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<PaymentResponse>>> GetPaymentList()
+		public async Task<ActionResult<List<PaymentResponse>>> GetPaymentListAsync()
 		{
-			var paymentList = await _paymentService.GetList();
+			var paymentList = await _paymentService.GetListAsync();
 
 			return Ok(paymentList);
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<DetailedPaymentResponse>> GetPayment(int id)
+		public async Task<ActionResult<DetailedPaymentResponse>> GetPaymentAsync(int id)
 		{
-			var payment = await _paymentService.Get(id);
+			var payment = await _paymentService.GetAsync(id);
 
 			return Ok(payment);
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<PaymentResponse>> CreatePayment(PaymentRequest request)
+		public async Task<ActionResult<PaymentResponse>> CreatePaymentAsync(PaymentRequest request)
 		{
-			var payment = await _paymentService.Create(request);
+			var payment = await _paymentService.CreateAsync(request);
 
-			return CreatedAtAction(nameof(CreatePayment), payment);
+			return CreatedAtAction(nameof(CreatePaymentAsync), payment);
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<PaymentResponse>> UpdatePayment(int id, PaymentRequest request)
+		public async Task<ActionResult<PaymentResponse>> UpdatePaymentAsync(int id, PaymentRequest request)
 		{
-			var payment = await _paymentService.Get(id);
+			var payment = await _paymentService.GetAsync(id);
 
 			if (payment == null)
 			{
 				return NotFound();
 			}
 
-			var updatedPayment = await _paymentService.Update(id, request);
+			var updatedPayment = await _paymentService.UpdateAsync(id, request);
 
 			return Ok(updatedPayment);
 		}
 
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult<PaymentResponse>> Delete(int id)
+		public async Task<ActionResult<PaymentResponse>> DeleteAsync(int id)
 		{
-			var payment = await _paymentService.Get(id);
+			var payment = await _paymentService.GetAsync(id);
 
 			if (payment == null)
 			{
 				return NotFound();
 			}
 
-			await _paymentService.Delete(id);
+			await _paymentService.DeleteAsync(id);
 
 			return Ok();
 		}

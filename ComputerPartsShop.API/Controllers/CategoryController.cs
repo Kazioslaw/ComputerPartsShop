@@ -8,24 +8,24 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class CategoryController : ControllerBase
 	{
-		private readonly IService<CategoryRequest, CategoryResponse, CategoryResponse, int> _categoryService;
+		private readonly ICategoryService _categoryService;
 
-		public CategoryController(IService<CategoryRequest, CategoryResponse, CategoryResponse, int> categoryService)
+		public CategoryController(ICategoryService categoryService)
 		{
 			_categoryService = categoryService;
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<CategoryResponse>>> GetCategoryList()
+		public async Task<ActionResult<List<CategoryResponse>>> GetCategoryListAsync()
 		{
-			var categoryList = await _categoryService.GetList();
+			var categoryList = await _categoryService.GetListAsync();
 			return Ok(categoryList);
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<CategoryResponse>> GetCategory(int id)
+		public async Task<ActionResult<CategoryResponse>> GetCategoryAsync(int id)
 		{
-			var category = await _categoryService.Get(id);
+			var category = await _categoryService.GetAsync(id);
 
 			if (category == null)
 			{
@@ -36,39 +36,39 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<CategoryResponse>> CreateCategory(CategoryRequest request)
+		public async Task<ActionResult<CategoryResponse>> CreateCategoryAsync(CategoryRequest request)
 		{
-			var category = await _categoryService.Create(request);
+			var category = await _categoryService.CreateAsync(request);
 
-			return CreatedAtAction(nameof(CreateCategory), category);
+			return CreatedAtAction(nameof(CreateCategoryAsync), category);
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<CategoryResponse>> UpdateCategory(int id, CategoryRequest request)
+		public async Task<ActionResult<CategoryResponse>> UpdateCategoryAsync(int id, CategoryRequest request)
 		{
-			var category = await _categoryService.Get(id);
+			var category = await _categoryService.GetAsync(id);
 
 			if (category == null)
 			{
 				return NotFound();
 			}
 
-			var updatedCategory = await _categoryService.Update(id, request);
+			var updatedCategory = await _categoryService.UpdateAsync(id, request);
 
 			return Ok(updatedCategory);
 		}
 
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteCategory(int id)
+		public async Task<ActionResult> DeleteCategoryAsync(int id)
 		{
-			var category = await _categoryService.Get(id);
+			var category = await _categoryService.GetAsync(id);
 
 			if (category == null)
 			{
 				return NotFound();
 			}
 
-			await _categoryService.Delete(id);
+			await _categoryService.DeleteAsync(id);
 
 			return Ok();
 		}

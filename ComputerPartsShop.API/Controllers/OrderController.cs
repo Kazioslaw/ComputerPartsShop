@@ -9,14 +9,14 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class OrderController : ControllerBase
 	{
-		private readonly IService<OrderRequest, OrderResponse, DetailedOrderResponse, int> _orderService;
+		private readonly IOrderService _orderService;
 		private readonly ICustomerRepository _customerRepository;
-		private readonly IService<AddressRequest, AddressResponse, AddressResponse, Guid> _addressService;
+		private readonly IAddressService _addressService;
 
 
-		public OrderController(IService<OrderRequest, OrderResponse, DetailedOrderResponse, int> orderService,
+		public OrderController(IOrderService orderService,
 			ICustomerRepository customerRepository,
-			IService<AddressRequest, AddressResponse, AddressResponse, Guid> addressService)
+			IAddressService addressService)
 		{
 			_orderService = orderService;
 			_customerRepository = customerRepository;
@@ -24,17 +24,17 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<OrderResponse>>> GetOrderList()
+		public async Task<ActionResult<List<OrderResponse>>> GetOrderListAsync()
 		{
-			var orderList = await _orderService.GetList();
+			var orderList = await _orderService.GetListAsync();
 
 			return Ok(orderList);
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<DetailedOrderResponse>> GetOrder(int id)
+		public async Task<ActionResult<DetailedOrderResponse>> GetOrderAsync(int id)
 		{
-			var order = await _orderService.Get(id);
+			var order = await _orderService.GetAsync(id);
 
 			if (order == null)
 			{
@@ -45,59 +45,59 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<OrderResponse>> CreateOrder(OrderRequest request)
+		public async Task<ActionResult<OrderResponse>> CreateOrderAsync(OrderRequest request)
 		{
 			if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
 			{
 				return BadRequest();
 			}
 
-			var customer = await _customerRepository.GetByUsernameOrEmail(request.Username! ?? request.Email!);
+			var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!);
 
 			if (customer == null)
 			{
 				return BadRequest();
 			}
 
-			var address = await _addressService.Get(request.AddressID);
+			var address = await _addressService.GetAsync(request.AddressID);
 
 			if (address == null)
 			{
 				return BadRequest();
 			}
 
-			var order = await _orderService.Create(request);
+			var order = await _orderService.CreateAsync(request);
 
 
-			return CreatedAtAction(nameof(CreateOrder), order);
+			return CreatedAtAction(nameof(CreateOrderAsync), order);
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<OrderResponse>> UpdateOrder(int id, OrderRequest request)
+		public async Task<ActionResult<OrderResponse>> UpdateOrderAsync(int id, OrderRequest request)
 		{
-			var order = await _orderService.Get(id);
+			var order = await _orderService.GetAsync(id);
 
 			if (order == null)
 			{
 				return NotFound();
 			}
 
-			var updatedOrder = _orderService.Update(id, request);
+			var updatedOrder = _orderService.UpdateAsync(id, request);
 
 			return Ok(updatedOrder);
 		}
 
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteOrder(int id)
+		public async Task<ActionResult> DeleteOrderAsync(int id)
 		{
-			var order = await _orderService.Get(id);
+			var order = await _orderService.GetAsync(id);
 
 			if (order == null)
 			{
 				return NotFound();
 			}
 
-			await _orderService.Delete(id);
+			await _orderService.DeleteAsync(id);
 
 			return Ok();
 		}

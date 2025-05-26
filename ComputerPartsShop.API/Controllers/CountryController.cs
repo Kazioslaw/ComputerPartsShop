@@ -8,17 +8,17 @@ namespace ComputerPartsShop.API.Controllers
 	[Route("/[controller]")]
 	public class CountryController : ControllerBase
 	{
-		private readonly IService<CountryRequest, CountryResponse, DetailedCountryResponse, int> _countryService;
+		private readonly ICountryService _countryService;
 
-		public CountryController(IService<CountryRequest, CountryResponse, DetailedCountryResponse, int> countryService)
+		public CountryController(ICountryService countryService)
 		{
 			_countryService = countryService;
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<CountryResponse>>> GetCountryList()
+		public async Task<ActionResult<List<CountryResponse>>> GetCountryListAsync()
 		{
-			var countryList = await _countryService.GetList();
+			var countryList = await _countryService.GetListAsync();
 
 			return Ok(countryList);
 		}
@@ -26,7 +26,7 @@ namespace ComputerPartsShop.API.Controllers
 		[HttpGet("{id:int}")]
 		public async Task<ActionResult<DetailedCountryResponse>> GetCountry(int id)
 		{
-			var country = await _countryService.Get(id);
+			var country = await _countryService.GetAsync(id);
 
 			if (country == null)
 			{
@@ -37,38 +37,40 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<CountryResponse>> CreateCountry(CountryRequest request)
+		public async Task<ActionResult<CountryResponse>> CreateCountryAsync(CountryRequest request)
 		{
-			var country = await _countryService.Create(request);
+			var country = await _countryService.CreateAsync(request);
 
-			return CreatedAtAction(nameof(CreateCountry), country);
+			return CreatedAtAction(nameof(CreateCountryAsync), country);
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<CountryResponse>> UpdateCountry(int id, CountryRequest request)
+		public async Task<ActionResult<CountryResponse>> UpdateCountryAsync(int id, CountryRequest request)
 		{
-			var country = await _countryService.Get(id);
+			var country = await _countryService.GetAsync(id);
 
 			if (country == null)
 			{
 				return NotFound();
 			}
 
-			var updatedCountry = await _countryService.Update(id, request);
+			var updatedCountry = await _countryService.UpdateAsync(id, request);
 
 			return Ok(updatedCountry);
 
 		}
 
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteCountry(int id)
+		public async Task<ActionResult> DeleteCountryAsync(int id)
 		{
-			var country = await _countryService.Get(id);
+			var country = await _countryService.GetAsync(id);
 
 			if (country == null)
 			{
 				return NotFound();
 			}
+
+			await _countryService.DeleteAsync(id);
 
 			return Ok(country);
 		}

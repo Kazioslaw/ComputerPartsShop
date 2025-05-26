@@ -9,25 +9,25 @@ namespace ComputerPartsShop.API.Controllers
 	public class PaymentProviderController : ControllerBase
 	{
 
-		private readonly IService<PaymentProviderRequest, PaymentProviderResponse, DetailedPaymentProviderResponse, int> _ppService;
+		private readonly IPaymentProviderService _ppService;
 
-		public PaymentProviderController(IService<PaymentProviderRequest, PaymentProviderResponse, DetailedPaymentProviderResponse, int> ppService)
+		public PaymentProviderController(IPaymentProviderService ppService)
 		{
 			_ppService = ppService;
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<PaymentProviderResponse>>> GetPaymentProviderList()
+		public async Task<ActionResult<List<PaymentProviderResponse>>> GetPaymentProviderListAsync()
 		{
-			var paymentProviderList = await _ppService.GetList();
+			var paymentProviderList = await _ppService.GetListAsync();
 
 			return Ok(paymentProviderList);
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<DetailedPaymentProviderResponse>> GetPaymentProvider(int id)
+		public async Task<ActionResult<DetailedPaymentProviderResponse>> GetPaymentProviderAsync(int id)
 		{
-			var paymentProvider = await _ppService.Get(id);
+			var paymentProvider = await _ppService.GetAsync(id);
 
 			if (paymentProvider == null)
 			{
@@ -38,39 +38,39 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<PaymentProviderResponse>> CreatePaymentProvider(PaymentProviderRequest request)
+		public async Task<ActionResult<PaymentProviderResponse>> CreatePaymentProviderAsync(PaymentProviderRequest request)
 		{
-			var paymentProvider = await _ppService.Create(request);
+			var paymentProvider = await _ppService.CreateAsync(request);
 
-			return CreatedAtAction(nameof(CreatePaymentProvider), paymentProvider);
+			return CreatedAtAction(nameof(CreatePaymentProviderAsync), paymentProvider);
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<PaymentProviderResponse>> UpdatePaymentProvider(int id, PaymentProviderRequest request)
+		public async Task<ActionResult<PaymentProviderResponse>> UpdatePaymentProviderAsync(int id, PaymentProviderRequest request)
 		{
-			var paymentProvider = await _ppService.Get(id);
+			var paymentProvider = await _ppService.GetAsync(id);
 
 			if (paymentProvider == null)
 			{
 				return NotFound();
 			}
 
-			var updatedPaymentProvider = await _ppService.Update(id, request);
+			var updatedPaymentProvider = await _ppService.UpdateAsync(id, request);
 
 			return Ok(updatedPaymentProvider);
 		}
 
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeletePaymentProvider(int id)
+		public async Task<ActionResult> DeletePaymentProviderAsync(int id)
 		{
-			var paymentProvider = await _ppService.Get(id);
+			var paymentProvider = await _ppService.GetAsync(id);
 
 			if (paymentProvider == null)
 			{
 				return NotFound();
 			}
 
-			await _ppService.Delete(id);
+			await _ppService.DeleteAsync(id);
 
 			return Ok();
 		}

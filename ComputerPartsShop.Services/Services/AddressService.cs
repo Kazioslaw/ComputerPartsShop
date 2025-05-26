@@ -5,12 +5,12 @@ using ComputerPartsShop.Infrastructure;
 
 namespace ComputerPartsShop.Services
 {
-	public class AddressService : IService<AddressRequest, AddressResponse, AddressResponse, Guid>
+	public class AddressService : IAddressService
 	{
-		private readonly IRepository<Address, Guid> _addressRepository;
+		private readonly IAddressRepository _addressRepository;
 		private readonly ICountryRepository _countryRepository;
 
-		public AddressService(IRepository<Address, Guid> addressRepository, ICountryRepository countryRepository)
+		public AddressService(IAddressRepository addressRepository, ICountryRepository countryRepository)
 		{
 			_addressRepository = addressRepository;
 			_countryRepository = countryRepository;

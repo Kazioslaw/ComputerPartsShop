@@ -9,28 +9,27 @@ namespace ComputerPartsShop.API.Controllers
 	public class ReviewController : ControllerBase
 	{
 
-		private readonly IService<ReviewRequest, ReviewResponse, ReviewResponse, int> _reviewService;
-		private readonly IService<ProductRequest, ProductResponse, ProductResponse, int> _productService;
+		private readonly IReviewService _reviewService;
+		private readonly IProductService _productService;
 
-		public ReviewController(IService<ReviewRequest, ReviewResponse, ReviewResponse, int> reviewService,
-			IService<ProductRequest, ProductResponse, ProductResponse, int> productService)
+		public ReviewController(IReviewService reviewService, IProductService productService)
 		{
 			_reviewService = reviewService;
 			_productService = productService;
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<ReviewResponse>>> GetReviewList()
+		public async Task<ActionResult<List<ReviewResponse>>> GetReviewListAsync()
 		{
-			var reviewList = await _reviewService.GetList();
+			var reviewList = await _reviewService.GetListAsync();
 
 			return Ok(reviewList);
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<ReviewResponse>> GetReview(int id)
+		public async Task<ActionResult<ReviewResponse>> GetReviewAsync(int id)
 		{
-			var review = await _reviewService.Get(id);
+			var review = await _reviewService.GetAsync(id);
 
 			if (review == null)
 			{
@@ -41,46 +40,46 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<ReviewResponse>> CreateReview(ReviewRequest request)
+		public async Task<ActionResult<ReviewResponse>> CreateReviewAsync(ReviewRequest request)
 		{
-			var product = _productService.Get(request.ProductID);
+			var product = _productService.GetAsync(request.ProductID);
 
 			if (product == null)
 			{
 				return BadRequest();
 			}
 
-			var review = await _reviewService.Create(request);
+			var review = await _reviewService.CreateAsync(request);
 
-			return CreatedAtAction(nameof(CreateReview), review);
+			return CreatedAtAction(nameof(CreateReviewAsync), review);
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<ReviewResponse>> UpdateReview(int id, ReviewRequest request)
+		public async Task<ActionResult<ReviewResponse>> UpdateReviewAsync(int id, ReviewRequest request)
 		{
-			var review = await _reviewService.Get(id);
+			var review = await _reviewService.GetAsync(id);
 
 			if (review == null)
 			{
 				return NotFound();
 			}
 
-			var updatedReview = await _reviewService.Update(id, request);
+			var updatedReview = await _reviewService.UpdateAsync(id, request);
 
 			return Ok(updatedReview);
 		}
 
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteReview(int id)
+		public async Task<ActionResult> DeleteReviewAsync(int id)
 		{
-			var review = await _reviewService.Get(id);
+			var review = await _reviewService.GetAsync(id);
 
 			if (review == null)
 			{
 				return NotFound();
 			}
 
-			await _reviewService.Delete(id);
+			await _reviewService.DeleteAsync(id);
 
 			return Ok();
 		}

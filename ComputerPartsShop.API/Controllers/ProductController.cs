@@ -10,26 +10,26 @@ namespace ComputerPartsShop.API.Controllers
 	public class ProductController : ControllerBase
 	{
 		private readonly ICategoryRepository _categoryRepository;
-		private readonly IService<ProductRequest, ProductResponse, ProductResponse, int> _productService;
+		private readonly IProductService _productService;
 
-		public ProductController(IService<ProductRequest, ProductResponse, ProductResponse, int> productService, ICategoryRepository categoryRepository)
+		public ProductController(IProductService productService, ICategoryRepository categoryRepository)
 		{
 			_categoryRepository = categoryRepository;
 			_productService = productService;
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<ProductResponse>>> GetProductList()
+		public async Task<ActionResult<List<ProductResponse>>> GetProductListAsync()
 		{
-			var productList = await _productService.GetList();
+			var productList = await _productService.GetListAsync();
 
 			return Ok(productList);
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<ProductResponse>> GetProduct(int id)
+		public async Task<ActionResult<ProductResponse>> GetProductAsync(int id)
 		{
-			var product = await _productService.Get(id);
+			var product = await _productService.GetAsync(id);
 
 			if (product == null)
 			{
@@ -40,53 +40,53 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<ProductResponse>> CreateProduct(ProductRequest request)
+		public async Task<ActionResult<ProductResponse>> CreateProductAsync(ProductRequest request)
 		{
-			var category = await _categoryRepository.GetByName(request.CategoryName);
+			var category = await _categoryRepository.GetByNameAsync(request.CategoryName);
 
 			if (category == null)
 			{
 				return BadRequest();
 			}
 
-			var product = await _productService.Create(request);
+			var product = await _productService.CreateAsync(request);
 
-			return CreatedAtAction(nameof(CreateProduct), product);
+			return CreatedAtAction(nameof(CreateProductAsync), product);
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<ProductResponse>> UpdateProduct(int id, ProductRequest request)
+		public async Task<ActionResult<ProductResponse>> UpdateProductAsync(int id, ProductRequest request)
 		{
-			var product = await _productService.Get(id);
+			var product = await _productService.GetAsync(id);
 
 			if (product == null)
 			{
 				return NotFound();
 			}
 
-			var category = await _categoryRepository.GetByName(request.CategoryName);
+			var category = await _categoryRepository.GetByNameAsync(request.CategoryName);
 
 			if (category == null)
 			{
 				return BadRequest();
 			}
 
-			var updatedProduct = await _productService.Update(id, request);
+			var updatedProduct = await _productService.UpdateAsync(id, request);
 
 			return Ok(updatedProduct);
 		}
 
 		[HttpDelete]
-		public async Task<ActionResult> DeleteProduct(int id)
+		public async Task<ActionResult> DeleteProductAsync(int id)
 		{
-			var product = await _productService.Get(id);
+			var product = await _productService.GetAsync(id);
 
 			if (product == null)
 			{
 				return NotFound();
 			}
 
-			await _productService.Delete(id);
+			await _productService.DeleteAsync(id);
 
 			return Ok();
 		}
