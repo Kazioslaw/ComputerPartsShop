@@ -14,16 +14,16 @@ namespace ComputerPartsShop.Services
 			_paymentRepository = paymentRepository;
 		}
 
-		public async Task<List<PaymentResponse>> GetListAsync()
+		public async Task<List<PaymentResponse>> GetListAsync(CancellationToken ct)
 		{
-			var paymentList = await _paymentRepository.GetListAsync();
+			var paymentList = await _paymentRepository.GetListAsync(ct);
 
 			return paymentList.Select(p => new PaymentResponse(p.ID, p.CustomerPaymentSystemID, p.OrderID, p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt)).ToList();
 		}
 
-		public async Task<DetailedPaymentResponse> GetAsync(int id)
+		public async Task<DetailedPaymentResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var payment = await _paymentRepository.GetAsync(id);
+			var payment = await _paymentRepository.GetAsync(id, ct);
 
 			return payment == null ? null! : new DetailedPaymentResponse(payment.ID,
 				new CustomerPaymentSystemResponse(payment.CustomerPaymentSystem.ID, payment.CustomerPaymentSystem.Customer.Username,
@@ -36,61 +36,61 @@ namespace ComputerPartsShop.Services
 				payment.Total, payment.Method, payment.Status, payment.PaymentStartAt, payment.PaidAt);
 		}
 
-		public async Task<PaymentResponse> CreateAsync(PaymentRequest payment)
+		public async Task<PaymentResponse> CreateAsync(PaymentRequest entity, CancellationToken ct)
 		{
 			var newPayment = new Payment()
 			{
-				CustomerPaymentSystemID = payment.CustomerPaymentSystemID,
-				OrderID = payment.OrderID,
-				Total = payment.Total,
-				Method = payment.Method,
+				CustomerPaymentSystemID = entity.CustomerPaymentSystemID,
+				OrderID = entity.OrderID,
+				Total = entity.Total,
+				Method = entity.Method,
 				Status = "Pending",
 				PaymentStartAt = DateTime.Now
 			};
 
-			var paymentID = await _paymentRepository.CreateAsync(newPayment);
+			var paymentID = await _paymentRepository.CreateAsync(newPayment, ct);
 
-			return new PaymentResponse(paymentID, payment.CustomerPaymentSystemID, payment.OrderID, payment.Total,
-				payment.Method, newPayment.Status, newPayment.PaymentStartAt, null);
+			return new PaymentResponse(paymentID, entity.CustomerPaymentSystemID, entity.OrderID, entity.Total,
+				entity.Method, newPayment.Status, newPayment.PaymentStartAt, null);
 		}
 
-		public async Task<PaymentResponse> UpdateAsync(int id, PaymentRequest updatedPayment)
+		public async Task<PaymentResponse> UpdateAsync(int id, PaymentRequest entity, CancellationToken ct)
 		{
-			Payment payment = await _paymentRepository.GetAsync(id);
+			Payment payment = await _paymentRepository.GetAsync(id, ct);
 
-			payment.CustomerPaymentSystemID = updatedPayment.CustomerPaymentSystemID;
-			payment.OrderID = updatedPayment.OrderID;
-			payment.Total = updatedPayment.Total;
-			payment.Method = updatedPayment.Method;
-			payment.Status = updatedPayment.Status!;
+			payment.CustomerPaymentSystemID = entity.CustomerPaymentSystemID;
+			payment.OrderID = entity.OrderID;
+			payment.Total = entity.Total;
+			payment.Method = entity.Method;
+			payment.Status = entity.Status!;
 
-			switch (updatedPayment.Status)
+			switch (entity.Status)
 			{
 				case "Pending":
 				case "Authorized":
 				case "Failed":
 				case "Cancelled":
-					payment.PaymentStartAt = (DateTime)updatedPayment.PaymentStartAt!;
+					payment.PaymentStartAt = (DateTime)entity.PaymentStartAt!;
 					break;
 				case "Completed":
-					payment.PaymentStartAt = (DateTime)updatedPayment.PaymentStartAt!;
+					payment.PaymentStartAt = (DateTime)entity.PaymentStartAt!;
 					payment.PaidAt = DateTime.Now;
 					break;
 				case "Refunded":
-					payment.PaymentStartAt = (DateTime)updatedPayment.PaymentStartAt!;
-					payment.PaidAt = (DateTime)updatedPayment.PaidAt!;
+					payment.PaymentStartAt = (DateTime)entity.PaymentStartAt!;
+					payment.PaidAt = (DateTime)entity.PaidAt!;
 					break;
 			}
 
-			await _paymentRepository.UpdateAsync(id, payment);
+			await _paymentRepository.UpdateAsync(id, payment, ct);
 
-			return new PaymentResponse(id, updatedPayment.CustomerPaymentSystemID, updatedPayment.OrderID, updatedPayment.Total, updatedPayment.Method,
-				updatedPayment.Status!, (DateTime)updatedPayment.PaymentStartAt!, updatedPayment.PaidAt);
+			return new PaymentResponse(id, entity.CustomerPaymentSystemID, entity.OrderID, entity.Total, entity.Method,
+				entity.Status!, entity.PaymentStartAt, entity.PaidAt);
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
-			await _paymentRepository.DeleteAsync(id);
+			await _paymentRepository.DeleteAsync(id, ct);
 		}
 	}
 }

@@ -11,20 +11,23 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<Address>> GetListAsync()
+		public async Task<List<Address>> GetListAsync(CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			return _dbContext.AddressList;
 		}
 
-		public async Task<Address> GetAsync(Guid id)
+		public async Task<Address> GetAsync(Guid id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var address = _dbContext.AddressList.FirstOrDefault(x => x.ID == id);
 
-			return address;
+			return address!;
 		}
 
-		public async Task<Guid> CreateAsync(Address request)
+		public async Task<Guid> CreateAsync(Address request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			request.ID = Guid.NewGuid();
 
 			_dbContext.AddressList.Add(request);
@@ -32,8 +35,9 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<Address> UpdateAsync(Guid id, Address request)
+		public async Task<Address> UpdateAsync(Guid id, Address request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var address = _dbContext.AddressList.FirstOrDefault(request => request.ID == id);
 
 			if (address != null)
@@ -45,11 +49,12 @@ namespace ComputerPartsShop.Infrastructure
 				address.CountryID = request.CountryID;
 			}
 
-			return address;
+			return address!;
 		}
 
-		public async Task DeleteAsync(Guid id)
+		public async Task DeleteAsync(Guid id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var address = _dbContext.AddressList.FirstOrDefault(a => a.ID == id);
 
 			if (address != null)

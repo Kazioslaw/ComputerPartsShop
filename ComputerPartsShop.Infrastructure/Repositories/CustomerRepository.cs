@@ -11,20 +11,23 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<Customer>> GetListAsync()
+		public async Task<List<Customer>> GetListAsync(CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			return _dbContext.CustomerList;
 		}
 
-		public async Task<Customer> GetAsync(Guid id)
+		public async Task<Customer> GetAsync(Guid id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.ID == id);
 
-			return customer;
+			return customer!;
 		}
 
-		public async Task<Customer> GetByUsernameOrEmailAsync(string input)
+		public async Task<Customer> GetByUsernameOrEmailAsync(string input, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			Customer? customer = null;
 
 			var emailCustomer = _dbContext.CustomerList.FirstOrDefault(x => x.Email == input);
@@ -41,11 +44,12 @@ namespace ComputerPartsShop.Infrastructure
 				return customer;
 			}
 
-			return customer;
+			return customer!;
 		}
 
-		public async Task<Guid> CreateAsync(Customer request)
+		public async Task<Guid> CreateAsync(Customer request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			request.ID = Guid.NewGuid();
 
 			_dbContext.CustomerList.Add(request);
@@ -53,8 +57,9 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<Customer> UpdateAsync(Guid id, Customer request)
+		public async Task<Customer> UpdateAsync(Guid id, Customer request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.ID == id);
 
 			if (customer != null)
@@ -66,11 +71,12 @@ namespace ComputerPartsShop.Infrastructure
 				customer.PhoneNumber = request.PhoneNumber;
 			}
 
-			return customer;
+			return customer!;
 		}
 
-		public async Task DeleteAsync(Guid id)
+		public async Task DeleteAsync(Guid id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.ID == id);
 
 			if (customer != null)

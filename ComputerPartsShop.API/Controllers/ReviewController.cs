@@ -19,69 +19,104 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<ReviewResponse>>> GetReviewListAsync()
+		public async Task<ActionResult<List<ReviewResponse>>> GetReviewListAsync(CancellationToken ct)
 		{
-			var reviewList = await _reviewService.GetListAsync();
-
-			return Ok(reviewList);
-		}
-
-		[HttpGet("{id:int}")]
-		public async Task<ActionResult<ReviewResponse>> GetReviewAsync(int id)
-		{
-			var review = await _reviewService.GetAsync(id);
-
-			if (review == null)
+			try
 			{
-				return NotFound();
+				var reviewList = await _reviewService.GetListAsync(ct);
+
+				return Ok(reviewList);
 			}
-
-			return Ok(review);
-		}
-
-		[HttpPost]
-		public async Task<ActionResult<ReviewResponse>> CreateReviewAsync(ReviewRequest request)
-		{
-			var product = _productService.GetAsync(request.ProductID);
-
-			if (product == null)
+			catch (OperationCanceledException)
 			{
 				return BadRequest();
 			}
+		}
 
-			var review = await _reviewService.CreateAsync(request);
+		[HttpGet("{id:int}")]
+		public async Task<ActionResult<ReviewResponse>> GetReviewAsync(int id, CancellationToken ct)
+		{
+			try
+			{
+				var review = await _reviewService.GetAsync(id, ct);
 
-			return CreatedAtAction(nameof(CreateReviewAsync), review);
+				if (review == null)
+				{
+					return NotFound();
+				}
+
+				return Ok(review);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
+		}
+
+		[HttpPost]
+		public async Task<ActionResult<ReviewResponse>> CreateReviewAsync(ReviewRequest request, CancellationToken ct)
+		{
+			try
+			{
+				var product = _productService.GetAsync(request.ProductID, ct);
+
+				if (product == null)
+				{
+					return BadRequest();
+				}
+
+				var review = await _reviewService.CreateAsync(request, ct);
+
+				return CreatedAtAction(nameof(CreateReviewAsync), review);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<ReviewResponse>> UpdateReviewAsync(int id, ReviewRequest request)
+		public async Task<ActionResult<ReviewResponse>> UpdateReviewAsync(int id, ReviewRequest request, CancellationToken ct)
 		{
-			var review = await _reviewService.GetAsync(id);
-
-			if (review == null)
+			try
 			{
-				return NotFound();
+				var review = await _reviewService.GetAsync(id, ct);
+
+				if (review == null)
+				{
+					return NotFound();
+				}
+
+				var updatedReview = await _reviewService.UpdateAsync(id, request, ct);
+
+				return Ok(updatedReview);
 			}
-
-			var updatedReview = await _reviewService.UpdateAsync(id, request);
-
-			return Ok(updatedReview);
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteReviewAsync(int id)
+		public async Task<ActionResult> DeleteReviewAsync(int id, CancellationToken ct)
 		{
-			var review = await _reviewService.GetAsync(id);
-
-			if (review == null)
+			try
 			{
-				return NotFound();
+				var review = await _reviewService.GetAsync(id, ct);
+
+				if (review == null)
+				{
+					return NotFound();
+				}
+
+				await _reviewService.DeleteAsync(id, ct);
+
+				return Ok();
 			}
-
-			await _reviewService.DeleteAsync(id);
-
-			return Ok();
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 	}
 }

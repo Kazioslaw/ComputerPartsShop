@@ -13,55 +13,54 @@ namespace ComputerPartsShop.Services
 			_countryRepository = countryRepository;
 		}
 
-		public async Task<List<CountryResponse>> GetListAsync()
+		public async Task<List<CountryResponse>> GetListAsync(CancellationToken ct)
 		{
-			var countryList = await _countryRepository.GetListAsync();
+			var countryList = await _countryRepository.GetListAsync(ct);
 
 			return countryList.Select(c => new CountryResponse(c.ID, c.Alpha2, c.Alpha3, c.Name)).ToList();
 
 
 		}
 
-		public async Task<DetailedCountryResponse> GetAsync(int id)
+		public async Task<DetailedCountryResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var country = await _countryRepository.GetAsync(id);
+			var country = await _countryRepository.GetAsync(id, ct);
 			var addressList = country.Addresses;
 
 			return country == null ? null! : new DetailedCountryResponse(country.ID, country.Alpha2, country.Alpha3, country.Name,
 				addressList.Select(a => new AddressInCountryResponse(a.ID, a.Street, a.City, a.Region, a.ZipCode)).ToList());
 		}
 
-		public async Task<CountryResponse> CreateAsync(CountryRequest country)
+		public async Task<CountryResponse> CreateAsync(CountryRequest entity, CancellationToken ct)
 		{
 			var newCountry = new Country()
 			{
-				Alpha2 = country.Alpha2,
-				Alpha3 = country.Alpha3,
-				Name = country.Name,
+				Alpha2 = entity.Alpha2,
+				Alpha3 = entity.Alpha3,
+				Name = entity.Name,
 			};
 
-			var createdCountryID = await _countryRepository.CreateAsync(newCountry);
-			return new CountryResponse(createdCountryID, country.Alpha2, country.Alpha3, country.Name);
+			var createdCountryID = await _countryRepository.CreateAsync(newCountry, ct);
+			return new CountryResponse(createdCountryID, entity.Alpha2, entity.Alpha3, entity.Name);
 		}
 
-		public async Task<CountryResponse> UpdateAsync(int id, CountryRequest updatedCountry)
+		public async Task<CountryResponse> UpdateAsync(int id, CountryRequest entity, CancellationToken ct)
 		{
 			var country = new Country()
 			{
-				Alpha2 = updatedCountry.Alpha2,
-				Alpha3 = updatedCountry.Alpha3,
-				Name = updatedCountry.Name
+				Alpha2 = entity.Alpha2,
+				Alpha3 = entity.Alpha3,
+				Name = entity.Name
 			};
 
-			await _countryRepository.UpdateAsync(id, country);
+			await _countryRepository.UpdateAsync(id, country, ct);
 
-			return new CountryResponse(id, updatedCountry.Alpha2, updatedCountry.Alpha3, updatedCountry.Name);
+			return new CountryResponse(id, entity.Alpha2, entity.Alpha3, entity.Name);
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
-			await _countryRepository.DeleteAsync(id);
+			await _countryRepository.DeleteAsync(id, ct);
 		}
-
 	}
 }

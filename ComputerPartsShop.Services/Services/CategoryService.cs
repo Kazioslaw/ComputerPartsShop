@@ -13,49 +13,49 @@ namespace ComputerPartsShop.Services
 			_categoryRepository = categoryRepository;
 		}
 
-		public async Task<List<CategoryResponse>> GetListAsync()
+		public async Task<List<CategoryResponse>> GetListAsync(CancellationToken ct)
 		{
-			var categoryList = await _categoryRepository.GetListAsync();
+			var categoryList = await _categoryRepository.GetListAsync(ct);
 
 			return categoryList.Select(c => new CategoryResponse(c.ID, c.Name, c.Description)).ToList();
 		}
 
-		public async Task<CategoryResponse> GetAsync(int id)
+		public async Task<CategoryResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var category = await _categoryRepository.GetAsync(id);
+			var category = await _categoryRepository.GetAsync(id, ct);
 
 			return category == null ? null! : new CategoryResponse(id, category.Name, category.Description);
 		}
 
-		public async Task<CategoryResponse> CreateAsync(CategoryRequest category)
+		public async Task<CategoryResponse> CreateAsync(CategoryRequest entity, CancellationToken ct)
 		{
 			var newCategory = new Category()
 			{
-				Name = category.Name,
-				Description = category.Description,
+				Name = entity.Name,
+				Description = entity.Description,
 			};
 
-			var createdCategoryID = await _categoryRepository.CreateAsync(newCategory);
+			var createdCategoryID = await _categoryRepository.CreateAsync(newCategory, ct);
 
-			return new CategoryResponse(createdCategoryID, category.Name, category.Description);
+			return new CategoryResponse(createdCategoryID, entity.Name, entity.Description);
 		}
 
-		public async Task<CategoryResponse> UpdateAsync(int id, CategoryRequest updatedCategory)
+		public async Task<CategoryResponse> UpdateAsync(int id, CategoryRequest entity, CancellationToken ct)
 		{
 			var category = new Category()
 			{
-				Name = updatedCategory.Name,
-				Description = updatedCategory.Description,
+				Name = entity.Name,
+				Description = entity.Description,
 			};
 
-			await _categoryRepository.UpdateAsync(id, category);
+			await _categoryRepository.UpdateAsync(id, category, ct);
 
-			return new CategoryResponse(id, updatedCategory.Name, updatedCategory.Description);
+			return new CategoryResponse(id, entity.Name, entity.Description);
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
-			await _categoryRepository.DeleteAsync(id);
+			await _categoryRepository.DeleteAsync(id, ct);
 		}
 	}
 }

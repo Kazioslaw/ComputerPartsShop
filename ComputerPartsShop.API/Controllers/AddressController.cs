@@ -16,64 +16,98 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<AddressResponse>>> GetAddressListAsync()
+		public async Task<ActionResult<List<AddressResponse>>> GetAddressListAsync(CancellationToken ct)
 		{
-			var addressList = await _addressService.GetListAsync();
+			try
+			{
+				var addressList = await _addressService.GetListAsync(ct);
 
-			return Ok(addressList);
-
+				return Ok(addressList);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpGet("{id:Guid}")]
-		public async Task<ActionResult<AddressResponse>> GetAddressAsync(Guid id)
+		public async Task<ActionResult<AddressResponse>> GetAddressAsync(Guid id, CancellationToken ct)
 		{
-			var address = await _addressService.GetAsync(id);
-
-			if (address == null)
+			try
 			{
-				return NotFound();
-			}
+				var address = await _addressService.GetAsync(id, ct);
 
-			return Ok(address);
+				if (address == null)
+				{
+					return NotFound();
+				}
+
+				return Ok(address);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<AddressResponse>> CreateAddressAsync(AddressRequest request)
+		public async Task<ActionResult<AddressResponse>> CreateAddressAsync(AddressRequest request, CancellationToken ct)
 		{
-			var address = await _addressService.CreateAsync(request);
+			try
+			{
+				var address = await _addressService.CreateAsync(request, ct);
 
-			return CreatedAtAction(nameof(CreateAddressAsync), address);
+				return CreatedAtAction(nameof(CreateAddressAsync), address);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPut("{id:guid}")]
-		public async Task<ActionResult<AddressResponse>> UpdateAddressAsync(Guid id, AddressRequest request)
+		public async Task<ActionResult<AddressResponse>> UpdateAddressAsync(Guid id, AddressRequest request, CancellationToken ct)
 		{
-			var address = await _addressService.GetAsync(id);
-
-			if (address == null)
+			try
 			{
-				return NotFound();
+				var address = await _addressService.GetAsync(id, ct);
+
+				if (address == null)
+				{
+					return NotFound();
+				}
+
+				var updatedAddress = await _addressService.UpdateAsync(id, request, ct);
+
+				return Ok(updatedAddress);
 			}
-
-			var updatedAddress = await _addressService.UpdateAsync(id, request);
-
-			return Ok(updatedAddress);
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 
 		}
 
 		[HttpDelete("{id:guid}")]
-		public async Task<ActionResult> DeleteAddressAsync(Guid id)
+		public async Task<ActionResult> DeleteAddressAsync(Guid id, CancellationToken ct)
 		{
-			var address = await _addressService.GetAsync(id);
-
-			if (address == null)
+			try
 			{
-				return NotFound();
+				var address = await _addressService.GetAsync(id, ct);
+
+				if (address == null)
+				{
+					return NotFound();
+				}
+
+				await _addressService.DeleteAsync(id, ct);
+
+				return Ok();
 			}
-
-			await _addressService.DeleteAsync(id);
-
-			return Ok();
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 	}
 }

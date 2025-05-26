@@ -16,57 +16,92 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<PaymentResponse>>> GetPaymentListAsync()
+		public async Task<ActionResult<List<PaymentResponse>>> GetPaymentListAsync(CancellationToken ct)
 		{
-			var paymentList = await _paymentService.GetListAsync();
+			try
+			{
+				var paymentList = await _paymentService.GetListAsync(ct);
 
-			return Ok(paymentList);
+				return Ok(paymentList);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<DetailedPaymentResponse>> GetPaymentAsync(int id)
+		public async Task<ActionResult<DetailedPaymentResponse>> GetPaymentAsync(int id, CancellationToken ct)
 		{
-			var payment = await _paymentService.GetAsync(id);
+			try
+			{
+				var payment = await _paymentService.GetAsync(id, ct);
 
-			return Ok(payment);
+				return Ok(payment);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<PaymentResponse>> CreatePaymentAsync(PaymentRequest request)
+		public async Task<ActionResult<PaymentResponse>> CreatePaymentAsync(PaymentRequest request, CancellationToken ct)
 		{
-			var payment = await _paymentService.CreateAsync(request);
+			try
+			{
+				var payment = await _paymentService.CreateAsync(request, ct);
 
-			return CreatedAtAction(nameof(CreatePaymentAsync), payment);
+				return CreatedAtAction(nameof(CreatePaymentAsync), payment);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<PaymentResponse>> UpdatePaymentAsync(int id, PaymentRequest request)
+		public async Task<ActionResult<PaymentResponse>> UpdatePaymentAsync(int id, PaymentRequest request, CancellationToken ct)
 		{
-			var payment = await _paymentService.GetAsync(id);
-
-			if (payment == null)
+			try
 			{
-				return NotFound();
+				var payment = await _paymentService.GetAsync(id, ct);
+
+				if (payment == null)
+				{
+					return NotFound();
+				}
+
+				var updatedPayment = await _paymentService.UpdateAsync(id, request, ct);
+
+				return Ok(updatedPayment);
 			}
-
-			var updatedPayment = await _paymentService.UpdateAsync(id, request);
-
-			return Ok(updatedPayment);
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult<PaymentResponse>> DeleteAsync(int id)
+		public async Task<ActionResult<PaymentResponse>> DeleteAsync(int id, CancellationToken ct)
 		{
-			var payment = await _paymentService.GetAsync(id);
-
-			if (payment == null)
+			try
 			{
-				return NotFound();
+				var payment = await _paymentService.GetAsync(id, ct);
+
+				if (payment == null)
+				{
+					return NotFound();
+				}
+
+				await _paymentService.DeleteAsync(id, ct);
+
+				return Ok();
 			}
-
-			await _paymentService.DeleteAsync(id);
-
-			return Ok();
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 	}
 }

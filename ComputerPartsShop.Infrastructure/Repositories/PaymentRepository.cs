@@ -11,20 +11,23 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<Payment>> GetListAsync()
+		public async Task<List<Payment>> GetListAsync(CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			return _dbContext.PaymentList;
 		}
 
-		public async Task<Payment> GetAsync(int id)
+		public async Task<Payment> GetAsync(int id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.ID == id);
 
-			return payment;
+			return payment!;
 		}
 
-		public async Task<int> CreateAsync(Payment request)
+		public async Task<int> CreateAsync(Payment request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var last = _dbContext.PaymentList.OrderBy(x => x.ID).FirstOrDefault();
 
 			if (last == null)
@@ -41,8 +44,9 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<Payment> UpdateAsync(int id, Payment request)
+		public async Task<Payment> UpdateAsync(int id, Payment request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.ID == id);
 
 			if (payment != null)
@@ -56,11 +60,12 @@ namespace ComputerPartsShop.Infrastructure
 				payment.PaidAt = request.PaidAt;
 			}
 
-			return payment;
+			return payment!;
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.ID == id);
 
 			if (payment != null)

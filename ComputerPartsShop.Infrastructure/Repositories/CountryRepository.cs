@@ -11,27 +11,31 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<Country>> GetListAsync()
+		public async Task<List<Country>> GetListAsync(CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			return _dbContext.CountryList;
 		}
 
-		public async Task<Country> GetAsync(int id)
+		public async Task<Country> GetAsync(int id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var country = _dbContext.CountryList.FirstOrDefault(c => c.ID == id);
 
-			return country;
+			return country!;
 		}
 
-		public async Task<Country> GetByCountry3CodeAsync(string Country3Code)
+		public async Task<Country> GetByCountry3CodeAsync(string Country3Code, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var country = _dbContext.CountryList.FirstOrDefault(x => x.Alpha3 == Country3Code);
 
-			return country;
+			return country!;
 		}
 
-		public async Task<int> CreateAsync(Country request)
+		public async Task<int> CreateAsync(Country request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var last = _dbContext.CountryList.OrderBy(x => x.ID).LastOrDefault();
 
 			if (last == null)
@@ -48,8 +52,9 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<Country> UpdateAsync(int id, Country request)
+		public async Task<Country> UpdateAsync(int id, Country request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var country = _dbContext.CountryList.FirstOrDefault(x => x.ID == id);
 
 			if (country != null)
@@ -62,8 +67,9 @@ namespace ComputerPartsShop.Infrastructure
 			return request;
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var country = _dbContext.CountryList.FirstOrDefault(x => x.ID == id);
 
 			if (country != null)

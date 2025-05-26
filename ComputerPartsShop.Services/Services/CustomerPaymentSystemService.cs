@@ -17,35 +17,35 @@ namespace ComputerPartsShop.Services
 			_providerRepository = providerRepository;
 		}
 
-		public async Task<List<CustomerPaymentSystemResponse>> GetListAsync()
+		public async Task<List<CustomerPaymentSystemResponse>> GetListAsync(CancellationToken ct)
 		{
-			var cpsList = await _cpsRepository.GetListAsync();
+			var cpsList = await _cpsRepository.GetListAsync(ct);
 
 			return cpsList.Select(cps => new CustomerPaymentSystemResponse(cps.ID, cps.Customer.Username, cps.Customer.Email, cps.Provider.Name, cps.PaymentReference)).ToList();
 		}
 
-		public async Task<DetailedCustomerPaymentSystemResponse> GetAsync(Guid id)
+		public async Task<DetailedCustomerPaymentSystemResponse> GetAsync(Guid id, CancellationToken ct)
 		{
-			var cps = await _cpsRepository.GetAsync(id);
+			var cps = await _cpsRepository.GetAsync(id, ct);
 			var paymentsList = cps.Payments;
 
 			return cps == null ? null! : new DetailedCustomerPaymentSystemResponse(cps.ID, cps.Customer.Username, cps.Customer.Email, cps.Provider.Name, cps.PaymentReference,
 				paymentsList.Select(p => new PaymentInCustomerPaymentSystemResponse(p.ID, p.OrderID, p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt)).ToList());
 		}
 
-		public async Task<CustomerPaymentSystemResponse> CreateAsync(CustomerPaymentSystemRequest cps)
+		public async Task<CustomerPaymentSystemResponse> CreateAsync(CustomerPaymentSystemRequest entity, CancellationToken ct)
 		{
 			Customer customer = new();
-			var provider = await _providerRepository.GetByNameAsync(cps.ProviderName);
+			var provider = await _providerRepository.GetByNameAsync(entity.ProviderName, ct);
 
-			if (!string.IsNullOrWhiteSpace(cps.Username))
+			if (!string.IsNullOrWhiteSpace(entity.Username))
 			{
-				customer = await _customerRepository.GetByUsernameOrEmailAsync(cps.Username);
+				customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username, ct);
 			}
 
-			if (!string.IsNullOrWhiteSpace(cps.Email) && string.IsNullOrWhiteSpace(cps.Username))
+			if (!string.IsNullOrWhiteSpace(entity.Email) && string.IsNullOrWhiteSpace(entity.Username))
 			{
-				customer = await _customerRepository.GetByUsernameOrEmailAsync(cps.Email);
+				customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Email, ct);
 			}
 
 
@@ -55,19 +55,19 @@ namespace ComputerPartsShop.Services
 				Customer = customer,
 				ProviderID = provider.ID,
 				Provider = provider,
-				PaymentReference = cps.PaymentReference
+				PaymentReference = entity.PaymentReference
 			};
 
-			var createdCPSID = await _cpsRepository.CreateAsync(newCustomerPaymentSystem);
+			var createdCPSID = await _cpsRepository.CreateAsync(newCustomerPaymentSystem, ct);
 
-			return new CustomerPaymentSystemResponse(createdCPSID, cps.Username, cps.Email, cps.ProviderName, cps.PaymentReference);
+			return new CustomerPaymentSystemResponse(createdCPSID, entity.Username, entity.Email, entity.ProviderName, entity.PaymentReference);
 
 		}
 
-		public async Task<CustomerPaymentSystemResponse> UpdateAsync(Guid id, CustomerPaymentSystemRequest updatedCPS)
+		public async Task<CustomerPaymentSystemResponse> UpdateAsync(Guid id, CustomerPaymentSystemRequest entity, CancellationToken ct)
 		{
-			var customer = await _customerRepository.GetByUsernameOrEmailAsync(updatedCPS.Username! ?? updatedCPS.Email!);
-			var provider = await _providerRepository.GetByNameAsync(updatedCPS.ProviderName);
+			var customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username! ?? entity.Email!, ct);
+			var provider = await _providerRepository.GetByNameAsync(entity.ProviderName, ct);
 
 			var cps = new CustomerPaymentSystem()
 			{
@@ -75,17 +75,17 @@ namespace ComputerPartsShop.Services
 				Customer = customer,
 				ProviderID = provider.ID,
 				Provider = provider,
-				PaymentReference = updatedCPS.PaymentReference
+				PaymentReference = entity.PaymentReference
 			};
 
-			await _cpsRepository.UpdateAsync(id, cps);
+			await _cpsRepository.UpdateAsync(id, cps, ct);
 
-			return new CustomerPaymentSystemResponse(id, updatedCPS.Username, updatedCPS.Email, updatedCPS.ProviderName, updatedCPS.PaymentReference);
+			return new CustomerPaymentSystemResponse(id, entity.Username, entity.Email, entity.ProviderName, entity.PaymentReference);
 		}
 
-		public async Task DeleteAsync(Guid id)
+		public async Task DeleteAsync(Guid id, CancellationToken ct)
 		{
-			await _cpsRepository.DeleteAsync(id);
+			await _cpsRepository.DeleteAsync(id, ct);
 		}
 	}
 }

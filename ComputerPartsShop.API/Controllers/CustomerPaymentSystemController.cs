@@ -23,94 +23,128 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<CustomerPaymentSystemResponse>>> GetCustomerPaymentSystemListAsync()
+		public async Task<ActionResult<List<CustomerPaymentSystemResponse>>> GetCustomerPaymentSystemListAsync(CancellationToken ct)
 		{
-			var cpsList = await _cpsService.GetListAsync();
+			try
+			{
+				var cpsList = await _cpsService.GetListAsync(ct);
 
-			return Ok(cpsList);
+				return Ok(cpsList);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpGet("{id:guid}")]
-		public async Task<ActionResult<DetailedCustomerPaymentSystemResponse>> GetCustomerPaymentSystemAsync(Guid id)
+		public async Task<ActionResult<DetailedCustomerPaymentSystemResponse>> GetCustomerPaymentSystemAsync(Guid id, CancellationToken ct)
 		{
-			var cps = await _cpsService.GetAsync(id);
-
-			if (cps == null)
+			try
 			{
-				return NotFound();
-			}
+				var cps = await _cpsService.GetAsync(id, ct);
 
-			return Ok(cps);
+				if (cps == null)
+				{
+					return NotFound();
+				}
+
+				return Ok(cps);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<CustomerPaymentSystemResponse>> CreateCustomerPaymentSystemAsync(CustomerPaymentSystemRequest request)
+		public async Task<ActionResult<CustomerPaymentSystemResponse>> CreateCustomerPaymentSystemAsync(CustomerPaymentSystemRequest request, CancellationToken ct)
 		{
+			try
+			{
+				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
+				{
+					return BadRequest();
+				}
 
-			if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
+				var payment = await _providerRepository.GetByNameAsync(request.ProviderName, ct);
+				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
+
+				if (payment == null)
+				{
+					return BadRequest();
+				}
+
+				if (customer == null)
+				{
+					return BadRequest();
+				}
+
+				var cps = await _cpsService.CreateAsync(request, ct);
+
+				return CreatedAtAction(nameof(CreateCustomerPaymentSystemAsync), cps);
+			}
+			catch (OperationCanceledException)
 			{
 				return BadRequest();
 			}
-
-			var payment = await _providerRepository.GetByNameAsync(request.ProviderName);
-			var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!);
-
-			if (payment == null)
-			{
-				return BadRequest();
-			}
-
-			if (customer == null)
-			{
-				return BadRequest();
-			}
-
-			var cps = await _cpsService.CreateAsync(request);
-
-			return CreatedAtAction(nameof(CreateCustomerPaymentSystemAsync), cps);
 		}
 
 		[HttpPut("{id:guid}")]
-		public async Task<ActionResult<CustomerPaymentSystemResponse>> UpdateCustomerPaymentSystemAsync(Guid id, CustomerPaymentSystemRequest request)
+		public async Task<ActionResult<CustomerPaymentSystemResponse>> UpdateCustomerPaymentSystemAsync(Guid id, CustomerPaymentSystemRequest request, CancellationToken ct)
 		{
-			var cps = await _cpsService.GetAsync(id);
-			var payment = await _providerRepository.GetByNameAsync(request.ProviderName);
-			var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!);
+			try
+			{
+				var cps = await _cpsService.GetAsync(id, ct);
+				var payment = await _providerRepository.GetByNameAsync(request.ProviderName, ct);
+				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
 
-			if (payment == null)
+				if (payment == null)
+				{
+					return BadRequest();
+
+				}
+
+				if (customer == null)
+				{
+					return BadRequest();
+				}
+
+				if (cps == null)
+				{
+					return NotFound();
+				}
+
+				var cpsUpdated = await _cpsService.UpdateAsync(id, request, ct);
+
+				return Ok(cpsUpdated);
+			}
+			catch (OperationCanceledException)
 			{
 				return BadRequest();
-
 			}
-
-			if (customer == null)
-			{
-				return BadRequest();
-			}
-
-			if (cps == null)
-			{
-				return NotFound();
-			}
-
-			var cpsUpdated = await _cpsService.UpdateAsync(id, request);
-
-			return Ok(cpsUpdated);
 		}
 
 		[HttpDelete("{id:guid}")]
-		public async Task<ActionResult> DeleteCustomerPaymentSystemAsync(Guid id)
+		public async Task<ActionResult> DeleteCustomerPaymentSystemAsync(Guid id, CancellationToken ct)
 		{
-			var cps = await _cpsService.GetAsync(id);
-
-			if (cps == null)
+			try
 			{
-				return NotFound();
+				var cps = await _cpsService.GetAsync(id, ct);
+
+				if (cps == null)
+				{
+					return NotFound();
+				}
+
+				await _cpsService.DeleteAsync(id, ct);
+
+				return Ok();
 			}
-
-			await _cpsService.DeleteAsync(id);
-
-			return Ok();
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 	}
 }

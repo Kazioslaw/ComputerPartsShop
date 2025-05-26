@@ -24,82 +24,117 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<OrderResponse>>> GetOrderListAsync()
+		public async Task<ActionResult<List<OrderResponse>>> GetOrderListAsync(CancellationToken ct)
 		{
-			var orderList = await _orderService.GetListAsync();
+			try
+			{
+				var orderList = await _orderService.GetListAsync(ct);
 
-			return Ok(orderList);
+				return Ok(orderList);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<DetailedOrderResponse>> GetOrderAsync(int id)
+		public async Task<ActionResult<DetailedOrderResponse>> GetOrderAsync(int id, CancellationToken ct)
 		{
-			var order = await _orderService.GetAsync(id);
-
-			if (order == null)
+			try
 			{
-				return NotFound();
-			}
+				var order = await _orderService.GetAsync(id, ct);
 
-			return Ok(order);
+				if (order == null)
+				{
+					return NotFound();
+				}
+
+				return Ok(order);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<OrderResponse>> CreateOrderAsync(OrderRequest request)
+		public async Task<ActionResult<OrderResponse>> CreateOrderAsync(OrderRequest request, CancellationToken ct)
 		{
-			if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
+			try
+			{
+				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
+				{
+					return BadRequest();
+				}
+
+				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
+
+				if (customer == null)
+				{
+					return BadRequest();
+				}
+
+				var address = await _addressService.GetAsync(request.AddressID, ct);
+
+				if (address == null)
+				{
+					return BadRequest();
+				}
+
+				var order = await _orderService.CreateAsync(request, ct);
+
+
+				return CreatedAtAction(nameof(CreateOrderAsync), order);
+			}
+			catch (OperationCanceledException)
 			{
 				return BadRequest();
 			}
-
-			var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!);
-
-			if (customer == null)
-			{
-				return BadRequest();
-			}
-
-			var address = await _addressService.GetAsync(request.AddressID);
-
-			if (address == null)
-			{
-				return BadRequest();
-			}
-
-			var order = await _orderService.CreateAsync(request);
-
-
-			return CreatedAtAction(nameof(CreateOrderAsync), order);
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<OrderResponse>> UpdateOrderAsync(int id, OrderRequest request)
+		public async Task<ActionResult<OrderResponse>> UpdateOrderAsync(int id, OrderRequest request, CancellationToken ct)
 		{
-			var order = await _orderService.GetAsync(id);
-
-			if (order == null)
+			try
 			{
-				return NotFound();
+				var order = await _orderService.GetAsync(id, ct);
+
+				if (order == null)
+				{
+					return NotFound();
+				}
+
+				var updatedOrder = _orderService.UpdateAsync(id, request, ct);
+
+				return Ok(updatedOrder);
 			}
-
-			var updatedOrder = _orderService.UpdateAsync(id, request);
-
-			return Ok(updatedOrder);
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteOrderAsync(int id)
+		public async Task<ActionResult> DeleteOrderAsync(int id, CancellationToken ct)
 		{
-			var order = await _orderService.GetAsync(id);
-
-			if (order == null)
+			try
 			{
-				return NotFound();
+				var order = await _orderService.GetAsync(id, ct);
+
+				if (order == null)
+				{
+					return NotFound();
+				}
+
+				await _orderService.DeleteAsync(id, ct);
+
+				return Ok();
 			}
-
-			await _orderService.DeleteAsync(id);
-
-			return Ok();
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 	}
 }

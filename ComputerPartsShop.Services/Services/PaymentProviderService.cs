@@ -13,16 +13,16 @@ namespace ComputerPartsShop.Services
 			_providerRepository = providerRepository;
 		}
 
-		public async Task<List<PaymentProviderResponse>> GetListAsync()
+		public async Task<List<PaymentProviderResponse>> GetListAsync(CancellationToken ct)
 		{
-			var paymentProviderList = await _providerRepository.GetListAsync();
+			var paymentProviderList = await _providerRepository.GetListAsync(ct);
 
 			return paymentProviderList.Select(pp => new PaymentProviderResponse(pp.ID, pp.Name, pp.CustomerPayments.Select(x => x.ID).ToList())).ToList();
 		}
 
-		public async Task<DetailedPaymentProviderResponse> GetAsync(int id)
+		public async Task<DetailedPaymentProviderResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var paymentProvider = await _providerRepository.GetAsync(id);
+			var paymentProvider = await _providerRepository.GetAsync(id, ct);
 
 			var cps = paymentProvider.CustomerPayments;
 
@@ -31,34 +31,33 @@ namespace ComputerPartsShop.Services
 				cps.Select(cps => new CustomerPaymentSystemResponse(cps.ID, cps.Customer.Username, cps.Customer.Email, cps.Provider.Name, cps.PaymentReference)).ToList());
 		}
 
-		public async Task<PaymentProviderResponse> CreateAsync(PaymentProviderRequest paymentProvider)
+		public async Task<PaymentProviderResponse> CreateAsync(PaymentProviderRequest entity, CancellationToken ct)
 		{
 			var newPaymentProvider = new PaymentProvider()
 			{
-				Name = paymentProvider.Name
+				Name = entity.Name
 			};
 
-			var paymentProviderID = await _providerRepository.CreateAsync(newPaymentProvider);
+			var paymentProviderID = await _providerRepository.CreateAsync(newPaymentProvider, ct);
 
-			return new PaymentProviderResponse(paymentProviderID, paymentProvider.Name, new List<Guid>());
+			return new PaymentProviderResponse(paymentProviderID, entity.Name, new List<Guid>());
 		}
 
-		public async Task<PaymentProviderResponse> UpdateAsync(int id, PaymentProviderRequest updatedPaymentProvider)
+		public async Task<PaymentProviderResponse> UpdateAsync(int id, PaymentProviderRequest entity, CancellationToken ct)
 		{
 			var paymentProvider = new PaymentProvider()
 			{
-				Name = updatedPaymentProvider.Name,
+				Name = entity.Name,
 			};
 
-			await _providerRepository.UpdateAsync(id, paymentProvider);
+			await _providerRepository.UpdateAsync(id, paymentProvider, ct);
 
-			return new PaymentProviderResponse(id, updatedPaymentProvider.Name, new List<Guid>());
+			return new PaymentProviderResponse(id, entity.Name, new List<Guid>());
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
-			await _providerRepository.DeleteAsync(id);
-			return;
+			await _providerRepository.DeleteAsync(id, ct);
 		}
 	}
 }

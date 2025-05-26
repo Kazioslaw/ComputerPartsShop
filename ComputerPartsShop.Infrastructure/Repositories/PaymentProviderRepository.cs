@@ -11,27 +11,31 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<PaymentProvider>> GetListAsync()
+		public async Task<List<PaymentProvider>> GetListAsync(CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			return _dbContext.PaymentProviderList;
 		}
 
-		public async Task<PaymentProvider> GetAsync(int id)
+		public async Task<PaymentProvider> GetAsync(int id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.ID == id);
 
-			return paymentProvider;
+			return paymentProvider!;
 		}
 
-		public async Task<PaymentProvider> GetByNameAsync(string input)
+		public async Task<PaymentProvider> GetByNameAsync(string input, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Name == input);
 
-			return paymentProvider;
+			return paymentProvider!;
 		}
 
-		public async Task<int> CreateAsync(PaymentProvider request)
+		public async Task<int> CreateAsync(PaymentProvider request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var last = _dbContext.PaymentProviderList.OrderBy(x => x.ID).FirstOrDefault();
 
 			if (last == null)
@@ -48,8 +52,9 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<PaymentProvider> UpdateAsync(int id, PaymentProvider request)
+		public async Task<PaymentProvider> UpdateAsync(int id, PaymentProvider request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.ID == id);
 
 			if (paymentProvider != null)
@@ -57,11 +62,12 @@ namespace ComputerPartsShop.Infrastructure
 				paymentProvider.Name = request.Name;
 			}
 
-			return paymentProvider;
+			return paymentProvider!;
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.ID == id);
 
 			if (paymentProvider != null)

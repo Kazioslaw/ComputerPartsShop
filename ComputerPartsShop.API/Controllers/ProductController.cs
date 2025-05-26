@@ -19,76 +19,111 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<ProductResponse>>> GetProductListAsync()
+		public async Task<ActionResult<List<ProductResponse>>> GetProductListAsync(CancellationToken ct)
 		{
-			var productList = await _productService.GetListAsync();
+			try
+			{
+				var productList = await _productService.GetListAsync(ct);
 
-			return Ok(productList);
+				return Ok(productList);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<ProductResponse>> GetProductAsync(int id)
+		public async Task<ActionResult<ProductResponse>> GetProductAsync(int id, CancellationToken ct)
 		{
-			var product = await _productService.GetAsync(id);
-
-			if (product == null)
+			try
 			{
-				return NotFound();
-			}
+				var product = await _productService.GetAsync(id, ct);
 
-			return Ok(product);
+				if (product == null)
+				{
+					return NotFound();
+				}
+
+				return Ok(product);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<ProductResponse>> CreateProductAsync(ProductRequest request)
+		public async Task<ActionResult<ProductResponse>> CreateProductAsync(ProductRequest request, CancellationToken ct)
 		{
-			var category = await _categoryRepository.GetByNameAsync(request.CategoryName);
+			try
+			{
+				var category = await _categoryRepository.GetByNameAsync(request.CategoryName, ct);
 
-			if (category == null)
+				if (category == null)
+				{
+					return BadRequest();
+				}
+
+				var product = await _productService.CreateAsync(request, ct);
+
+				return CreatedAtAction(nameof(CreateProductAsync), product);
+			}
+			catch (OperationCanceledException)
 			{
 				return BadRequest();
 			}
-
-			var product = await _productService.CreateAsync(request);
-
-			return CreatedAtAction(nameof(CreateProductAsync), product);
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<ProductResponse>> UpdateProductAsync(int id, ProductRequest request)
+		public async Task<ActionResult<ProductResponse>> UpdateProductAsync(int id, ProductRequest request, CancellationToken ct)
 		{
-			var product = await _productService.GetAsync(id);
-
-			if (product == null)
+			try
 			{
-				return NotFound();
+				var product = await _productService.GetAsync(id, ct);
+
+				if (product == null)
+				{
+					return NotFound();
+				}
+
+				var category = await _categoryRepository.GetByNameAsync(request.CategoryName, ct);
+
+				if (category == null)
+				{
+					return BadRequest();
+				}
+
+				var updatedProduct = await _productService.UpdateAsync(id, request, ct);
+
+				return Ok(updatedProduct);
 			}
-
-			var category = await _categoryRepository.GetByNameAsync(request.CategoryName);
-
-			if (category == null)
+			catch (OperationCanceledException)
 			{
 				return BadRequest();
 			}
-
-			var updatedProduct = await _productService.UpdateAsync(id, request);
-
-			return Ok(updatedProduct);
 		}
 
 		[HttpDelete]
-		public async Task<ActionResult> DeleteProductAsync(int id)
+		public async Task<ActionResult> DeleteProductAsync(int id, CancellationToken ct)
 		{
-			var product = await _productService.GetAsync(id);
-
-			if (product == null)
+			try
 			{
-				return NotFound();
+				var product = await _productService.GetAsync(id, ct);
+
+				if (product == null)
+				{
+					return NotFound();
+				}
+
+				await _productService.DeleteAsync(id, ct);
+
+				return Ok();
 			}
-
-			await _productService.DeleteAsync(id);
-
-			return Ok();
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 	}
 }

@@ -23,17 +23,17 @@ namespace ComputerPartsShop.Services
 			_cpsRepository = cpsRepository;
 		}
 
-		public async Task<List<OrderResponse>> GetListAsync()
+		public async Task<List<OrderResponse>> GetListAsync(CancellationToken ct)
 		{
-			var orderList = await _orderRepository.GetListAsync();
+			var orderList = await _orderRepository.GetListAsync(ct);
 
 			return orderList.Select(o => new OrderResponse(o.ID, o.CustomerID, o.OrdersProducts.Select(p => p.ProductID).ToList(), o.Total, o.DeliveryAddress.ID,
 				o.Status, o.OrderedAt, o.SendAt, o.Payments.Select(p => p.ID).ToList())).ToList();
 		}
 
-		public async Task<DetailedOrderResponse> GetAsync(int id)
+		public async Task<DetailedOrderResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var order = await _orderRepository.GetAsync(id);
+			var order = await _orderRepository.GetAsync(id, ct);
 			var productList = order.OrdersProducts.Select(o => o.Product).ToList();
 			var paymentList = order.Payments;
 
@@ -50,21 +50,21 @@ namespace ComputerPartsShop.Services
 				p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt)).ToList());
 		}
 
-		public async Task<OrderResponse> CreateAsync(OrderRequest order)
+		public async Task<OrderResponse> CreateAsync(OrderRequest entity, CancellationToken ct)
 		{
-			var customer = await _customerRepository.GetByUsernameOrEmailAsync(order.Username! ?? order.Email!);
-			var address = await _addressRepository.GetAsync(order.AddressID);
-			var productsID = order.ProductIDList;
+			var customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username! ?? entity.Email!, ct);
+			var address = await _addressRepository.GetAsync(entity.AddressID, ct);
+			var productsID = entity.ProductIDList;
 			var productsIDDistinct = productsID.Distinct();
 			var productList = new List<OrderProduct>();
 			foreach (var productID in productsIDDistinct)
 			{
-				var product = await _productRepository.GetAsync(productID);
+				var product = await _productRepository.GetAsync(productID, ct);
 				var orderProduct = new OrderProduct()
 				{
 					ProductID = productID,
 					Product = product,
-					Quantity = order.ProductIDList.Count(id => id == productID),
+					Quantity = entity.ProductIDList.Count(id => id == productID),
 				};
 				productList.Add(orderProduct);
 			}
@@ -74,46 +74,46 @@ namespace ComputerPartsShop.Services
 				CustomerID = customer.ID,
 				Customer = customer,
 				OrdersProducts = productList,
-				Total = order.Total,
-				DeliveryAddressID = order.AddressID,
+				Total = entity.Total,
+				DeliveryAddressID = entity.AddressID,
 				DeliveryAddress = address,
 				Status = "Pending",
 				OrderedAt = DateTime.Now,
 			};
 
-			var orderID = await _orderRepository.CreateAsync(newOrder);
+			var orderID = await _orderRepository.CreateAsync(newOrder, ct);
 
-			return new OrderResponse(orderID, newOrder.CustomerID, order.ProductIDList, order.Total, order.AddressID, newOrder.Status, newOrder.OrderedAt, null, newOrder.Payments.Select(p => p.ID).ToList());
+			return new OrderResponse(orderID, newOrder.CustomerID, entity.ProductIDList, entity.Total, entity.AddressID, newOrder.Status, newOrder.OrderedAt, null, newOrder.Payments.Select(p => p.ID).ToList());
 		}
 
-		public async Task<OrderResponse> UpdateAsync(int id, OrderRequest updatedOrder)
+		public async Task<OrderResponse> UpdateAsync(int id, OrderRequest entity, CancellationToken ct)
 		{
-			var customer = await _customerRepository.GetByUsernameOrEmailAsync(updatedOrder.Username! ?? updatedOrder.Email!);
-			var address = await _addressRepository.GetAsync(updatedOrder.AddressID);
+			var customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username! ?? entity.Email!, ct);
+			var address = await _addressRepository.GetAsync(entity.AddressID, ct);
 
-			var productIDList = updatedOrder.ProductIDList;
+			var productIDList = entity.ProductIDList;
 			var productsIDDistinct = productIDList.Distinct();
 			var productList = new List<OrderProduct>();
 
-			var cps = await _cpsRepository.GetAsync(updatedOrder.CustomerPaymentSystemID);
+			var cps = await _cpsRepository.GetAsync(entity.CustomerPaymentSystemID, ct);
 
 			var payments = cps.Payments.Where(x => x.OrderID == id).ToList();
 
 			foreach (var productID in productsIDDistinct)
 			{
-				var product = await _productRepository.GetAsync(productID);
+				var product = await _productRepository.GetAsync(productID, ct);
 				var orderProduct = new OrderProduct()
 				{
 					ProductID = productID,
 					Product = product,
-					Quantity = updatedOrder.ProductIDList.Count(id => id == productID),
+					Quantity = entity.ProductIDList.Count(id => id == productID),
 				};
 				productList.Add(orderProduct);
 			}
 
 			Order order = null!;
 
-			switch (updatedOrder.Status)
+			switch (entity.Status)
 			{
 				case "Pending":
 				case "Processing":
@@ -122,11 +122,11 @@ namespace ComputerPartsShop.Services
 						CustomerID = customer.ID,
 						Customer = customer,
 						OrdersProducts = productList,
-						Total = updatedOrder.Total,
-						DeliveryAddressID = updatedOrder.AddressID,
+						Total = entity.Total,
+						DeliveryAddressID = entity.AddressID,
 						DeliveryAddress = address,
-						Status = updatedOrder.Status!,
-						OrderedAt = (DateTime)updatedOrder.OrderedAt!,
+						Status = entity.Status!,
+						OrderedAt = (DateTime)entity.OrderedAt!,
 						Payments = payments ?? new List<Payment>(),
 					};
 					break;
@@ -136,11 +136,11 @@ namespace ComputerPartsShop.Services
 						CustomerID = customer.ID,
 						Customer = customer,
 						OrdersProducts = productList,
-						Total = updatedOrder.Total,
-						DeliveryAddressID = updatedOrder.AddressID,
+						Total = entity.Total,
+						DeliveryAddressID = entity.AddressID,
 						DeliveryAddress = address,
-						Status = updatedOrder.Status!,
-						OrderedAt = (DateTime)updatedOrder.OrderedAt!,
+						Status = entity.Status!,
+						OrderedAt = (DateTime)entity.OrderedAt!,
 						SendAt = DateTime.Now,
 						Payments = payments ?? new List<Payment>()
 					};
@@ -153,27 +153,27 @@ namespace ComputerPartsShop.Services
 						CustomerID = customer.ID,
 						Customer = customer,
 						OrdersProducts = productList,
-						Total = updatedOrder.Total,
-						DeliveryAddressID = updatedOrder.AddressID,
+						Total = entity.Total,
+						DeliveryAddressID = entity.AddressID,
 						DeliveryAddress = address,
-						Status = updatedOrder.Status!,
-						OrderedAt = (DateTime)updatedOrder.OrderedAt!,
-						SendAt = (DateTime)updatedOrder.SendAt!,
+						Status = entity.Status!,
+						OrderedAt = (DateTime)entity.OrderedAt!,
+						SendAt = (DateTime)entity.SendAt!,
 						Payments = payments ?? new List<Payment>()
 					};
 					break;
 			}
 			if (order != null)
 			{
-				await _orderRepository.UpdateAsync(id, order);
+				await _orderRepository.UpdateAsync(id, order, ct);
 			}
-			return new OrderResponse(id, customer.ID, updatedOrder.ProductIDList, updatedOrder.Total, updatedOrder.AddressID,
-				updatedOrder.Status!, (DateTime)updatedOrder.OrderedAt!, (DateTime)updatedOrder.SendAt!, payments.Select(x => x.ID).ToList() ?? new List<int>());
+			return new OrderResponse(id, customer.ID, entity.ProductIDList, entity.Total, entity.AddressID,
+				entity.Status!, entity.OrderedAt, entity.SendAt, payments?.Select(x => x.ID).ToList() ?? new List<int>());
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
-			await _orderRepository.DeleteAsync(id);
+			await _orderRepository.DeleteAsync(id, ct);
 		}
 	}
 }

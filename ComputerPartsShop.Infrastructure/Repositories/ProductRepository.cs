@@ -11,20 +11,23 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<Product>> GetListAsync()
+		public async Task<List<Product>> GetListAsync(CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			return _dbContext.ProductList;
 		}
 
-		public async Task<Product> GetAsync(int id)
+		public async Task<Product> GetAsync(int id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var product = _dbContext.ProductList.FirstOrDefault(x => x.ID == id);
 
-			return product;
+			return product!;
 		}
 
-		public async Task<int> CreateAsync(Product request)
+		public async Task<int> CreateAsync(Product request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var last = _dbContext.ProductList.OrderBy(x => x.ID).LastOrDefault();
 
 			if (last == null)
@@ -41,8 +44,9 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<Product> UpdateAsync(int id, Product request)
+		public async Task<Product> UpdateAsync(int id, Product request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var product = _dbContext.ProductList.FirstOrDefault(x => x.ID == id);
 
 			if (product != null)
@@ -55,11 +59,12 @@ namespace ComputerPartsShop.Infrastructure
 				product.InternalCode = request.InternalCode;
 			}
 
-			return product;
+			return product!;
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var product = _dbContext.ProductList.FirstOrDefault(x => x.ID == id);
 
 			if (product != null)

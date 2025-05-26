@@ -16,61 +16,97 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<CategoryResponse>>> GetCategoryListAsync()
+		public async Task<ActionResult<List<CategoryResponse>>> GetCategoryListAsync(CancellationToken ct)
 		{
-			var categoryList = await _categoryService.GetListAsync();
-			return Ok(categoryList);
+			try
+			{
+				var categoryList = await _categoryService.GetListAsync(ct);
+
+				return Ok(categoryList);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<CategoryResponse>> GetCategoryAsync(int id)
+		public async Task<ActionResult<CategoryResponse>> GetCategoryAsync(int id, CancellationToken ct)
 		{
-			var category = await _categoryService.GetAsync(id);
-
-			if (category == null)
+			try
 			{
-				return NotFound();
-			}
+				var category = await _categoryService.GetAsync(id, ct);
 
-			return Ok(category);
+				if (category == null)
+				{
+					return NotFound();
+				}
+
+				return Ok(category);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<CategoryResponse>> CreateCategoryAsync(CategoryRequest request)
+		public async Task<ActionResult<CategoryResponse>> CreateCategoryAsync(CategoryRequest request, CancellationToken ct)
 		{
-			var category = await _categoryService.CreateAsync(request);
+			try
+			{
+				var category = await _categoryService.CreateAsync(request, ct);
 
-			return CreatedAtAction(nameof(CreateCategoryAsync), category);
+				return CreatedAtAction(nameof(CreateCategoryAsync), category);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<CategoryResponse>> UpdateCategoryAsync(int id, CategoryRequest request)
+		public async Task<ActionResult<CategoryResponse>> UpdateCategoryAsync(int id, CategoryRequest request, CancellationToken ct)
 		{
-			var category = await _categoryService.GetAsync(id);
-
-			if (category == null)
+			try
 			{
-				return NotFound();
+				var category = await _categoryService.GetAsync(id, ct);
+
+				if (category == null)
+				{
+					return NotFound();
+				}
+
+				var updatedCategory = await _categoryService.UpdateAsync(id, request, ct);
+
+				return Ok(updatedCategory);
 			}
-
-			var updatedCategory = await _categoryService.UpdateAsync(id, request);
-
-			return Ok(updatedCategory);
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteCategoryAsync(int id)
+		public async Task<ActionResult> DeleteCategoryAsync(int id, CancellationToken ct)
 		{
-			var category = await _categoryService.GetAsync(id);
-
-			if (category == null)
+			try
 			{
-				return NotFound();
+				var category = await _categoryService.GetAsync(id, ct);
+
+				if (category == null)
+				{
+					return NotFound();
+				}
+
+				await _categoryService.DeleteAsync(id, ct);
+
+				return Ok();
 			}
-
-			await _categoryService.DeleteAsync(id);
-
-			return Ok();
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 	}
 }

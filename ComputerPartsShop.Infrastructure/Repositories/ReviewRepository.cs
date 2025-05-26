@@ -11,20 +11,23 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<Review>> GetListAsync()
+		public async Task<List<Review>> GetListAsync(CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			return _dbContext.ReviewList;
 		}
 
-		public async Task<Review> GetAsync(int id)
+		public async Task<Review> GetAsync(int id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var review = _dbContext.ReviewList.FirstOrDefault(x => x.ID == id);
 
-			return review;
+			return review!;
 		}
 
-		public async Task<int> CreateAsync(Review request)
+		public async Task<int> CreateAsync(Review request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var last = _dbContext.ReviewList.LastOrDefault();
 
 			if (last == null)
@@ -41,8 +44,9 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<Review> UpdateAsync(int id, Review request)
+		public async Task<Review> UpdateAsync(int id, Review request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var review = _dbContext.ReviewList.FirstOrDefault(x => x.ID == id);
 
 			if (review != null)
@@ -53,11 +57,12 @@ namespace ComputerPartsShop.Infrastructure
 				review.Description = request.Description;
 			}
 
-			return review;
+			return review!;
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var review = _dbContext.ReviewList.FirstOrDefault(x => x.ID == id);
 
 			if (review != null)

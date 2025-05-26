@@ -17,29 +17,29 @@ namespace ComputerPartsShop.Services
 			_productRepository = productRepository;
 		}
 
-		public async Task<List<ReviewResponse>> GetListAsync()
+		public async Task<List<ReviewResponse>> GetListAsync(CancellationToken ct)
 		{
-			var reviewList = await _reviewRepository.GetListAsync();
+			var reviewList = await _reviewRepository.GetListAsync(ct);
 
-			return reviewList.Select(r => new ReviewResponse(r.ID, r.Customer.Username, r.Product.Name, r.Rating, r.Description)).ToList();
+			return reviewList.Select(r => new ReviewResponse(r.ID, r.Customer?.Username, r.Product.Name, r.Rating, r.Description)).ToList();
 		}
 
-		public async Task<ReviewResponse> GetAsync(int id)
+		public async Task<ReviewResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var review = await _reviewRepository.GetAsync(id);
+			var review = await _reviewRepository.GetAsync(id, ct);
 
-			return review == null ? null! : new ReviewResponse(id, review.Customer.Username, review.Product.Name, review.Rating, review.Description);
+			return review == null ? null! : new ReviewResponse(id, review.Customer?.Username, review.Product.Name, review.Rating, review.Description);
 		}
 
-		public async Task<ReviewResponse> CreateAsync(ReviewRequest review)
+		public async Task<ReviewResponse> CreateAsync(ReviewRequest entity, CancellationToken ct)
 		{
 			Review newReview;
 			Customer? customer = null;
-			var product = await _productRepository.GetAsync(review.ProductID);
+			var product = await _productRepository.GetAsync(entity.ProductID, ct);
 
-			if (!string.IsNullOrWhiteSpace(review.Username))
+			if (!string.IsNullOrWhiteSpace(entity.Username))
 			{
-				customer = await _customerRepository.GetByUsernameOrEmailAsync(review.Username);
+				customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username, ct);
 			}
 
 			if (customer == null)
@@ -48,8 +48,8 @@ namespace ComputerPartsShop.Services
 				{
 					ProductID = product.ID,
 					Product = product,
-					Rating = review.Rating,
-					Description = review.Description,
+					Rating = entity.Rating,
+					Description = entity.Description,
 				};
 			}
 
@@ -61,24 +61,24 @@ namespace ComputerPartsShop.Services
 					Customer = customer,
 					ProductID = product.ID,
 					Product = product,
-					Rating = review.Rating,
-					Description = review.Description,
+					Rating = entity.Rating,
+					Description = entity.Description,
 				};
 			}
 
-			var reviewID = await _reviewRepository.CreateAsync(newReview);
-			return new ReviewResponse(reviewID, review.Username, product.Name, review.Rating, review.Description);
+			var reviewID = await _reviewRepository.CreateAsync(newReview, ct);
+			return new ReviewResponse(reviewID, entity.Username, product.Name, entity.Rating, entity.Description);
 		}
 
-		public async Task<ReviewResponse> UpdateAsync(int id, ReviewRequest updatedReview)
+		public async Task<ReviewResponse> UpdateAsync(int id, ReviewRequest entity, CancellationToken ct)
 		{
 			Review review;
 			Customer? customer = null;
-			var product = await _productRepository.GetAsync(updatedReview.ProductID);
+			var product = await _productRepository.GetAsync(entity.ProductID, ct);
 
-			if (!string.IsNullOrWhiteSpace(updatedReview.Username))
+			if (!string.IsNullOrWhiteSpace(entity.Username))
 			{
-				customer = await _customerRepository.GetByUsernameOrEmailAsync(updatedReview.Username);
+				customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username, ct);
 			}
 
 			if (customer == null)
@@ -87,8 +87,8 @@ namespace ComputerPartsShop.Services
 				{
 					ProductID = product.ID,
 					Product = product,
-					Rating = updatedReview.Rating,
-					Description = updatedReview.Description,
+					Rating = entity.Rating,
+					Description = entity.Description,
 				};
 			}
 
@@ -100,19 +100,19 @@ namespace ComputerPartsShop.Services
 					Customer = customer,
 					ProductID = product.ID,
 					Product = product,
-					Rating = updatedReview.Rating,
-					Description = updatedReview.Description,
+					Rating = entity.Rating,
+					Description = entity.Description,
 				};
 			}
 
-			await _reviewRepository.UpdateAsync(id, review);
+			await _reviewRepository.UpdateAsync(id, review, ct);
 
-			return new ReviewResponse(id, updatedReview.Username, product.Name, updatedReview.Rating, updatedReview.Description);
+			return new ReviewResponse(id, entity.Username, product.Name, entity.Rating, entity.Description);
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
-			await _reviewRepository.DeleteAsync(id);
+			await _reviewRepository.DeleteAsync(id, ct);
 		}
 	}
 }

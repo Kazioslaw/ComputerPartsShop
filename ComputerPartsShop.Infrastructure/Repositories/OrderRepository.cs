@@ -12,20 +12,23 @@ namespace ComputerPartsShop.Infrastructure
 		}
 
 
-		public async Task<List<Order>> GetListAsync()
+		public async Task<List<Order>> GetListAsync(CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			return _dbContext.OrderList;
 		}
 
-		public async Task<Order> GetAsync(int id)
+		public async Task<Order> GetAsync(int id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var order = _dbContext.OrderList.FirstOrDefault(x => x.ID == id);
 
-			return order;
+			return order!;
 		}
 
-		public async Task<int> CreateAsync(Order request)
+		public async Task<int> CreateAsync(Order request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var last = _dbContext.OrderList.OrderBy(x => x.ID).LastOrDefault();
 
 			if (last == null)
@@ -42,8 +45,9 @@ namespace ComputerPartsShop.Infrastructure
 			return request.ID;
 		}
 
-		public async Task<Order> UpdateAsync(int id, Order request)
+		public async Task<Order> UpdateAsync(int id, Order request, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var order = _dbContext.OrderList.FirstOrDefault(x => x.ID == id);
 
 			if (order != null)
@@ -58,11 +62,12 @@ namespace ComputerPartsShop.Infrastructure
 				order.Payments = request.Payments;
 			}
 
-			return order;
+			return order!;
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
+			await Task.Delay(500, ct);
 			var order = _dbContext.OrderList.FirstOrDefault(x => x.ID == id);
 
 			if (order != null)

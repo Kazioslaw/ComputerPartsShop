@@ -16,63 +16,97 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<CustomerResponse>>> GetCustomerListAsync()
+		public async Task<ActionResult<List<CustomerResponse>>> GetCustomerListAsync(CancellationToken ct)
 		{
-			var customerList = await _customerService.GetListAsync();
+			try
+			{
+				var customerList = await _customerService.GetListAsync(ct);
 
-			return Ok(customerList);
+				return Ok(customerList);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpGet("{id:guid}")]
-		public async Task<ActionResult<DetailedCustomerResponse>> GetCustomerAsync(Guid id)
+		public async Task<ActionResult<DetailedCustomerResponse>> GetCustomerAsync(Guid id, CancellationToken ct)
 		{
-			var customer = await _customerService.GetAsync(id);
-
-			if (customer == null)
+			try
 			{
-				return NotFound();
-			}
+				var customer = await _customerService.GetAsync(id, ct);
 
-			return Ok(customer);
+				if (customer == null)
+				{
+					return NotFound();
+				}
+
+				return Ok(customer);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<CustomerResponse>> CreateCustomerAsync(CustomerRequest request)
+		public async Task<ActionResult<CustomerResponse>> CreateCustomerAsync(CustomerRequest request, CancellationToken ct)
 		{
-			var customer = await _customerService.CreateAsync(request);
+			try
+			{
+				var customer = await _customerService.CreateAsync(request, ct);
 
-			return CreatedAtAction(nameof(CreateCustomerAsync), customer);
+				return CreatedAtAction(nameof(CreateCustomerAsync), customer);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPut("{id:guid}")]
-		public async Task<ActionResult<CustomerResponse>> UpdateCustomerAsync(Guid id, CustomerRequest request)
+		public async Task<ActionResult<CustomerResponse>> UpdateCustomerAsync(Guid id, CustomerRequest request, CancellationToken ct)
 		{
-			var customer = await _customerService.GetAsync(id);
-
-			if (customer == null)
+			try
 			{
-				return NotFound();
+				var customer = await _customerService.GetAsync(id, ct);
+
+				if (customer == null)
+				{
+					return NotFound();
+				}
+
+				var updatedCustomer = await _customerService.UpdateAsync(id, request, ct);
+
+				return Ok(updatedCustomer);
 			}
-
-			var updatedCustomer = await _customerService.UpdateAsync(id, request);
-
-			return Ok(updatedCustomer);
-
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpDelete("{id:guid}")]
-		public async Task<ActionResult> DeleteCustomerAsync(Guid id)
+		public async Task<ActionResult> DeleteCustomerAsync(Guid id, CancellationToken ct)
 		{
-			var customer = await _customerService.GetAsync(id);
-
-			if (customer == null)
+			try
 			{
-				return NotFound();
+				var customer = await _customerService.GetAsync(id, ct);
+
+				if (customer == null)
+				{
+					return NotFound();
+				}
+
+				await _customerService.DeleteAsync(id, ct);
+
+				return Ok();
 			}
-
-			await _customerService.DeleteAsync(id);
-
-			return Ok();
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 	}
 }

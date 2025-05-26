@@ -15,65 +15,65 @@ namespace ComputerPartsShop.Services
 			_categoryRepository = categoryRepository;
 		}
 
-		public async Task<List<ProductResponse>> GetListAsync()
+		public async Task<List<ProductResponse>> GetListAsync(CancellationToken ct)
 		{
-			var productList = await _productRepository.GetListAsync();
+			var productList = await _productRepository.GetListAsync(ct);
 
 			return productList.Select(p => new ProductResponse(p.ID, p.Name, p.Description, p.UnitPrice, p.Stock, p.Category.Name, p.InternalCode)).ToList();
 		}
 
-		public async Task<ProductResponse> GetAsync(int id)
+		public async Task<ProductResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var product = await _productRepository.GetAsync(id);
+			var product = await _productRepository.GetAsync(id, ct);
 
 			return product == null ? null! :
 				new ProductResponse(product.ID, product.Name, product.Description, product.UnitPrice, product.Stock, product.Category.Name, product.InternalCode);
 		}
 
-		public async Task<ProductResponse> CreateAsync(ProductRequest product)
+		public async Task<ProductResponse> CreateAsync(ProductRequest entity, CancellationToken ct)
 		{
-			var category = await _categoryRepository.GetByNameAsync(product.CategoryName);
+			var category = await _categoryRepository.GetByNameAsync(entity.CategoryName, ct);
 
 			var newProduct = new Product()
 			{
-				Name = product.Name,
-				Description = product.Description,
-				UnitPrice = product.UnitPrice,
-				Stock = product.Stock,
+				Name = entity.Name,
+				Description = entity.Description,
+				UnitPrice = entity.UnitPrice,
+				Stock = entity.Stock,
 				CategoryID = category.ID,
 				Category = category,
-				InternalCode = product.InternalCode,
+				InternalCode = entity.InternalCode,
 			};
 
-			var productID = await _productRepository.CreateAsync(newProduct);
+			var productID = await _productRepository.CreateAsync(newProduct, ct);
 
-			return new ProductResponse(productID, product.Name, product.Description, product.UnitPrice, product.Stock, product.CategoryName, product.InternalCode);
+			return new ProductResponse(productID, entity.Name, entity.Description, entity.UnitPrice, entity.Stock, entity.CategoryName, entity.InternalCode);
 		}
 
-		public async Task<ProductResponse> UpdateAsync(int id, ProductRequest updatedProduct)
+		public async Task<ProductResponse> UpdateAsync(int id, ProductRequest entity, CancellationToken ct)
 		{
-			var category = await _categoryRepository.GetByNameAsync(updatedProduct.CategoryName);
+			var category = await _categoryRepository.GetByNameAsync(entity.CategoryName, ct);
 
 			var product = new Product()
 			{
-				Name = updatedProduct.Name,
-				Description = updatedProduct.Description,
-				UnitPrice = updatedProduct.UnitPrice,
-				Stock = updatedProduct.Stock,
+				Name = entity.Name,
+				Description = entity.Description,
+				UnitPrice = entity.UnitPrice,
+				Stock = entity.Stock,
 				CategoryID = category.ID,
 				Category = category,
-				InternalCode = updatedProduct.InternalCode,
+				InternalCode = entity.InternalCode,
 			};
 
-			await _productRepository.UpdateAsync(id, product);
+			await _productRepository.UpdateAsync(id, product, ct);
 
-			return new ProductResponse(id, updatedProduct.Name, updatedProduct.Description, updatedProduct.UnitPrice,
-				updatedProduct.Stock, updatedProduct.CategoryName, updatedProduct.InternalCode);
+			return new ProductResponse(id, entity.Name, entity.Description, entity.UnitPrice,
+				entity.Stock, entity.CategoryName, entity.InternalCode);
 		}
 
-		public async Task DeleteAsync(int id)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
-			await _productRepository.DeleteAsync(id);
+			await _productRepository.DeleteAsync(id, ct);
 		}
 	}
 }

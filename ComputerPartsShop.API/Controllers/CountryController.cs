@@ -16,63 +16,98 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<List<CountryResponse>>> GetCountryListAsync()
+		public async Task<ActionResult<List<CountryResponse>>> GetCountryListAsync(CancellationToken ct)
 		{
-			var countryList = await _countryService.GetListAsync();
+			try
+			{
+				var countryList = await _countryService.GetListAsync(ct);
 
-			return Ok(countryList);
+				return Ok(countryList);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<DetailedCountryResponse>> GetCountry(int id)
+		public async Task<ActionResult<DetailedCountryResponse>> GetCountry(int id, CancellationToken ct)
 		{
-			var country = await _countryService.GetAsync(id);
-
-			if (country == null)
+			try
 			{
-				return NotFound();
-			}
+				var country = await _countryService.GetAsync(id, ct);
 
-			return Ok(country);
+				if (country == null)
+				{
+					return NotFound();
+				}
+
+				return Ok(country);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<CountryResponse>> CreateCountryAsync(CountryRequest request)
+		public async Task<ActionResult<CountryResponse>> CreateCountryAsync(CountryRequest request, CancellationToken ct)
 		{
-			var country = await _countryService.CreateAsync(request);
+			try
+			{
+				var country = await _countryService.CreateAsync(request, ct);
 
-			return CreatedAtAction(nameof(CreateCountryAsync), country);
+				return CreatedAtAction(nameof(CreateCountryAsync), country);
+			}
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<CountryResponse>> UpdateCountryAsync(int id, CountryRequest request)
+		public async Task<ActionResult<CountryResponse>> UpdateCountryAsync(int id, CountryRequest request, CancellationToken ct)
 		{
-			var country = await _countryService.GetAsync(id);
-
-			if (country == null)
+			try
 			{
-				return NotFound();
+				var country = await _countryService.GetAsync(id, ct);
+
+				if (country == null)
+				{
+					return NotFound();
+				}
+
+				var updatedCountry = await _countryService.UpdateAsync(id, request, ct);
+
+				return Ok(updatedCountry);
 			}
-
-			var updatedCountry = await _countryService.UpdateAsync(id, request);
-
-			return Ok(updatedCountry);
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 
 		}
 
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteCountryAsync(int id)
+		public async Task<ActionResult> DeleteCountryAsync(int id, CancellationToken ct)
 		{
-			var country = await _countryService.GetAsync(id);
-
-			if (country == null)
+			try
 			{
-				return NotFound();
+				var country = await _countryService.GetAsync(id, ct);
+
+				if (country == null)
+				{
+					return NotFound();
+				}
+
+				await _countryService.DeleteAsync(id, ct);
+
+				return Ok(country);
 			}
-
-			await _countryService.DeleteAsync(id);
-
-			return Ok(country);
+			catch (OperationCanceledException)
+			{
+				return BadRequest();
+			}
 		}
 
 	}
