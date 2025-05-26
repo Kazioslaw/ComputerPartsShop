@@ -58,7 +58,7 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-				var product = _productService.GetAsync(request.ProductID, ct);
+				var product = _productService.GetAsync(request.ProductId, ct);
 
 				if (product == null)
 				{

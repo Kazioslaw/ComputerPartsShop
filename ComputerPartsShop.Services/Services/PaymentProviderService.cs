@@ -17,18 +17,19 @@ namespace ComputerPartsShop.Services
 		{
 			var paymentProviderList = await _providerRepository.GetListAsync(ct);
 
-			return paymentProviderList.Select(pp => new PaymentProviderResponse(pp.ID, pp.Name, pp.CustomerPayments.Select(x => x.ID).ToList())).ToList();
+			return paymentProviderList.Select(pp => new PaymentProviderResponse(pp.Id, pp.Name, pp.CustomerPayments.Select(x => x.Id).ToList())).ToList();
 		}
 
 		public async Task<DetailedPaymentProviderResponse> GetAsync(int id, CancellationToken ct)
 		{
 			var paymentProvider = await _providerRepository.GetAsync(id, ct);
 
-			var cps = paymentProvider.CustomerPayments;
+			var customerPaymentSystem = paymentProvider.CustomerPayments;
 
 			return paymentProvider == null ? null! :
-				new DetailedPaymentProviderResponse(paymentProvider.ID, paymentProvider.Name,
-				cps.Select(cps => new CustomerPaymentSystemResponse(cps.ID, cps.Customer.Username, cps.Customer.Email, cps.Provider.Name, cps.PaymentReference)).ToList());
+				new DetailedPaymentProviderResponse(paymentProvider.Id, paymentProvider.Name,
+				customerPaymentSystem.Select(customerPaymentSystem => new CustomerPaymentSystemResponse(customerPaymentSystem.Id, customerPaymentSystem.Customer.Username,
+				customerPaymentSystem.Customer.Email, customerPaymentSystem.Provider.Name, customerPaymentSystem.PaymentReference)).ToList());
 		}
 
 		public async Task<PaymentProviderResponse> CreateAsync(PaymentProviderRequest entity, CancellationToken ct)
@@ -38,9 +39,9 @@ namespace ComputerPartsShop.Services
 				Name = entity.Name
 			};
 
-			var paymentProviderID = await _providerRepository.CreateAsync(newPaymentProvider, ct);
+			var paymentProviderId = await _providerRepository.CreateAsync(newPaymentProvider, ct);
 
-			return new PaymentProviderResponse(paymentProviderID, entity.Name, new List<Guid>());
+			return new PaymentProviderResponse(paymentProviderId, entity.Name, new List<Guid>());
 		}
 
 		public async Task<PaymentProviderResponse> UpdateAsync(int id, PaymentProviderRequest entity, CancellationToken ct)

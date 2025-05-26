@@ -10,14 +10,14 @@ namespace ComputerPartsShop.API.Controllers
 	public class CustomerPaymentSystemController : ControllerBase
 	{
 
-		private readonly ICustomerPaymentSystemService _cpsService;
+		private readonly ICustomerPaymentSystemService _customerPaymentSystemService;
 		private readonly IPaymentProviderRepository _providerRepository;
 		private readonly ICustomerRepository _customerRepository;
 
-		public CustomerPaymentSystemController(ICustomerPaymentSystemService cpsService,
+		public CustomerPaymentSystemController(ICustomerPaymentSystemService customerPaymentSystemService,
 			IPaymentProviderRepository providerRepository, ICustomerRepository customerRepository)
 		{
-			_cpsService = cpsService;
+			_customerPaymentSystemService = customerPaymentSystemService;
 			_providerRepository = providerRepository;
 			_customerRepository = customerRepository;
 		}
@@ -27,9 +27,9 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-				var cpsList = await _cpsService.GetListAsync(ct);
+				var customerPaymentSystemList = await _customerPaymentSystemService.GetListAsync(ct);
 
-				return Ok(cpsList);
+				return Ok(customerPaymentSystemList);
 			}
 			catch (OperationCanceledException)
 			{
@@ -42,14 +42,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-				var cps = await _cpsService.GetAsync(id, ct);
+				var customerPaymentSystem = await _customerPaymentSystemService.GetAsync(id, ct);
 
-				if (cps == null)
+				if (customerPaymentSystem == null)
 				{
 					return NotFound();
 				}
 
-				return Ok(cps);
+				return Ok(customerPaymentSystem);
 			}
 			catch (OperationCanceledException)
 			{
@@ -80,9 +80,9 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest();
 				}
 
-				var cps = await _cpsService.CreateAsync(request, ct);
+				var customerPaymentSystem = await _customerPaymentSystemService.CreateAsync(request, ct);
 
-				return CreatedAtAction(nameof(CreateCustomerPaymentSystemAsync), cps);
+				return CreatedAtAction(nameof(CreateCustomerPaymentSystemAsync), customerPaymentSystem);
 			}
 			catch (OperationCanceledException)
 			{
@@ -95,7 +95,7 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-				var cps = await _cpsService.GetAsync(id, ct);
+				var customerPaymentSystem = await _customerPaymentSystemService.GetAsync(id, ct);
 				var payment = await _providerRepository.GetByNameAsync(request.ProviderName, ct);
 				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
 
@@ -110,14 +110,14 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest();
 				}
 
-				if (cps == null)
+				if (customerPaymentSystem == null)
 				{
 					return NotFound();
 				}
 
-				var cpsUpdated = await _cpsService.UpdateAsync(id, request, ct);
+				var customerPaymentSystemUpdated = await _customerPaymentSystemService.UpdateAsync(id, request, ct);
 
-				return Ok(cpsUpdated);
+				return Ok(customerPaymentSystemUpdated);
 			}
 			catch (OperationCanceledException)
 			{
@@ -130,14 +130,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-				var cps = await _cpsService.GetAsync(id, ct);
+				var customerPaymentSystem = await _customerPaymentSystemService.GetAsync(id, ct);
 
-				if (cps == null)
+				if (customerPaymentSystem == null)
 				{
 					return NotFound();
 				}
 
-				await _cpsService.DeleteAsync(id, ct);
+				await _customerPaymentSystemService.DeleteAsync(id, ct);
 
 				return Ok();
 			}

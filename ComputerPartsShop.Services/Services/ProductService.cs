@@ -19,7 +19,7 @@ namespace ComputerPartsShop.Services
 		{
 			var productList = await _productRepository.GetListAsync(ct);
 
-			return productList.Select(p => new ProductResponse(p.ID, p.Name, p.Description, p.UnitPrice, p.Stock, p.Category.Name, p.InternalCode)).ToList();
+			return productList.Select(p => new ProductResponse(p.Id, p.Name, p.Description, p.UnitPrice, p.Stock, p.Category.Name, p.InternalCode)).ToList();
 		}
 
 		public async Task<ProductResponse> GetAsync(int id, CancellationToken ct)
@@ -27,7 +27,7 @@ namespace ComputerPartsShop.Services
 			var product = await _productRepository.GetAsync(id, ct);
 
 			return product == null ? null! :
-				new ProductResponse(product.ID, product.Name, product.Description, product.UnitPrice, product.Stock, product.Category.Name, product.InternalCode);
+				new ProductResponse(product.Id, product.Name, product.Description, product.UnitPrice, product.Stock, product.Category.Name, product.InternalCode);
 		}
 
 		public async Task<ProductResponse> CreateAsync(ProductRequest entity, CancellationToken ct)
@@ -40,14 +40,14 @@ namespace ComputerPartsShop.Services
 				Description = entity.Description,
 				UnitPrice = entity.UnitPrice,
 				Stock = entity.Stock,
-				CategoryID = category.ID,
+				CategoryId = category.Id,
 				Category = category,
 				InternalCode = entity.InternalCode,
 			};
 
-			var productID = await _productRepository.CreateAsync(newProduct, ct);
+			var productId = await _productRepository.CreateAsync(newProduct, ct);
 
-			return new ProductResponse(productID, entity.Name, entity.Description, entity.UnitPrice, entity.Stock, entity.CategoryName, entity.InternalCode);
+			return new ProductResponse(productId, entity.Name, entity.Description, entity.UnitPrice, entity.Stock, entity.CategoryName, entity.InternalCode);
 		}
 
 		public async Task<ProductResponse> UpdateAsync(int id, ProductRequest entity, CancellationToken ct)
@@ -60,7 +60,7 @@ namespace ComputerPartsShop.Services
 				Description = entity.Description,
 				UnitPrice = entity.UnitPrice,
 				Stock = entity.Stock,
-				CategoryID = category.ID,
+				CategoryId = category.Id,
 				Category = category,
 				InternalCode = entity.InternalCode,
 			};

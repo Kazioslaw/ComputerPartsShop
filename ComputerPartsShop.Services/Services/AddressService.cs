@@ -21,14 +21,14 @@ namespace ComputerPartsShop.Services
 		{
 			var addressList = await _addressRepository.GetListAsync(ct);
 
-			return addressList.Select(a => new AddressResponse(a.ID, a.Street, a.City, a.Region, a.ZipCode, a.Country.Alpha3)).ToList();
+			return addressList.Select(a => new AddressResponse(a.Id, a.Street, a.City, a.Region, a.ZipCode, a.Country.Alpha3)).ToList();
 		}
 
 		public async Task<AddressResponse> GetAsync(Guid id, CancellationToken ct)
 		{
 			var address = await _addressRepository.GetAsync(id, ct);
 
-			return address == null ? null! : new AddressResponse(address.ID, address.Street, address.City, address.Region, address.ZipCode, address.Country.Alpha3);
+			return address == null ? null! : new AddressResponse(address.Id, address.Street, address.City, address.Region, address.ZipCode, address.Country.Alpha3);
 		}
 
 		public async Task<AddressResponse> CreateAsync(AddressRequest entity, CancellationToken ct)
@@ -41,13 +41,13 @@ namespace ComputerPartsShop.Services
 				City = entity.City,
 				Region = entity.Region,
 				ZipCode = entity.ZipCode,
-				CountryID = country.ID,
+				CountryId = country.Id,
 				Country = country
 			};
 
-			var createdAddressID = await _addressRepository.CreateAsync(newAddres, ct);
+			var createdAddressId = await _addressRepository.CreateAsync(newAddres, ct);
 
-			return new AddressResponse(createdAddressID, entity.Street, entity.City, entity.Region, entity.ZipCode, entity.Country3Code);
+			return new AddressResponse(createdAddressId, entity.Street, entity.City, entity.Region, entity.ZipCode, entity.Country3Code);
 		}
 
 		public async Task<AddressResponse> UpdateAsync(Guid id, AddressRequest entity, CancellationToken ct)
@@ -60,7 +60,7 @@ namespace ComputerPartsShop.Services
 				City = entity.City,
 				Region = entity.Region,
 				ZipCode = entity.ZipCode,
-				CountryID = country.ID,
+				CountryId = country.Id,
 				Country = country
 			};
 

@@ -20,7 +20,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<Review> GetAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var review = _dbContext.ReviewList.FirstOrDefault(x => x.ID == id);
+			var review = _dbContext.ReviewList.FirstOrDefault(x => x.Id == id);
 
 			return review!;
 		}
@@ -32,27 +32,27 @@ namespace ComputerPartsShop.Infrastructure
 
 			if (last == null)
 			{
-				request.ID = 1;
+				request.Id = 1;
 			}
 			else
 			{
-				request.ID = last.ID + 1;
+				request.Id = last.Id + 1;
 			}
 
 			_dbContext.ReviewList.Add(request);
 
-			return request.ID;
+			return request.Id;
 		}
 
 		public async Task<Review> UpdateAsync(int id, Review request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var review = _dbContext.ReviewList.FirstOrDefault(x => x.ID == id);
+			var review = _dbContext.ReviewList.FirstOrDefault(x => x.Id == id);
 
 			if (review != null)
 			{
-				review.CustomerID = request.CustomerID;
-				review.ProductID = request.ProductID;
+				review.CustomerId = request.CustomerId;
+				review.ProductId = request.ProductId;
 				review.Rating = request.Rating;
 				review.Description = request.Description;
 			}
@@ -63,7 +63,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var review = _dbContext.ReviewList.FirstOrDefault(x => x.ID == id);
+			var review = _dbContext.ReviewList.FirstOrDefault(x => x.Id == id);
 
 			if (review != null)
 			{

@@ -19,7 +19,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<Category> GetAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var category = _dbContext.CategoryList.FirstOrDefault(c => c.ID == id);
+			var category = _dbContext.CategoryList.FirstOrDefault(c => c.Id == id);
 
 			return category!;
 		}
@@ -35,26 +35,26 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<int> CreateAsync(Category request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var last = _dbContext.CategoryList.OrderBy(x => x.ID).LastOrDefault();
+			var last = _dbContext.CategoryList.OrderBy(x => x.Id).LastOrDefault();
 
 			if (last == null)
 			{
-				request.ID = 1;
+				request.Id = 1;
 			}
 			else
 			{
-				request.ID = last.ID + 1;
+				request.Id = last.Id + 1;
 			}
 
 			_dbContext.CategoryList.Add(request);
 
-			return request.ID;
+			return request.Id;
 		}
 
 		public async Task<Category> UpdateAsync(int id, Category request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var category = _dbContext.CategoryList.FirstOrDefault(c => c.ID == id);
+			var category = _dbContext.CategoryList.FirstOrDefault(c => c.Id == id);
 
 			if (category != null)
 			{
@@ -68,7 +68,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var category = _dbContext.CategoryList.FirstOrDefault(c => c.ID == id);
+			var category = _dbContext.CategoryList.FirstOrDefault(c => c.Id == id);
 
 			if (category != null)
 			{

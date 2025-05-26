@@ -20,7 +20,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<Country> GetAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var country = _dbContext.CountryList.FirstOrDefault(c => c.ID == id);
+			var country = _dbContext.CountryList.FirstOrDefault(c => c.Id == id);
 
 			return country!;
 		}
@@ -36,26 +36,26 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<int> CreateAsync(Country request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var last = _dbContext.CountryList.OrderBy(x => x.ID).LastOrDefault();
+			var last = _dbContext.CountryList.OrderBy(x => x.Id).LastOrDefault();
 
 			if (last == null)
 			{
-				request.ID = 1;
+				request.Id = 1;
 			}
 			else
 			{
-				request.ID = last.ID + 1;
+				request.Id = last.Id + 1;
 			}
 
 			_dbContext.CountryList.Add(request);
 
-			return request.ID;
+			return request.Id;
 		}
 
 		public async Task<Country> UpdateAsync(int id, Country request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var country = _dbContext.CountryList.FirstOrDefault(x => x.ID == id);
+			var country = _dbContext.CountryList.FirstOrDefault(x => x.Id == id);
 
 			if (country != null)
 			{
@@ -70,7 +70,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var country = _dbContext.CountryList.FirstOrDefault(x => x.ID == id);
+			var country = _dbContext.CountryList.FirstOrDefault(x => x.Id == id);
 
 			if (country != null)
 			{

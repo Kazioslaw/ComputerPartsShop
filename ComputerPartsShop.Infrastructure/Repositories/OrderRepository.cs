@@ -21,7 +21,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<Order> GetAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var order = _dbContext.OrderList.FirstOrDefault(x => x.ID == id);
+			var order = _dbContext.OrderList.FirstOrDefault(x => x.Id == id);
 
 			return order!;
 		}
@@ -29,30 +29,30 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<int> CreateAsync(Order request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var last = _dbContext.OrderList.OrderBy(x => x.ID).LastOrDefault();
+			var last = _dbContext.OrderList.OrderBy(x => x.Id).LastOrDefault();
 
 			if (last == null)
 			{
-				request.ID = 1;
+				request.Id = 1;
 			}
 			else
 			{
-				request.ID = last.ID + 1;
+				request.Id = last.Id + 1;
 			}
 
 			_dbContext.OrderList.Add(request);
 
-			return request.ID;
+			return request.Id;
 		}
 
 		public async Task<Order> UpdateAsync(int id, Order request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var order = _dbContext.OrderList.FirstOrDefault(x => x.ID == id);
+			var order = _dbContext.OrderList.FirstOrDefault(x => x.Id == id);
 
 			if (order != null)
 			{
-				order.CustomerID = request.CustomerID;
+				order.CustomerId = request.CustomerId;
 				order.OrdersProducts = request.OrdersProducts;
 				order.Total = request.Total;
 				order.DeliveryAddress = request.DeliveryAddress;
@@ -68,7 +68,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var order = _dbContext.OrderList.FirstOrDefault(x => x.ID == id);
+			var order = _dbContext.OrderList.FirstOrDefault(x => x.Id == id);
 
 			if (order != null)
 			{

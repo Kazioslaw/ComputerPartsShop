@@ -1,5 +1,5 @@
 ﻿namespace ComputerPartsShop.Domain.DTO
 {
-	public record PaymentProviderResponse(int ID, string Name, List<Guid> CustomerPaymentSystemIDList);
-	public record DetailedPaymentProviderResponse(int ID, string Name, List<CustomerPaymentSystemResponse> CustomerPaymentSystemList);
+	public record PaymentProviderResponse(int Id, string Name, List<Guid> CustomerPaymentSystemIdList);
+	public record DetailedPaymentProviderResponse(int Id, string Name, List<CustomerPaymentSystemResponse> CustomerPaymentSystemList);
 }

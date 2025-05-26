@@ -20,7 +20,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<Payment> GetAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.ID == id);
+			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.Id == id);
 
 			return payment!;
 		}
@@ -28,31 +28,31 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<int> CreateAsync(Payment request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var last = _dbContext.PaymentList.OrderBy(x => x.ID).FirstOrDefault();
+			var last = _dbContext.PaymentList.OrderBy(x => x.Id).FirstOrDefault();
 
 			if (last == null)
 			{
-				request.ID = 1;
+				request.Id = 1;
 			}
 			else
 			{
-				request.ID = last.ID + 1;
+				request.Id = last.Id + 1;
 			}
 
 			_dbContext.PaymentList.Add(request);
 
-			return request.ID;
+			return request.Id;
 		}
 
 		public async Task<Payment> UpdateAsync(int id, Payment request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.ID == id);
+			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.Id == id);
 
 			if (payment != null)
 			{
-				payment.CustomerPaymentSystemID = request.CustomerPaymentSystemID;
-				payment.OrderID = request.OrderID;
+				payment.CustomerPaymentSystemId = request.CustomerPaymentSystemId;
+				payment.OrderId = request.OrderId;
 				payment.Total = request.Total;
 				payment.Method = request.Method;
 				payment.Status = request.Status;
@@ -66,7 +66,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.ID == id);
+			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.Id == id);
 
 			if (payment != null)
 			{

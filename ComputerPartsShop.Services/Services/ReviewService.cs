@@ -21,7 +21,7 @@ namespace ComputerPartsShop.Services
 		{
 			var reviewList = await _reviewRepository.GetListAsync(ct);
 
-			return reviewList.Select(r => new ReviewResponse(r.ID, r.Customer?.Username, r.Product.Name, r.Rating, r.Description)).ToList();
+			return reviewList.Select(r => new ReviewResponse(r.Id, r.Customer?.Username, r.Product.Name, r.Rating, r.Description)).ToList();
 		}
 
 		public async Task<ReviewResponse> GetAsync(int id, CancellationToken ct)
@@ -35,7 +35,7 @@ namespace ComputerPartsShop.Services
 		{
 			Review newReview;
 			Customer? customer = null;
-			var product = await _productRepository.GetAsync(entity.ProductID, ct);
+			var product = await _productRepository.GetAsync(entity.ProductId, ct);
 
 			if (!string.IsNullOrWhiteSpace(entity.Username))
 			{
@@ -46,7 +46,7 @@ namespace ComputerPartsShop.Services
 			{
 				newReview = new()
 				{
-					ProductID = product.ID,
+					ProductId = product.Id,
 					Product = product,
 					Rating = entity.Rating,
 					Description = entity.Description,
@@ -57,24 +57,24 @@ namespace ComputerPartsShop.Services
 			{
 				newReview = new()
 				{
-					CustomerID = customer.ID,
+					CustomerId = customer.Id,
 					Customer = customer,
-					ProductID = product.ID,
+					ProductId = product.Id,
 					Product = product,
 					Rating = entity.Rating,
 					Description = entity.Description,
 				};
 			}
 
-			var reviewID = await _reviewRepository.CreateAsync(newReview, ct);
-			return new ReviewResponse(reviewID, entity.Username, product.Name, entity.Rating, entity.Description);
+			var reviewId = await _reviewRepository.CreateAsync(newReview, ct);
+			return new ReviewResponse(reviewId, entity.Username, product.Name, entity.Rating, entity.Description);
 		}
 
 		public async Task<ReviewResponse> UpdateAsync(int id, ReviewRequest entity, CancellationToken ct)
 		{
 			Review review;
 			Customer? customer = null;
-			var product = await _productRepository.GetAsync(entity.ProductID, ct);
+			var product = await _productRepository.GetAsync(entity.ProductId, ct);
 
 			if (!string.IsNullOrWhiteSpace(entity.Username))
 			{
@@ -85,7 +85,7 @@ namespace ComputerPartsShop.Services
 			{
 				review = new()
 				{
-					ProductID = product.ID,
+					ProductId = product.Id,
 					Product = product,
 					Rating = entity.Rating,
 					Description = entity.Description,
@@ -96,9 +96,9 @@ namespace ComputerPartsShop.Services
 			{
 				review = new()
 				{
-					CustomerID = customer.ID,
+					CustomerId = customer.Id,
 					Customer = customer,
-					ProductID = product.ID,
+					ProductId = product.Id,
 					Product = product,
 					Rating = entity.Rating,
 					Description = entity.Description,

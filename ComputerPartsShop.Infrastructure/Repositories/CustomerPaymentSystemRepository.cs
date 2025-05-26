@@ -20,44 +20,44 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<CustomerPaymentSystem> GetAsync(Guid id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var cps = _dbContext.CustomerPaymentSystemList.FirstOrDefault(x => x.ID == id);
+			var customerPaymentSystem = _dbContext.CustomerPaymentSystemList.FirstOrDefault(x => x.Id == id);
 
-			return cps!;
+			return customerPaymentSystem!;
 		}
 
 		public async Task<Guid> CreateAsync(CustomerPaymentSystem request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			request.ID = Guid.NewGuid();
+			request.Id = Guid.NewGuid();
 
 			_dbContext.CustomerPaymentSystemList.Add(request);
 
-			return request.ID;
+			return request.Id;
 		}
 
 		public async Task<CustomerPaymentSystem> UpdateAsync(Guid id, CustomerPaymentSystem request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var cps = _dbContext.CustomerPaymentSystemList.FirstOrDefault(x => x.ID == id);
+			var customerPaymentSystem = _dbContext.CustomerPaymentSystemList.FirstOrDefault(x => x.Id == id);
 
-			if (cps != null)
+			if (customerPaymentSystem != null)
 			{
-				cps.CustomerID = request.CustomerID;
-				cps.ProviderID = request.ProviderID;
-				cps.PaymentReference = request.PaymentReference;
+				customerPaymentSystem.CustomerId = request.CustomerId;
+				customerPaymentSystem.ProviderId = request.ProviderId;
+				customerPaymentSystem.PaymentReference = request.PaymentReference;
 			}
 
-			return cps!;
+			return customerPaymentSystem!;
 		}
 
 		public async Task DeleteAsync(Guid id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var cps = _dbContext.CustomerPaymentSystemList.FirstOrDefault(x => x.ID == id);
+			var customerPaymentSystem = _dbContext.CustomerPaymentSystemList.FirstOrDefault(x => x.Id == id);
 
-			if (cps != null)
+			if (customerPaymentSystem != null)
 			{
-				_dbContext.CustomerPaymentSystemList.Remove(cps);
+				_dbContext.CustomerPaymentSystemList.Remove(customerPaymentSystem);
 			}
 		}
 	}

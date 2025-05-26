@@ -20,7 +20,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<Customer> GetAsync(Guid id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.ID == id);
+			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.Id == id);
 
 			return customer!;
 		}
@@ -50,17 +50,17 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<Guid> CreateAsync(Customer request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			request.ID = Guid.NewGuid();
+			request.Id = Guid.NewGuid();
 
 			_dbContext.CustomerList.Add(request);
 
-			return request.ID;
+			return request.Id;
 		}
 
 		public async Task<Customer> UpdateAsync(Guid id, Customer request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.ID == id);
+			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.Id == id);
 
 			if (customer != null)
 			{
@@ -77,7 +77,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task DeleteAsync(Guid id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.ID == id);
+			var customer = _dbContext.CustomerList.FirstOrDefault(x => x.Id == id);
 
 			if (customer != null)
 			{

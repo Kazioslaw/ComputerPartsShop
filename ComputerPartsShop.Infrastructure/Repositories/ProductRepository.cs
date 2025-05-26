@@ -20,7 +20,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<Product> GetAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var product = _dbContext.ProductList.FirstOrDefault(x => x.ID == id);
+			var product = _dbContext.ProductList.FirstOrDefault(x => x.Id == id);
 
 			return product!;
 		}
@@ -28,26 +28,26 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<int> CreateAsync(Product request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var last = _dbContext.ProductList.OrderBy(x => x.ID).LastOrDefault();
+			var last = _dbContext.ProductList.OrderBy(x => x.Id).LastOrDefault();
 
 			if (last == null)
 			{
-				request.ID = 1;
+				request.Id = 1;
 			}
 			else
 			{
-				request.ID = last.ID + 1;
+				request.Id = last.Id + 1;
 			}
 
 			_dbContext.ProductList.Add(request);
 
-			return request.ID;
+			return request.Id;
 		}
 
 		public async Task<Product> UpdateAsync(int id, Product request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var product = _dbContext.ProductList.FirstOrDefault(x => x.ID == id);
+			var product = _dbContext.ProductList.FirstOrDefault(x => x.Id == id);
 
 			if (product != null)
 			{
@@ -55,7 +55,7 @@ namespace ComputerPartsShop.Infrastructure
 				product.Description = request.Description;
 				product.UnitPrice = request.UnitPrice;
 				product.Stock = request.Stock;
-				product.CategoryID = request.CategoryID;
+				product.CategoryId = request.CategoryId;
 				product.InternalCode = request.InternalCode;
 			}
 
@@ -65,7 +65,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var product = _dbContext.ProductList.FirstOrDefault(x => x.ID == id);
+			var product = _dbContext.ProductList.FirstOrDefault(x => x.Id == id);
 
 			if (product != null)
 			{

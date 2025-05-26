@@ -18,19 +18,19 @@ namespace ComputerPartsShop.Services
 		{
 			var paymentList = await _paymentRepository.GetListAsync(ct);
 
-			return paymentList.Select(p => new PaymentResponse(p.ID, p.CustomerPaymentSystemID, p.OrderID, p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt)).ToList();
+			return paymentList.Select(p => new PaymentResponse(p.Id, p.CustomerPaymentSystemId, p.OrderId, p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt)).ToList();
 		}
 
 		public async Task<DetailedPaymentResponse> GetAsync(int id, CancellationToken ct)
 		{
 			var payment = await _paymentRepository.GetAsync(id, ct);
 
-			return payment == null ? null! : new DetailedPaymentResponse(payment.ID,
-				new CustomerPaymentSystemResponse(payment.CustomerPaymentSystem.ID, payment.CustomerPaymentSystem.Customer.Username,
+			return payment == null ? null! : new DetailedPaymentResponse(payment.Id,
+				new CustomerPaymentSystemResponse(payment.CustomerPaymentSystem.Id, payment.CustomerPaymentSystem.Customer.Username,
 				payment.CustomerPaymentSystem.Customer.Email, payment.CustomerPaymentSystem.Provider.Name, payment.CustomerPaymentSystem.PaymentReference),
-				new OrderInPaymentResponse(payment.OrderID, payment.Order.Customer.Username, payment.Order.Customer.Email,
+				new OrderInPaymentResponse(payment.OrderId, payment.Order.Customer.Username, payment.Order.Customer.Email,
 				payment.Order.OrdersProducts.Select(x => new ProductInPaymentResponse(x.Product.Name, x.Quantity)).ToList(),
-				new AddressResponse(payment.Order.DeliveryAddress.ID, payment.Order.DeliveryAddress.Street, payment.Order.DeliveryAddress.City,
+				new AddressResponse(payment.Order.DeliveryAddress.Id, payment.Order.DeliveryAddress.Street, payment.Order.DeliveryAddress.City,
 				payment.Order.DeliveryAddress.Region, payment.Order.DeliveryAddress.ZipCode, payment.Order.DeliveryAddress.Country.Alpha3),
 				payment.Order.Status, payment.Order.OrderedAt, payment.Order.SendAt),
 				payment.Total, payment.Method, payment.Status, payment.PaymentStartAt, payment.PaidAt);
@@ -40,17 +40,17 @@ namespace ComputerPartsShop.Services
 		{
 			var newPayment = new Payment()
 			{
-				CustomerPaymentSystemID = entity.CustomerPaymentSystemID,
-				OrderID = entity.OrderID,
+				CustomerPaymentSystemId = entity.CustomerPaymentSystemId,
+				OrderId = entity.OrderId,
 				Total = entity.Total,
 				Method = entity.Method,
 				Status = "Pending",
 				PaymentStartAt = DateTime.Now
 			};
 
-			var paymentID = await _paymentRepository.CreateAsync(newPayment, ct);
+			var paymentId = await _paymentRepository.CreateAsync(newPayment, ct);
 
-			return new PaymentResponse(paymentID, entity.CustomerPaymentSystemID, entity.OrderID, entity.Total,
+			return new PaymentResponse(paymentId, entity.CustomerPaymentSystemId, entity.OrderId, entity.Total,
 				entity.Method, newPayment.Status, newPayment.PaymentStartAt, null);
 		}
 
@@ -58,8 +58,8 @@ namespace ComputerPartsShop.Services
 		{
 			Payment payment = await _paymentRepository.GetAsync(id, ct);
 
-			payment.CustomerPaymentSystemID = entity.CustomerPaymentSystemID;
-			payment.OrderID = entity.OrderID;
+			payment.CustomerPaymentSystemId = entity.CustomerPaymentSystemId;
+			payment.OrderId = entity.OrderId;
 			payment.Total = entity.Total;
 			payment.Method = entity.Method;
 			payment.Status = entity.Status!;
@@ -84,7 +84,7 @@ namespace ComputerPartsShop.Services
 
 			await _paymentRepository.UpdateAsync(id, payment, ct);
 
-			return new PaymentResponse(id, entity.CustomerPaymentSystemID, entity.OrderID, entity.Total, entity.Method,
+			return new PaymentResponse(id, entity.CustomerPaymentSystemId, entity.OrderId, entity.Total, entity.Method,
 				entity.Status!, entity.PaymentStartAt, entity.PaidAt);
 		}
 

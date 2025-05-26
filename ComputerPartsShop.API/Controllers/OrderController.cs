@@ -75,7 +75,7 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest();
 				}
 
-				var address = await _addressService.GetAsync(request.AddressID, ct);
+				var address = await _addressService.GetAsync(request.AddressId, ct);
 
 				if (address == null)
 				{

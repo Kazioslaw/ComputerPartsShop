@@ -17,7 +17,7 @@ namespace ComputerPartsShop.Services
 		{
 			var countryList = await _countryRepository.GetListAsync(ct);
 
-			return countryList.Select(c => new CountryResponse(c.ID, c.Alpha2, c.Alpha3, c.Name)).ToList();
+			return countryList.Select(c => new CountryResponse(c.Id, c.Alpha2, c.Alpha3, c.Name)).ToList();
 
 
 		}
@@ -27,8 +27,8 @@ namespace ComputerPartsShop.Services
 			var country = await _countryRepository.GetAsync(id, ct);
 			var addressList = country.Addresses;
 
-			return country == null ? null! : new DetailedCountryResponse(country.ID, country.Alpha2, country.Alpha3, country.Name,
-				addressList.Select(a => new AddressInCountryResponse(a.ID, a.Street, a.City, a.Region, a.ZipCode)).ToList());
+			return country == null ? null! : new DetailedCountryResponse(country.Id, country.Alpha2, country.Alpha3, country.Name,
+				addressList.Select(a => new AddressInCountryResponse(a.Id, a.Street, a.City, a.Region, a.ZipCode)).ToList());
 		}
 
 		public async Task<CountryResponse> CreateAsync(CountryRequest entity, CancellationToken ct)
@@ -40,8 +40,8 @@ namespace ComputerPartsShop.Services
 				Name = entity.Name,
 			};
 
-			var createdCountryID = await _countryRepository.CreateAsync(newCountry, ct);
-			return new CountryResponse(createdCountryID, entity.Alpha2, entity.Alpha3, entity.Name);
+			var createdCountryId = await _countryRepository.CreateAsync(newCountry, ct);
+			return new CountryResponse(createdCountryId, entity.Alpha2, entity.Alpha3, entity.Name);
 		}
 
 		public async Task<CountryResponse> UpdateAsync(int id, CountryRequest entity, CancellationToken ct)

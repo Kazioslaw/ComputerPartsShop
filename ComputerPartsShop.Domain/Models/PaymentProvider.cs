@@ -2,7 +2,7 @@
 {
 	public class PaymentProvider
 	{
-		public int ID { get; set; }
+		public int Id { get; set; }
 		public string Name { get; set; }
 		public List<CustomerPaymentSystem> CustomerPayments { get; set; }
 	}

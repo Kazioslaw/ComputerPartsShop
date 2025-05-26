@@ -20,7 +20,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<PaymentProvider> GetAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.ID == id);
+			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Id == id);
 
 			return paymentProvider!;
 		}
@@ -36,26 +36,26 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<int> CreateAsync(PaymentProvider request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var last = _dbContext.PaymentProviderList.OrderBy(x => x.ID).FirstOrDefault();
+			var last = _dbContext.PaymentProviderList.OrderBy(x => x.Id).FirstOrDefault();
 
 			if (last == null)
 			{
-				request.ID = 1;
+				request.Id = 1;
 			}
 			else
 			{
-				request.ID = last.ID + 1;
+				request.Id = last.Id + 1;
 			}
 
 			_dbContext.PaymentProviderList.Add(request);
 
-			return request.ID;
+			return request.Id;
 		}
 
 		public async Task<PaymentProvider> UpdateAsync(int id, PaymentProvider request, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.ID == id);
+			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Id == id);
 
 			if (paymentProvider != null)
 			{
@@ -68,7 +68,7 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
 			await Task.Delay(500, ct);
-			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.ID == id);
+			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Id == id);
 
 			if (paymentProvider != null)
 			{

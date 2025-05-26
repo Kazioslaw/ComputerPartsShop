@@ -17,20 +17,22 @@ namespace ComputerPartsShop.Services
 		{
 			var customerList = await _customerRepository.GetListAsync(ct);
 
-			return customerList.Select(c => new CustomerResponse(c.ID, c.FirstName, c.LastName, c.Username, c.Email, c.PhoneNumber)).ToList();
+			return customerList.Select(c => new CustomerResponse(c.Id, c.FirstName, c.LastName, c.Username, c.Email, c.PhoneNumber)).ToList();
 		}
 
 		public async Task<DetailedCustomerResponse> GetAsync(Guid id, CancellationToken ct)
 		{
 			var customer = await _customerRepository.GetAsync(id, ct);
 			var addressLsit = customer.CustomersAddresses.Select(c => c.Address);
-			var cpsList = customer.PaymentInfoList;
+			var customerPaymentSystemList = customer.PaymentInfoList;
 			var reviewList = customer.Reviews;
 
-			return customer == null ? null! : new DetailedCustomerResponse(customer.ID, customer.FirstName, customer.LastName, customer.Username, customer.Email, customer.PhoneNumber,
-				addressLsit.Select(a => new AddressResponse(a.ID, a.Street, a.City, a.Region, a.ZipCode, a.Country.Alpha3)).ToList(),
-				cpsList.Select(cps => new PaymentInfoInCustomerResponse(cps.ID, cps.Provider.Name, cps.PaymentReference)).ToList(),
-				reviewList!.Select(r => new ReviewInCustomerResponse(r.ID, r.Product.Name, r.Rating, r.Description)).ToList() ?? new List<ReviewInCustomerResponse>());
+			return customer == null ? null! : new DetailedCustomerResponse(customer.Id, customer.FirstName, customer.LastName,
+				customer.Username, customer.Email, customer.PhoneNumber,
+				addressLsit.Select(a => new AddressResponse(a.Id, a.Street, a.City, a.Region, a.ZipCode, a.Country.Alpha3)).ToList(),
+				customerPaymentSystemList.Select(customerPaymentSystem => new PaymentInfoInCustomerResponse(customerPaymentSystem.Id,
+				customerPaymentSystem.Provider.Name, customerPaymentSystem.PaymentReference)).ToList(),
+				reviewList!.Select(r => new ReviewInCustomerResponse(r.Id, r.Product.Name, r.Rating, r.Description)).ToList() ?? new List<ReviewInCustomerResponse>());
 		}
 
 		public async Task<CustomerResponse> CreateAsync(CustomerRequest entity, CancellationToken ct)
@@ -44,9 +46,9 @@ namespace ComputerPartsShop.Services
 				PhoneNumber = entity.PhoneNumber,
 			};
 
-			var createdCustomerID = await _customerRepository.CreateAsync(newCustomer, ct);
+			var createdCustomerId = await _customerRepository.CreateAsync(newCustomer, ct);
 
-			return new CustomerResponse(createdCustomerID, entity.FirstName, entity.LastName, entity.Username, entity.Email, entity.PhoneNumber);
+			return new CustomerResponse(createdCustomerId, entity.FirstName, entity.LastName, entity.Username, entity.Email, entity.PhoneNumber);
 		}
 
 		public async Task<CustomerResponse> UpdateAsync(Guid id, CustomerRequest entity, CancellationToken ct)

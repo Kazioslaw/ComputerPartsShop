@@ -17,7 +17,7 @@ namespace ComputerPartsShop.Services
 		{
 			var categoryList = await _categoryRepository.GetListAsync(ct);
 
-			return categoryList.Select(c => new CategoryResponse(c.ID, c.Name, c.Description)).ToList();
+			return categoryList.Select(c => new CategoryResponse(c.Id, c.Name, c.Description)).ToList();
 		}
 
 		public async Task<CategoryResponse> GetAsync(int id, CancellationToken ct)
@@ -35,9 +35,9 @@ namespace ComputerPartsShop.Services
 				Description = entity.Description,
 			};
 
-			var createdCategoryID = await _categoryRepository.CreateAsync(newCategory, ct);
+			var createdCategoryId = await _categoryRepository.CreateAsync(newCategory, ct);
 
-			return new CategoryResponse(createdCategoryID, entity.Name, entity.Description);
+			return new CategoryResponse(createdCategoryId, entity.Name, entity.Description);
 		}
 
 		public async Task<CategoryResponse> UpdateAsync(int id, CategoryRequest entity, CancellationToken ct)
