@@ -58,7 +58,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (review == null)
 				{
-					return NotFound();
+					return NotFound("Review not found");
 				}
 
 				return Ok(review);
@@ -88,12 +88,12 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (product == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid product ID");
 				}
 
 				var review = await _reviewService.CreateAsync(request, ct);
 
-				return CreatedAtAction(nameof(CreateReviewAsync), review);
+				return Created(nameof(CreateReviewAsync), review);
 			}
 			catch (OperationCanceledException)
 			{
@@ -121,14 +121,14 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (review == null)
 				{
-					return NotFound();
+					return NotFound("Review not found");
 				}
 
 				var product = await _productService.GetAsync(request.ProductId, ct);
 
 				if (product == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid product ID");
 				}
 
 				var updatedReview = await _reviewService.UpdateAsync(id, request, ct);
@@ -159,7 +159,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (review == null)
 				{
-					return NotFound();
+					return NotFound("Review not found");
 				}
 
 				await _reviewService.DeleteAsync(id, ct);

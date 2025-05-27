@@ -63,7 +63,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (customerPaymentSystem == null)
 				{
-					return NotFound();
+					return NotFound("Customer payment system not found");
 				}
 
 				return Ok(customerPaymentSystem);
@@ -90,25 +90,25 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
 				{
-					return BadRequest();
+					return BadRequest("Invalid or missing username or email");
 				}
 
-				var payment = await _providerRepository.GetByNameAsync(request.ProviderName, ct);
+				var paymentProvider = await _providerRepository.GetByNameAsync(request.ProviderName, ct);
 				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
 
-				if (payment == null)
+				if (paymentProvider == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid provider name");
 				}
 
 				if (customer == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid or missing username or email");
 				}
 
 				var customerPaymentSystem = await _customerPaymentSystemService.CreateAsync(request, ct);
 
-				return CreatedAtAction(nameof(CreateCustomerPaymentSystemAsync), customerPaymentSystem);
+				return Created(nameof(CreateCustomerPaymentSystemAsync), customerPaymentSystem);
 			}
 			catch (OperationCanceledException)
 			{
@@ -134,26 +134,26 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
 				{
-					return BadRequest();
+					return BadRequest("Invalid or missing username or email");
 				}
 				var customerPaymentSystem = await _customerPaymentSystemService.GetAsync(id, ct);
-				var payment = await _providerRepository.GetByNameAsync(request.ProviderName, ct);
+				var paymentProvider = await _providerRepository.GetByNameAsync(request.ProviderName, ct);
 				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
 
-				if (payment == null)
+				if (paymentProvider == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid provider name");
 
 				}
 
 				if (customer == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid or missing username or email");
 				}
 
 				if (customerPaymentSystem == null)
 				{
-					return NotFound();
+					return NotFound("Customer payment system not found");
 				}
 
 				var customerPaymentSystemUpdated = await _customerPaymentSystemService.UpdateAsync(id, request, ct);
@@ -184,7 +184,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (customerPaymentSystem == null)
 				{
-					return NotFound();
+					return NotFound("Customer payment system not found");
 				}
 
 				await _customerPaymentSystemService.DeleteAsync(id, ct);

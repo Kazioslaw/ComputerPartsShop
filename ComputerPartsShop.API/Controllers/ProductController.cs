@@ -58,7 +58,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (product == null)
 				{
-					return NotFound();
+					return NotFound("Product not found");
 				}
 
 				return Ok(product);
@@ -88,12 +88,12 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (category == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid category name");
 				}
 
 				var product = await _productService.CreateAsync(request, ct);
 
-				return CreatedAtAction(nameof(CreateProductAsync), product);
+				return Created(nameof(CreateProductAsync), product);
 			}
 			catch (OperationCanceledException)
 			{
@@ -122,14 +122,14 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (product == null)
 				{
-					return NotFound();
+					return NotFound("Product not found");
 				}
 
 				var category = await _categoryRepository.GetByNameAsync(request.CategoryName, ct);
 
 				if (category == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid category name");
 				}
 
 				var updatedProduct = await _productService.UpdateAsync(id, request, ct);
@@ -160,7 +160,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (product == null)
 				{
-					return NotFound();
+					return NotFound("Product not found");
 				}
 
 				await _productService.DeleteAsync(id, ct);

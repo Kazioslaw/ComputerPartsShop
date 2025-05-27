@@ -81,12 +81,12 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (customerPaymentSystem == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid customer payment system ID");
 				}
 
 				var payment = await _paymentService.CreateAsync(request, ct);
 
-				return CreatedAtAction(nameof(CreatePaymentAsync), payment);
+				return Created(nameof(CreatePaymentAsync), payment);
 			}
 			catch (OperationCanceledException)
 			{
@@ -114,14 +114,14 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (payment == null)
 				{
-					return NotFound();
+					return NotFound("Payment not found");
 				}
 
 				var customerPaymentSystem = await _customerPaymentSystemService.GetAsync(request.CustomerPaymentSystemId, ct);
 
 				if (customerPaymentSystem == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid customer payment system ID");
 				}
 
 				var updatedPayment = await _paymentService.UpdateAsync(id, request, ct);
@@ -152,7 +152,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (payment == null)
 				{
-					return NotFound();
+					return NotFound("Payment not found");
 				}
 
 				await _paymentService.DeleteAsync(id, ct);

@@ -63,7 +63,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (order == null)
 				{
-					return NotFound();
+					return NotFound("Order not found");
 				}
 
 				return Ok(order);
@@ -90,27 +90,27 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
 				{
-					return BadRequest();
+					return BadRequest("Invalid or missing username or email");
 				}
 
 				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
 
 				if (customer == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid or missing username or email");
 				}
 
 				var address = await _addressService.GetAsync(request.AddressId, ct);
 
 				if (address == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid address ID");
 				}
 
 				var order = await _orderService.CreateAsync(request, ct);
 
 
-				return CreatedAtAction(nameof(CreateOrderAsync), order);
+				return Created(nameof(CreateOrderAsync), order);
 			}
 			catch (OperationCanceledException)
 			{
@@ -138,26 +138,26 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (order == null)
 				{
-					return NotFound();
+					return NotFound("Order not found");
 				}
 
 				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
 				{
-					return BadRequest();
+					return BadRequest("Invalid or missing username or email");
 				}
 
 				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
 
 				if (customer == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid or missing username or email");
 				}
 
 				var address = await _addressService.GetAsync(request.AddressId, ct);
 
 				if (address == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid address ID");
 				}
 
 
@@ -174,7 +174,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <summary>
 		/// Asynchronously deletes an order by its ID.
 		/// </summary>
-		/// <param name="id">Order ID</param>
+		/// <param name="ID">Order ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns confirmation of deletion</response>
 		/// <response code="404">Returns if the order was not found</response>
@@ -189,7 +189,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (order == null)
 				{
-					return NotFound();
+					return NotFound("Order not found");
 				}
 
 				await _orderService.DeleteAsync(id, ct);

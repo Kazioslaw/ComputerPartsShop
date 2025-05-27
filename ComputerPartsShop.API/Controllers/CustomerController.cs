@@ -55,7 +55,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (customer == null)
 				{
-					return NotFound();
+					return NotFound("Customer not found");
 				}
 
 				return Ok(customer);
@@ -82,7 +82,7 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				var customer = await _customerService.CreateAsync(request, ct);
 
-				return CreatedAtAction(nameof(CreateCustomerAsync), customer);
+				return Created(nameof(CreateCustomerAsync), customer);
 			}
 			catch (OperationCanceledException)
 			{
@@ -109,7 +109,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (customer == null)
 				{
-					return NotFound();
+					return NotFound("Customer not found");
 				}
 
 				var updatedCustomer = await _customerService.UpdateAsync(id, request, ct);
@@ -140,7 +140,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (customer == null)
 				{
-					return NotFound();
+					return NotFound("Customer not found");
 				}
 
 				await _customerService.DeleteAsync(id, ct);

@@ -55,7 +55,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (country == null)
 				{
-					return NotFound();
+					return NotFound("Country not found");
 				}
 
 				return Ok(country);
@@ -81,7 +81,7 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				var country = await _countryService.CreateAsync(request, ct);
 
-				return CreatedAtAction(nameof(CreateCountryAsync), country);
+				return Created(nameof(CreateCountryAsync), country);
 			}
 			catch (OperationCanceledException)
 			{
@@ -108,7 +108,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (country == null)
 				{
-					return NotFound();
+					return NotFound("Country not found");
 				}
 
 				var updatedCountry = await _countryService.UpdateAsync(id, request, ct);
@@ -140,7 +140,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (country == null)
 				{
-					return NotFound();
+					return NotFound("Country not found");
 				}
 
 				await _countryService.DeleteAsync(id, ct);

@@ -60,7 +60,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (address == null)
 				{
-					return NotFound();
+					return NotFound("Address not found");
 				}
 
 				return Ok(address);
@@ -88,26 +88,26 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
 				{
-					return BadRequest();
+					return BadRequest("Invalid or missing username or email");
 				}
 
 				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username ?? request.Email, ct);
 
 				if (customer == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid or missing username or email");
 				}
 
 				var country = await _countryRepository.GetByCountry3CodeAsync(request.Country3Code, ct);
 
 				if (country == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid country code");
 				}
 
 				var address = await _addressService.CreateAsync(request, ct);
 
-				return CreatedAtAction(nameof(CreateAddressAsync), address);
+				return Created(nameof(CreateAddressAsync), address);
 			}
 			catch (OperationCanceledException)
 			{
@@ -135,26 +135,26 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (address == null)
 				{
-					return NotFound();
+					return NotFound("Address not found");
 				}
 
 				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
 				{
-					return BadRequest();
+					return BadRequest("Invalid or missing username or email");
 				}
 
 				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username ?? request.Email, ct);
 
 				if (customer == null)
 				{
-					return BadRequest();
+					return BadRequest("Invalid or missing username or email");
 				}
 
 				var country = await _countryRepository.GetByCountry3CodeAsync(request.Country3Code, ct);
 
 				if (country == null)
 				{
-					return BadRequest();
+					return BadRequest("Country with that alpha3 code was not found");
 				}
 
 				var updatedAddress = await _addressService.UpdateAsync(id, request, ct);
@@ -186,7 +186,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (address == null)
 				{
-					return NotFound();
+					return NotFound("Address not found");
 				}
 
 				await _addressService.DeleteAsync(id, ct);

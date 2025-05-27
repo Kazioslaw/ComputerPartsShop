@@ -56,7 +56,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (paymentProvider == null)
 				{
-					return NotFound();
+					return NotFound("Payment provider not found");
 				}
 
 				return Ok(paymentProvider);
@@ -82,7 +82,7 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				var paymentProvider = await _ppService.CreateAsync(request, ct);
 
-				return CreatedAtAction(nameof(CreatePaymentProviderAsync), paymentProvider);
+				return Created(nameof(CreatePaymentProviderAsync), paymentProvider);
 			}
 			catch (OperationCanceledException)
 			{
@@ -109,7 +109,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (paymentProvider == null)
 				{
-					return NotFound();
+					return NotFound("Payment provider not found");
 				}
 
 				var updatedPaymentProvider = await _ppService.UpdateAsync(id, request, ct);
@@ -140,7 +140,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (paymentProvider == null)
 				{
-					return NotFound();
+					return NotFound("Payment provider not found");
 				}
 
 				await _ppService.DeleteAsync(id, ct);

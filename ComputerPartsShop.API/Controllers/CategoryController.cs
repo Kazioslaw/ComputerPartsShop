@@ -55,7 +55,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (category == null)
 				{
-					return NotFound();
+					return NotFound("Category not found");
 				}
 
 				return Ok(category);
@@ -81,7 +81,7 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				var category = await _categoryService.CreateAsync(request, ct);
 
-				return CreatedAtAction(nameof(CreateCategoryAsync), category);
+				return Created(nameof(CreateCategoryAsync), category);
 			}
 			catch (OperationCanceledException)
 			{
@@ -108,7 +108,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (category == null)
 				{
-					return NotFound();
+					return NotFound("Category not found");
 				}
 
 				var updatedCategory = await _categoryService.UpdateAsync(id, request, ct);
@@ -139,7 +139,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (category == null)
 				{
-					return NotFound();
+					return NotFound("Category not found");
 				}
 
 				await _categoryService.DeleteAsync(id, ct);
