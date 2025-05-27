@@ -15,6 +15,13 @@ namespace ComputerPartsShop.API.Controllers
 			_customerService = customerService;
 		}
 
+		/// <summary>
+		/// Asynchronously retrieves all customers.
+		/// </summary>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the list of customers</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>List of customers</returns>
 		[HttpGet]
 		public async Task<ActionResult<List<CustomerResponse>>> GetCustomerListAsync(CancellationToken ct)
 		{
@@ -30,6 +37,15 @@ namespace ComputerPartsShop.API.Controllers
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously retrieves an customer by its ID.
+		/// </summary>
+		/// <param name="id">Customer ID</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the customer</response>
+		/// <response code="404">Returns if the customer was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Customer</returns>
 		[HttpGet("{id:guid}")]
 		public async Task<ActionResult<DetailedCustomerResponse>> GetCustomerAsync(Guid id, CancellationToken ct)
 		{
@@ -50,6 +66,15 @@ namespace ComputerPartsShop.API.Controllers
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously retrieves an customer by its ID.
+		/// </summary>
+		/// <param name="id">Customer ID</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the customer</response>
+		/// <response code="404">Returns if the customer was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Customer</returns>
 		[HttpPost]
 		public async Task<ActionResult<CustomerResponse>> CreateCustomerAsync(CustomerRequest request, CancellationToken ct)
 		{
@@ -65,6 +90,16 @@ namespace ComputerPartsShop.API.Controllers
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously updates an customer by its ID.
+		/// </summary>
+		/// <param name="id">Customer ID</param>
+		/// <param name="request">Updated customer model</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the updated customer</response>
+		/// <response code="404">Returns if the customer was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Updated customer</returns>
 		[HttpPut("{id:guid}")]
 		public async Task<ActionResult<CustomerResponse>> UpdateCustomerAsync(Guid id, CustomerRequest request, CancellationToken ct)
 		{
@@ -87,6 +122,15 @@ namespace ComputerPartsShop.API.Controllers
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously deletes an customer by its ID.
+		/// </summary>
+		/// <param name="id">Customer ID</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="404">Returns if the customer was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:guid}")]
 		public async Task<ActionResult> DeleteCustomerAsync(Guid id, CancellationToken ct)
 		{

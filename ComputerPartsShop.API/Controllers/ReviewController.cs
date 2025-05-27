@@ -18,6 +18,13 @@ namespace ComputerPartsShop.API.Controllers
 			_productService = productService;
 		}
 
+		/// <summary>
+		/// Asynchronously retrieves all reviews.
+		/// </summary>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the list of reviews</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>List of reviews</returns>
 		[HttpGet]
 		public async Task<ActionResult<List<ReviewResponse>>> GetReviewListAsync(CancellationToken ct)
 		{
@@ -33,6 +40,15 @@ namespace ComputerPartsShop.API.Controllers
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously retrieves an review by its ID.
+		/// </summary>
+		/// <param name="id">Review ID</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the review</response>
+		/// <response code="404">Returns if the review was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Review</returns>
 		[HttpGet("{id:int}")]
 		public async Task<ActionResult<ReviewResponse>> GetReviewAsync(int id, CancellationToken ct)
 		{
@@ -53,12 +69,22 @@ namespace ComputerPartsShop.API.Controllers
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously creates a new review.
+		/// </summary>
+		/// <param name="request">Review model</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the created review</response>
+		/// <response code="400">Returns if the product id was invalid</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Created review</returns>
 		[HttpPost]
 		public async Task<ActionResult<ReviewResponse>> CreateReviewAsync(ReviewRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var product = _productService.GetAsync(request.ProductId, ct);
+				var product = await _productService.GetAsync(request.ProductId, ct);
+
 
 				if (product == null)
 				{
@@ -75,6 +101,17 @@ namespace ComputerPartsShop.API.Controllers
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously updates an review by its ID.
+		/// </summary>
+		/// <param name="id">Review ID</param>
+		/// <param name="request">Updated review model</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the updated review</response>
+		/// <response code="400">Returns if the product id was invalid</response>
+		/// <response code="404">Returns if the review was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Updated review</returns>
 		[HttpPut("{id:int}")]
 		public async Task<ActionResult<ReviewResponse>> UpdateReviewAsync(int id, ReviewRequest request, CancellationToken ct)
 		{
@@ -87,6 +124,13 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound();
 				}
 
+				var product = await _productService.GetAsync(request.ProductId, ct);
+
+				if (product == null)
+				{
+					return BadRequest();
+				}
+
 				var updatedReview = await _reviewService.UpdateAsync(id, request, ct);
 
 				return Ok(updatedReview);
@@ -97,6 +141,15 @@ namespace ComputerPartsShop.API.Controllers
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously deletes an review by its ID.
+		/// </summary>
+		/// <param name="id">Review ID</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="404">Returns if the review was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
 		public async Task<ActionResult> DeleteReviewAsync(int id, CancellationToken ct)
 		{

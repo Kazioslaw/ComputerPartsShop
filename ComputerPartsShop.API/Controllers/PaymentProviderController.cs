@@ -16,6 +16,13 @@ namespace ComputerPartsShop.API.Controllers
 			_ppService = ppService;
 		}
 
+		/// <summary>
+		/// Asynchronously retrieves all payment providers.
+		/// </summary>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the list of payment providers</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>List of payment providers</returns>
 		[HttpGet]
 		public async Task<ActionResult<List<PaymentProviderResponse>>> GetPaymentProviderListAsync(CancellationToken ct)
 		{
@@ -31,6 +38,15 @@ namespace ComputerPartsShop.API.Controllers
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously retrieves an payment provider by its ID.
+		/// </summary>
+		/// <param name="id">Payment provider ID</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the payment provider</response>
+		/// <response code="404">Returns if the payment provider was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Payment provider</returns>
 		[HttpGet("{id:int}")]
 		public async Task<ActionResult<DetailedPaymentProviderResponse>> GetPaymentProviderAsync(int id, CancellationToken ct)
 		{
@@ -51,6 +67,14 @@ namespace ComputerPartsShop.API.Controllers
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously creates a new payment provider.
+		/// </summary>
+		/// <param name="request">Payment provider model</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the created payment provider</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Created payment provider</returns>
 		[HttpPost]
 		public async Task<ActionResult<PaymentProviderResponse>> CreatePaymentProviderAsync(PaymentProviderRequest request, CancellationToken ct)
 		{
@@ -66,6 +90,16 @@ namespace ComputerPartsShop.API.Controllers
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously updates an payment provider by its ID.
+		/// </summary>
+		/// <param name="id">Payment provider ID</param>
+		/// <param name="request">Updated payment provider model</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the updated payment provider</response>
+		/// <response code="404">Returns if the payment provider was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Updated payment provider</returns>
 		[HttpPut("{id:int}")]
 		public async Task<ActionResult<PaymentProviderResponse>> UpdatePaymentProviderAsync(int id, PaymentProviderRequest request, CancellationToken ct)
 		{
@@ -88,6 +122,15 @@ namespace ComputerPartsShop.API.Controllers
 			}
 		}
 
+		/// <summary>
+		/// Asynchronously deletes an payment provider by its ID.
+		/// </summary>
+		/// <param name="id">Payment provider ID</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="404">Returns if the payment provider was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
 		public async Task<ActionResult> DeletePaymentProviderAsync(int id, CancellationToken ct)
 		{

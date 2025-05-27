@@ -15,6 +15,12 @@ namespace ComputerPartsShop
 			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddOpenApi();
+			builder.Services.AddSwaggerGen(c =>
+			{
+				var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+				var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+				c.IncludeXmlComments(xmlPath);
+			});
 			builder.Services.AddScoped<IAddressService, AddressService>();
 			builder.Services.AddScoped<ICategoryService, CategoryService>();
 			builder.Services.AddScoped<ICountryService, CountryService>();
@@ -43,6 +49,8 @@ namespace ComputerPartsShop
 			if (app.Environment.IsDevelopment())
 			{
 				app.MapOpenApi();
+				app.UseSwagger();
+				app.UseSwaggerUI();
 			}
 
 			app.UseHttpsRedirection();

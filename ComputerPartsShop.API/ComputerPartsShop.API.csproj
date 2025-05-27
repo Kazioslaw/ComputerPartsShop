@@ -4,16 +4,20 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);1591</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="8.1.2" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.2" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\ComputerPartsShop.Domain\ComputerPartsShop.Domain.csproj" />
 		<ProjectReference Include="..\ComputerPartsShop.Services\ComputerPartsShop.Services.csproj" />
-		<ProjectReference Include="..\ComputerPartsShop.Infrastructure\ComputerPartsShop.Infrastructure.csproj"/>
+		<ProjectReference Include="..\ComputerPartsShop.Infrastructure\ComputerPartsShop.Infrastructure.csproj" />
 	</ItemGroup>
 
 </Project>
