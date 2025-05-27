@@ -21,14 +21,16 @@ namespace ComputerPartsShop.Services
 		{
 			var addressList = await _addressRepository.GetListAsync(ct);
 
-			return addressList.Select(a => new AddressResponse(a.Id, a.Street, a.City, a.Region, a.ZipCode, a.Country.Alpha3)).ToList();
+			return addressList.Select(a => new AddressResponse(a.Id, a.Street, a.City, a.Region, a.ZipCode,
+				a.Country == null ? "Empty" : a.Country.Alpha3)).ToList();
 		}
 
 		public async Task<AddressResponse> GetAsync(Guid id, CancellationToken ct)
 		{
 			var address = await _addressRepository.GetAsync(id, ct);
 
-			return address == null ? null! : new AddressResponse(address.Id, address.Street, address.City, address.Region, address.ZipCode, address.Country.Alpha3);
+			return address == null ? null! : new AddressResponse(address.Id, address.Street, address.City, address.Region, address.ZipCode,
+				address.Country == null ? "Empty" : address.Country.Alpha3);
 		}
 
 		public async Task<AddressResponse> CreateAsync(AddressRequest entity, CancellationToken ct)

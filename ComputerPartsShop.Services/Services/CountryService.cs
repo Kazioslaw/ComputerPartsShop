@@ -25,7 +25,15 @@ namespace ComputerPartsShop.Services
 		public async Task<DetailedCountryResponse> GetAsync(int id, CancellationToken ct)
 		{
 			var country = await _countryRepository.GetAsync(id, ct);
-			var addressList = country.Addresses;
+			var addressList = country.Addresses ?? new List<Address>() {
+				new Address()
+				{
+					Id = Guid.NewGuid(),
+					Street = "Empty",
+					City = "Empty",
+					Region = "Empty",
+					ZipCode = "Empty"
+				} };
 
 			return country == null ? null! : new DetailedCountryResponse(country.Id, country.Alpha2, country.Alpha3, country.Name,
 				addressList.Select(a => new AddressInCountryResponse(a.Id, a.Street, a.City, a.Region, a.ZipCode)).ToList());

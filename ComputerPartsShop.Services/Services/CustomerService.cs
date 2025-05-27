@@ -23,13 +23,31 @@ namespace ComputerPartsShop.Services
 		public async Task<DetailedCustomerResponse> GetAsync(Guid id, CancellationToken ct)
 		{
 			var customer = await _customerRepository.GetAsync(id, ct);
-			var addressLsit = customer.CustomersAddresses.Select(c => c.Address);
-			var customerPaymentSystemList = customer.PaymentInfoList;
-			var reviewList = customer.Reviews;
+			var addressLsit = customer.CustomersAddresses.Select(c => c.Address) ?? new List<Address>() { new Address { Id = Guid.NewGuid(), Street = "Empty", City = "Empty",
+			Region = "Empty", ZipCode = "Empty"}};
+			var customerPaymentSystemList = customer.PaymentInfoList ?? new List<CustomerPaymentSystem>() {
+				new CustomerPaymentSystem()
+				{
+					Id = Guid.NewGuid(),
+					Provider = new PaymentProvider(){Id = 999, Name = ""},
+					PaymentReference = "999-999-999"
+
+				}};
+			var reviewList = customer.Reviews ?? new List<Review>
+			{
+				new Review
+				{
+					Id = 999,
+					Customer = new Customer {Id = Guid.NewGuid(), Username = "Empty", Email = "Empty"},
+					Product = new Product {Id = 000, Name = "Empty"},
+					Rating = 6,
+					Description = ""
+				}
+			};
 
 			return customer == null ? null! : new DetailedCustomerResponse(customer.Id, customer.FirstName, customer.LastName,
 				customer.Username, customer.Email, customer.PhoneNumber,
-				addressLsit.Select(a => new AddressResponse(a.Id, a.Street, a.City, a.Region, a.ZipCode, a.Country.Alpha3)).ToList(),
+				addressLsit.Select(a => new AddressResponse(a.Id, a.Street, a.City, a.Region, a.ZipCode, a.Country == null ? "Empty" : a.Country.Alpha3)).ToList(),
 				customerPaymentSystemList.Select(customerPaymentSystem => new PaymentInfoInCustomerResponse(customerPaymentSystem.Id,
 				customerPaymentSystem.Provider.Name, customerPaymentSystem.PaymentReference)).ToList(),
 				reviewList!.Select(r => new ReviewInCustomerResponse(r.Id, r.Product.Name, r.Rating, r.Description)).ToList() ?? new List<ReviewInCustomerResponse>());

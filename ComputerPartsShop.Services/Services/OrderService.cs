@@ -28,7 +28,8 @@ namespace ComputerPartsShop.Services
 		{
 			var orderList = await _orderRepository.GetListAsync(ct);
 
-			return orderList.Select(o => new OrderResponse(o.Id, o.CustomerId, o.OrdersProducts.Select(p => p.ProductId).ToList(), o.Total, o.DeliveryAddress.Id,
+			return orderList.Select(o => new OrderResponse(o.Id, o.CustomerId, o.OrdersProducts.Select(p => p.ProductId).ToList(), o.Total,
+				o.DeliveryAddress == null ? Guid.NewGuid() : o.DeliveryAddress.Id,
 				o.Status, o.OrderedAt, o.SendAt, o.Payments.Select(p => p.Id).ToList())).ToList();
 		}
 

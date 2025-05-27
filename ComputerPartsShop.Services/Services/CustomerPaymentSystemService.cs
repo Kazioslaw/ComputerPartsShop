@@ -23,7 +23,9 @@ namespace ComputerPartsShop.Services
 			var customerPaymentSystemList = await _customerPaymentSystemRepository.GetListAsync(ct);
 
 			return customerPaymentSystemList.Select(customerPaymentSystem => new CustomerPaymentSystemResponse(customerPaymentSystem.Id,
-				customerPaymentSystem.Customer.Username, customerPaymentSystem.Customer.Email, customerPaymentSystem.Provider.Name,
+				customerPaymentSystem.Customer == null ? "Empty" : customerPaymentSystem.Customer.Username,
+				customerPaymentSystem.Customer == null ? "Empty" : customerPaymentSystem.Customer.Email,
+				customerPaymentSystem.Provider == null ? "Empty" : customerPaymentSystem.Provider.Name,
 				customerPaymentSystem.PaymentReference)).ToList();
 		}
 
@@ -32,8 +34,10 @@ namespace ComputerPartsShop.Services
 			var customerPaymentSystem = await _customerPaymentSystemRepository.GetAsync(id, ct);
 			var paymentsList = customerPaymentSystem.Payments;
 
-			return customerPaymentSystem == null ? null! : new DetailedCustomerPaymentSystemResponse(customerPaymentSystem.Id, customerPaymentSystem.Customer.Username,
-				customerPaymentSystem.Customer.Email, customerPaymentSystem.Provider.Name, customerPaymentSystem.PaymentReference,
+			return customerPaymentSystem == null ? null! : new DetailedCustomerPaymentSystemResponse(customerPaymentSystem.Id,
+				customerPaymentSystem.Customer == null ? "Empty" : customerPaymentSystem.Customer.Username,
+				customerPaymentSystem.Customer == null ? "Empty" : customerPaymentSystem.Customer.Email,
+				customerPaymentSystem.Provider == null ? "Empty" : customerPaymentSystem.Provider.Name, customerPaymentSystem.PaymentReference,
 				paymentsList.Select(p => new PaymentInCustomerPaymentSystemResponse(p.Id, p.OrderId, p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt)).ToList());
 		}
 
