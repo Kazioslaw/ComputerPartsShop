@@ -1,0 +1,80 @@
+﻿using ComputerPartsShop.Domain.Models;
+
+namespace ComputerPartsShop.Infrastructure
+{
+	public class PaymentProviderRepository : IPaymentProviderRepository
+	{
+		private readonly TempData _dbContext;
+
+		public PaymentProviderRepository(TempData dbContext)
+		{
+			_dbContext = dbContext;
+		}
+
+		public async Task<List<PaymentProvider>> GetListAsync(CancellationToken ct)
+		{
+			await Task.Delay(500, ct);
+
+			return _dbContext.PaymentProviderList;
+		}
+
+		public async Task<PaymentProvider> GetAsync(int id, CancellationToken ct)
+		{
+			await Task.Delay(500, ct);
+			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Id == id);
+
+			return paymentProvider!;
+		}
+
+		public async Task<PaymentProvider> GetByNameAsync(string input, CancellationToken ct)
+		{
+			await Task.Delay(500, ct);
+			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Name == input);
+
+			return paymentProvider!;
+		}
+
+		public async Task<int> CreateAsync(PaymentProvider request, CancellationToken ct)
+		{
+			await Task.Delay(500, ct);
+			var last = _dbContext.PaymentProviderList.OrderBy(x => x.Id).FirstOrDefault();
+
+			if (last == null)
+			{
+				request.Id = 1;
+			}
+			else
+			{
+				request.Id = last.Id + 1;
+			}
+
+			_dbContext.PaymentProviderList.Add(request);
+
+			return request.Id;
+		}
+
+		public async Task<PaymentProvider> UpdateAsync(int id, PaymentProvider request, CancellationToken ct)
+		{
+			await Task.Delay(500, ct);
+			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Id == id);
+
+			if (paymentProvider != null)
+			{
+				paymentProvider.Name = request.Name;
+			}
+
+			return paymentProvider!;
+		}
+
+		public async Task DeleteAsync(int id, CancellationToken ct)
+		{
+			await Task.Delay(500, ct);
+			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Id == id);
+
+			if (paymentProvider != null)
+			{
+				_dbContext.PaymentProviderList.Remove(paymentProvider);
+			}
+		}
+	}
+}

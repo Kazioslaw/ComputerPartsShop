@@ -1,0 +1,176 @@
+﻿using ComputerPartsShop.Domain.DTO;
+using ComputerPartsShop.Infrastructure;
+using ComputerPartsShop.Services;
+using Microsoft.AspNetCore.Mvc;
+
+namespace ComputerPartsShop.API.Controllers
+{
+	[ApiController]
+	[Route("[controller]")]
+	public class ProductController : ControllerBase
+	{
+		private readonly ICategoryRepository _categoryRepository;
+		private readonly IProductService _productService;
+
+		public ProductController(IProductService productService, ICategoryRepository categoryRepository)
+		{
+			_categoryRepository = categoryRepository;
+			_productService = productService;
+		}
+
+		/// <summary>
+		/// Asynchronously retrieves all products.
+		/// </summary>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the list of products</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>List of products</returns>
+		[HttpGet]
+		public async Task<ActionResult<List<ProductResponse>>> GetProductListAsync(CancellationToken ct)
+		{
+			try
+			{
+				var productList = await _productService.GetListAsync(ct);
+
+				return Ok(productList);
+			}
+			catch (OperationCanceledException)
+			{
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+		}
+
+		/// <summary>
+		/// Asynchronously retrieves an product by its ID.
+		/// </summary>
+		/// <param name="id">Product ID</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the product</response>
+		/// <response code="404">Returns if the product was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Product</returns>
+		[HttpGet("{id:int}")]
+		public async Task<ActionResult<ProductResponse>> GetProductAsync(int id, CancellationToken ct)
+		{
+			try
+			{
+				var product = await _productService.GetAsync(id, ct);
+
+				if (product == null)
+				{
+					return NotFound("Product not found");
+				}
+
+				return Ok(product);
+			}
+			catch (OperationCanceledException)
+			{
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+		}
+
+		/// <summary>
+		/// Asynchronously creates a new product.
+		/// </summary>
+		/// <param name="request">Product model</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the created product</response>
+		/// <response code="400">Returns if the category name was empty or invalid</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Created product</returns>
+
+		[HttpPost]
+		public async Task<ActionResult<ProductResponse>> CreateProductAsync(ProductRequest request, CancellationToken ct)
+		{
+			try
+			{
+				var category = await _categoryRepository.GetByNameAsync(request.CategoryName, ct);
+
+				if (category == null)
+				{
+					return BadRequest("Invalid category name");
+				}
+
+				var product = await _productService.CreateAsync(request, ct);
+
+				return Created(nameof(CreateProductAsync), product);
+			}
+			catch (OperationCanceledException)
+			{
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+		}
+
+		/// <summary>
+		/// Asynchronously updates an product by its ID.
+		/// </summary>
+		/// <param name="id">Product ID</param>
+		/// <param name="request">Updated product model</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the updated product</response>
+		/// <response code="400">Returns if the category name was empty or invalid</response>
+		/// <response code="404">Returns if the product was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Updated product</returns>
+
+		[HttpPut("{id:int}")]
+		public async Task<ActionResult<ProductResponse>> UpdateProductAsync(int id, ProductRequest request, CancellationToken ct)
+		{
+			try
+			{
+				var product = await _productService.GetAsync(id, ct);
+
+				if (product == null)
+				{
+					return NotFound("Product not found");
+				}
+
+				var category = await _categoryRepository.GetByNameAsync(request.CategoryName, ct);
+
+				if (category == null)
+				{
+					return BadRequest("Invalid category name");
+				}
+
+				var updatedProduct = await _productService.UpdateAsync(id, request, ct);
+
+				return Ok(updatedProduct);
+			}
+			catch (OperationCanceledException)
+			{
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+		}
+
+		/// <summary>
+		/// Asynchronously deletes an product by its ID.
+		/// </summary>
+		/// <param name="id">Product ID</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="404">Returns if the product was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Deletion confirmation</returns>
+		[HttpDelete]
+		public async Task<ActionResult> DeleteProductAsync(int id, CancellationToken ct)
+		{
+			try
+			{
+				var product = await _productService.GetAsync(id, ct);
+
+				if (product == null)
+				{
+					return NotFound("Product not found");
+				}
+
+				await _productService.DeleteAsync(id, ct);
+
+				return Ok();
+			}
+			catch (OperationCanceledException)
+			{
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+		}
+	}
+}

@@ -1,0 +1,200 @@
+﻿using ComputerPartsShop.Domain.DTO;
+using ComputerPartsShop.Infrastructure;
+using ComputerPartsShop.Services;
+using Microsoft.AspNetCore.Mvc;
+
+namespace ComputerPartsShop.API.Controllers
+{
+	[ApiController]
+	[Route("[controller]")]
+	public class CustomerPaymentSystemController : ControllerBase
+	{
+
+		private readonly ICustomerPaymentSystemService _customerPaymentSystemService;
+		private readonly IPaymentProviderRepository _providerRepository;
+		private readonly ICustomerRepository _customerRepository;
+
+		public CustomerPaymentSystemController(ICustomerPaymentSystemService customerPaymentSystemService,
+			IPaymentProviderRepository providerRepository, ICustomerRepository customerRepository)
+		{
+			_customerPaymentSystemService = customerPaymentSystemService;
+			_providerRepository = providerRepository;
+			_customerRepository = customerRepository;
+		}
+
+		/// <summary>
+		/// Asynchronously retrieves all customer payment systems.
+		/// </summary>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the list of customer payment systems</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>List of customer payment systems</returns>
+
+		[HttpGet]
+		public async Task<ActionResult<List<CustomerPaymentSystemResponse>>> GetCustomerPaymentSystemListAsync(CancellationToken ct)
+		{
+			try
+			{
+				var customerPaymentSystemList = await _customerPaymentSystemService.GetListAsync(ct);
+
+				return Ok(customerPaymentSystemList);
+			}
+			catch (OperationCanceledException)
+			{
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+		}
+
+		/// <summary>
+		/// Asynchronously retrieves an customer payment system by its ID.
+		/// </summary>
+		/// <param name="id">Customer payment system ID</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the customer payment system</response>
+		/// <response code="404">Returns if the customer payment system was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Customer payment system</returns>
+		[HttpGet("{id:guid}")]
+		public async Task<ActionResult<DetailedCustomerPaymentSystemResponse>> GetCustomerPaymentSystemAsync(Guid id, CancellationToken ct)
+		{
+			try
+			{
+				var customerPaymentSystem = await _customerPaymentSystemService.GetAsync(id, ct);
+
+				if (customerPaymentSystem == null)
+				{
+					return NotFound("Customer payment system not found");
+				}
+
+				return Ok(customerPaymentSystem);
+			}
+			catch (OperationCanceledException)
+			{
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+		}
+
+		/// <summary>
+		/// Asynchronously creates a new customer payment system.
+		/// </summary>
+		/// <param name="request">Customer payment system model</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the created customer payment system</response>
+		/// <response code="400">Returns if the username, email or provider name was empty or invalid</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Created customer payment system</returns>
+		[HttpPost]
+		public async Task<ActionResult<CustomerPaymentSystemResponse>> CreateCustomerPaymentSystemAsync(CustomerPaymentSystemRequest request, CancellationToken ct)
+		{
+			try
+			{
+				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
+				{
+					return BadRequest("Invalid or missing username or email");
+				}
+
+				var paymentProvider = await _providerRepository.GetByNameAsync(request.ProviderName, ct);
+				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
+
+				if (paymentProvider == null)
+				{
+					return BadRequest("Invalid provider name");
+				}
+
+				if (customer == null)
+				{
+					return BadRequest("Invalid or missing username or email");
+				}
+
+				var customerPaymentSystem = await _customerPaymentSystemService.CreateAsync(request, ct);
+
+				return Created(nameof(CreateCustomerPaymentSystemAsync), customerPaymentSystem);
+			}
+			catch (OperationCanceledException)
+			{
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+		}
+
+		/// <summary>
+		/// Asynchronously updates an customer payment system by its ID.
+		/// </summary>
+		/// <param name="id">Customer payment system ID</param>
+		/// <param name="request">Updated customer payment system model</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the updated customer payment system</response>
+		/// <response code="400">Returns if the username, email or provider name was empty or invalid</response>
+		/// <response code="404">Returns if the customer payment system was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Updated customer payment system</returns>
+		[HttpPut("{id:guid}")]
+		public async Task<ActionResult<CustomerPaymentSystemResponse>> UpdateCustomerPaymentSystemAsync(Guid id, CustomerPaymentSystemRequest request, CancellationToken ct)
+		{
+			try
+			{
+				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
+				{
+					return BadRequest("Invalid or missing username or email");
+				}
+				var customerPaymentSystem = await _customerPaymentSystemService.GetAsync(id, ct);
+				var paymentProvider = await _providerRepository.GetByNameAsync(request.ProviderName, ct);
+				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
+
+				if (paymentProvider == null)
+				{
+					return BadRequest("Invalid provider name");
+
+				}
+
+				if (customer == null)
+				{
+					return BadRequest("Invalid or missing username or email");
+				}
+
+				if (customerPaymentSystem == null)
+				{
+					return NotFound("Customer payment system not found");
+				}
+
+				var customerPaymentSystemUpdated = await _customerPaymentSystemService.UpdateAsync(id, request, ct);
+
+				return Ok(customerPaymentSystemUpdated);
+			}
+			catch (OperationCanceledException)
+			{
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+		}
+
+		/// <summary>
+		/// Asynchronously deletes an customer payment system by its ID.
+		/// </summary>
+		/// <param name="id">Customer payment system ID</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="404">Returns if the customer payment system was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Deletion confirmation</returns>
+		[HttpDelete("{id:guid}")]
+		public async Task<ActionResult> DeleteCustomerPaymentSystemAsync(Guid id, CancellationToken ct)
+		{
+			try
+			{
+				var customerPaymentSystem = await _customerPaymentSystemService.GetAsync(id, ct);
+
+				if (customerPaymentSystem == null)
+				{
+					return NotFound("Customer payment system not found");
+				}
+
+				await _customerPaymentSystemService.DeleteAsync(id, ct);
+
+				return Ok();
+			}
+			catch (OperationCanceledException)
+			{
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+		}
+	}
+}
