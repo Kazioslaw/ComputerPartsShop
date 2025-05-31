@@ -25,18 +25,28 @@ namespace ComputerPartsShop.Services
 		public async Task<DetailedCountryResponse> GetAsync(int id, CancellationToken ct)
 		{
 			var country = await _countryRepository.GetAsync(id, ct);
-			var addressList = country.Addresses ?? new List<Address>() {
-				new Address()
-				{
-					Id = Guid.NewGuid(),
-					Street = "Empty",
-					City = "Empty",
-					Region = "Empty",
-					ZipCode = "Empty"
-				} };
 
-			return country == null ? null! : new DetailedCountryResponse(country.Id, country.Alpha2, country.Alpha3, country.Name,
-				addressList.Select(a => new AddressInCountryResponse(a.Id, a.Street, a.City, a.Region, a.ZipCode)).ToList());
+			if (country == null)
+			{
+				return null;
+			}
+
+			var addressList = country.Addresses;
+
+			return new DetailedCountryResponse(country.Id, country.Alpha2, country.Alpha3, country.Name, addressList == null ?
+				country.Addresses.Select(x => new AddressInCountryResponse(x.Id, x.Street, x.City, x.Region, x.ZipCode)).ToList() : new List<AddressInCountryResponse>());
+		}
+
+		public async Task<CountryResponse> GetByAlpha3Async(string Alpha3, CancellationToken ct)
+		{
+			var country = await _countryRepository.GetByCountry3CodeAsync(Alpha3, ct);
+
+			if (country == null)
+			{
+				return null;
+			}
+
+			return new CountryResponse(country.Id, country.Alpha2, country.Alpha3, country.Name);
 		}
 
 		public async Task<CountryResponse> CreateAsync(CountryRequest entity, CancellationToken ct)
@@ -48,8 +58,8 @@ namespace ComputerPartsShop.Services
 				Name = entity.Name,
 			};
 
-			var createdCountryId = await _countryRepository.CreateAsync(newCountry, ct);
-			return new CountryResponse(createdCountryId, entity.Alpha2, entity.Alpha3, entity.Name);
+			var createdCountry = await _countryRepository.CreateAsync(newCountry, ct);
+			return createdCountry == null ? null! : new CountryResponse(createdCountry.Id, entity.Alpha2, entity.Alpha3, entity.Name);
 		}
 
 		public async Task<CountryResponse> UpdateAsync(int id, CountryRequest entity, CancellationToken ct)
@@ -66,9 +76,9 @@ namespace ComputerPartsShop.Services
 			return new CountryResponse(id, entity.Alpha2, entity.Alpha3, entity.Name);
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await _countryRepository.DeleteAsync(id, ct);
+			return await _countryRepository.DeleteAsync(id, ct);
 		}
 	}
 }

@@ -24,7 +24,24 @@ namespace ComputerPartsShop.Services
 		{
 			var category = await _categoryRepository.GetAsync(id, ct);
 
-			return category == null ? null! : new CategoryResponse(id, category.Name, category.Description);
+			if (category == null)
+			{
+				return null;
+			}
+
+			return new CategoryResponse(id, category.Name, category.Description);
+		}
+
+		public async Task<CategoryResponse> GetByNameAsync(string name, CancellationToken ct)
+		{
+			var category = await _categoryRepository.GetByNameAsync(name, ct);
+
+			if (category == null)
+			{
+				return null;
+			}
+
+			return new CategoryResponse(category.Id, category.Name, category.Description);
 		}
 
 		public async Task<CategoryResponse> CreateAsync(CategoryRequest entity, CancellationToken ct)
@@ -35,9 +52,9 @@ namespace ComputerPartsShop.Services
 				Description = entity.Description,
 			};
 
-			var createdCategoryId = await _categoryRepository.CreateAsync(newCategory, ct);
+			var createdCategory = await _categoryRepository.CreateAsync(newCategory, ct);
 
-			return new CategoryResponse(createdCategoryId, entity.Name, entity.Description);
+			return createdCategory == null! ? null : new CategoryResponse(createdCategory.Id, entity.Name, entity.Description);
 		}
 
 		public async Task<CategoryResponse> UpdateAsync(int id, CategoryRequest entity, CancellationToken ct)
@@ -53,9 +70,9 @@ namespace ComputerPartsShop.Services
 			return new CategoryResponse(id, entity.Name, entity.Description);
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await _categoryRepository.DeleteAsync(id, ct);
+			return await _categoryRepository.DeleteAsync(id, ct);
 		}
 	}
 }

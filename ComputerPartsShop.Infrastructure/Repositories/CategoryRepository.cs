@@ -1,79 +1,139 @@
 ﻿using ComputerPartsShop.Domain.Models;
+using Dapper;
+using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace ComputerPartsShop.Infrastructure
 {
 	public class CategoryRepository : ICategoryRepository
 	{
-		private readonly TempData _dbContext;
-		public CategoryRepository(TempData dbContext)
+		private readonly DBContext _dbContext;
+		public CategoryRepository(DBContext dbContext)
 		{
 			_dbContext = dbContext;
 		}
 
 		public async Task<List<Category>> GetListAsync(CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
+			var query = "SELECT ID, Name, Description FROM Category";
 
-			return _dbContext.CategoryList;
+			using (var connection = _dbContext.CreateConnection())
+			{
+				var result = await connection.QueryAsync<Category>(query);
+
+				return result.ToList();
+			}
 		}
 
 		public async Task<Category> GetAsync(int id, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var category = _dbContext.CategoryList.FirstOrDefault(c => c.Id == id);
+			var query = "SELECT ID, Name, Description FROM Category WHERE ID = @Id";
 
-			return category!;
+			using (var connection = _dbContext.CreateConnection())
+			{
+				var result = await connection.QueryFirstOrDefaultAsync<Category>(query, new { id });
+
+				return result;
+			}
 		}
 
 		public async Task<Category> GetByNameAsync(string name, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var category = _dbContext.CategoryList.FirstOrDefault(c => c.Name == name);
+			var query = "SELECT ID, Name, Description FROM Category WHERE Name = @Name";
 
-			return category!;
+			using (var connection = _dbContext.CreateConnection())
+			{
+				var result = await connection.QueryFirstOrDefaultAsync<Category>(query, new { name });
+
+				return result;
+			}
 		}
 
-		public async Task<int> CreateAsync(Category request, CancellationToken ct)
+		public async Task<Category> CreateAsync(Category request, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var last = _dbContext.CategoryList.OrderBy(x => x.Id).LastOrDefault();
+			var query = "INSERT INTO Category (Name, Description) VALUES (@Name, @Description); " +
+						"SELECT CAST(SCOPE_IDENTITY() AS int)";
 
-			if (last == null)
+			var parameters = new DynamicParameters();
+			parameters.Add("Name", request.Name, dbType: DbType.String, direction: ParameterDirection.Input);
+			parameters.Add("Description", request.Description, dbType: DbType.String, direction: ParameterDirection.Input);
+
+			using (var connection = _dbContext.CreateConnection())
 			{
-				request.Id = 1;
-			}
-			else
-			{
-				request.Id = last.Id + 1;
-			}
+				using (var transaction = connection.BeginTransaction())
+				{
+					try
+					{
+						request.Id = await connection.QuerySingleAsync<int>(query, parameters, transaction);
+						transaction.Commit();
 
-			_dbContext.CategoryList.Add(request);
+						return request;
+					}
+					catch (SqlException)
+					{
+						transaction.Rollback();
 
-			return request.Id;
+						return null;
+					}
+				}
+			}
 		}
 
 		public async Task<Category> UpdateAsync(int id, Category request, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var category = _dbContext.CategoryList.FirstOrDefault(c => c.Id == id);
+			var query = "UPDATE Category SET Name = @Name, Description = @Description WHERE ID = @Id";
 
-			if (category != null)
+			var parameters = new DynamicParameters();
+			parameters.Add("Id", id, dbType: DbType.Int32, direction: ParameterDirection.Input);
+			parameters.Add("Name", request.Name, dbType: DbType.String, direction: ParameterDirection.Input);
+			parameters.Add("Description", request.Description, dbType: DbType.String, direction: ParameterDirection.Input);
+
+			using (var connection = _dbContext.CreateConnection())
 			{
-				category.Name = request.Name;
-				category.Description = request.Description;
-			}
+				using (var transaction = connection.BeginTransaction())
+				{
+					try
+					{
+						await connection.ExecuteAsync(query, parameters, transaction: transaction);
+						transaction.Commit();
+						request.Id = id;
 
-			return category!;
+						return request;
+					}
+					catch (SqlException)
+					{
+						transaction.Rollback();
+
+						return null;
+					}
+				}
+			}
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var category = _dbContext.CategoryList.FirstOrDefault(c => c.Id == id);
+			var query = "DELETE FROM Category WHERE ID = @Id";
 
-			if (category != null)
+			using (var connection = _dbContext.CreateConnection())
 			{
-				_dbContext.CategoryList.Remove(category);
+				using (var transaction = connection.BeginTransaction())
+				{
+
+					try
+					{
+						await connection.ExecuteAsync(query, new { id }, transaction: transaction);
+						transaction.Commit();
+
+						return true;
+					}
+					catch (SqlException)
+					{
+						transaction.Rollback();
+
+						return false;
+					}
+
+				}
 			}
 		}
 	}
