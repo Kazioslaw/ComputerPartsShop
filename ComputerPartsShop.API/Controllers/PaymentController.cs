@@ -25,7 +25,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>List of payments</returns>
 		[HttpGet]
-		public async Task<ActionResult<List<PaymentResponse>>> GetPaymentListAsync(CancellationToken ct)
+		public async Task<IActionResult> GetPaymentListAsync(CancellationToken ct)
 		{
 			try
 			{
@@ -49,7 +49,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Payment</returns>
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<DetailedPaymentResponse>> GetPaymentAsync(int id, CancellationToken ct)
+		public async Task<IActionResult> GetPaymentAsync(int id, CancellationToken ct)
 		{
 			try
 			{
@@ -73,7 +73,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Created payment</returns>
 		[HttpPost]
-		public async Task<ActionResult<PaymentResponse>> CreatePaymentAsync(PaymentRequest request, CancellationToken ct)
+		public async Task<IActionResult> CreatePaymentAsync(PaymentRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -86,7 +86,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				var payment = await _paymentService.CreateAsync(request, ct);
 
-				return Created(nameof(CreatePaymentAsync), payment);
+				return CreatedAtAction(nameof(GetPaymentAsync), new { id = payment.Id }, payment);
 			}
 			catch (OperationCanceledException)
 			{
@@ -106,7 +106,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Updated payment</returns>
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<PaymentResponse>> UpdatePaymentAsync(int id, PaymentRequest request, CancellationToken ct)
+		public async Task<IActionResult> UpdatePaymentAsync(int id, PaymentRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -139,12 +139,12 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="id">Payment ID</param>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="204">Returns confirmation of deletion</response>
 		/// <response code="404">Returns if the payment was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult<PaymentResponse>> DeleteAsync(int id, CancellationToken ct)
+		public async Task<IActionResult> DeleteAsync(int id, CancellationToken ct)
 		{
 			try
 			{
@@ -157,7 +157,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				await _paymentService.DeleteAsync(id, ct);
 
-				return Ok();
+				return NoContent();
 			}
 			catch (OperationCanceledException)
 			{

@@ -31,7 +31,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>List of orders</returns>
 		[HttpGet]
-		public async Task<ActionResult<List<OrderResponse>>> GetOrderListAsync(CancellationToken ct)
+		public async Task<IActionResult> GetOrderListAsync(CancellationToken ct)
 		{
 			try
 			{
@@ -55,7 +55,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Order</returns>
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<DetailedOrderResponse>> GetOrderAsync(int id, CancellationToken ct)
+		public async Task<IActionResult> GetOrderAsync(int id, CancellationToken ct)
 		{
 			try
 			{
@@ -84,7 +84,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Created order</returns>
 		[HttpPost]
-		public async Task<ActionResult<OrderResponse>> CreateOrderAsync(OrderRequest request, CancellationToken ct)
+		public async Task<IActionResult> CreateOrderAsync(OrderRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -110,7 +110,7 @@ namespace ComputerPartsShop.API.Controllers
 				var order = await _orderService.CreateAsync(request, ct);
 
 
-				return Created(nameof(CreateOrderAsync), order);
+				return Ok(order);
 			}
 			catch (OperationCanceledException)
 			{
@@ -130,7 +130,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Updated order</returns>
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<OrderResponse>> UpdateOrderAsync(int id, OrderRequest request, CancellationToken ct)
+		public async Task<IActionResult> UpdateOrderAsync(int id, OrderRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -174,14 +174,14 @@ namespace ComputerPartsShop.API.Controllers
 		/// <summary>
 		/// Asynchronously deletes an order by its ID.
 		/// </summary>
-		/// <param name="ID">Order ID</param>
+		/// <param name="id">Order ID</param>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="204">Returns confirmation of deletion</response>
 		/// <response code="404">Returns if the order was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteOrderAsync(int id, CancellationToken ct)
+		public async Task<IActionResult> DeleteOrderAsync(int id, CancellationToken ct)
 		{
 			try
 			{
@@ -194,7 +194,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				await _orderService.DeleteAsync(id, ct);
 
-				return Ok();
+				return NoContent();
 			}
 			catch (OperationCanceledException)
 			{

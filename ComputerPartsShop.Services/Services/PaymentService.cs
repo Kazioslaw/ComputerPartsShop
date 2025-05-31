@@ -26,7 +26,12 @@ namespace ComputerPartsShop.Services
 		{
 			var payment = await _paymentRepository.GetAsync(id, ct);
 
-			return payment == null ? null! : new DetailedPaymentResponse(payment.Id,
+			if (payment == null)
+			{
+				return null;
+			}
+
+			return new DetailedPaymentResponse(payment.Id,
 				new CustomerPaymentSystemResponse(payment.CustomerPaymentSystem.Id, payment.CustomerPaymentSystem.Customer.Username,
 				payment.CustomerPaymentSystem.Customer.Email, payment.CustomerPaymentSystem.Provider.Name, payment.CustomerPaymentSystem.PaymentReference),
 				new OrderInPaymentResponse(payment.OrderId, payment.Order.Customer.Username, payment.Order.Customer.Email,
@@ -49,9 +54,9 @@ namespace ComputerPartsShop.Services
 				PaymentStartAt = DateTime.Now
 			};
 
-			var paymentId = await _paymentRepository.CreateAsync(newPayment, ct);
+			var payment = await _paymentRepository.CreateAsync(newPayment, ct);
 
-			return new PaymentResponse(paymentId, entity.CustomerPaymentSystemId, entity.OrderId, entity.Total,
+			return new PaymentResponse(payment.Id, entity.CustomerPaymentSystemId, entity.OrderId, entity.Total,
 				entity.Method, newPayment.Status, newPayment.PaymentStartAt, null);
 		}
 
@@ -89,9 +94,9 @@ namespace ComputerPartsShop.Services
 				entity.Status, entity.PaymentStartAt, entity.PaidAt);
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await _paymentRepository.DeleteAsync(id, ct);
+			return await _paymentRepository.DeleteAsync(id, ct);
 		}
 	}
 }

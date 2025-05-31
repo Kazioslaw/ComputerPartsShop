@@ -1,12 +1,14 @@
 ﻿using ComputerPartsShop.Domain.Models;
+using Dapper;
+using Microsoft.Data.SqlClient;
 
 namespace ComputerPartsShop.Infrastructure
 {
 	public class OrderRepository : IOrderRepository
 	{
-		private readonly TempData _dbContext;
+		private readonly DBContext _dbContext;
 
-		public OrderRepository(TempData dbContext)
+		public OrderRepository(DBContext dbContext)
 		{
 			_dbContext = dbContext;
 		}
@@ -14,66 +16,141 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<List<Order>> GetListAsync(CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
+			var query = "SELECT \"Order\".ID, \"Order\".CustomerID, \"Order\".Total, \"Order\".DeliveryAddressID, \"Order\".Status, " +
+				"\"Order\".OrderedAt, \"Order\".SendAt, OrderProduct.ProductID, OrderProduct.Quantity, Product.Name, Product.UnitPrice, " +
+				"Payment.ID FROM \"Order\" LEFT JOIN OrderProduct ON \"Order\".ID = OrderProduct.OrderID " +
+				"LEFT JOIN Payment ON \"Order\".ID = Payment.OrderID LEFT JOIN Product ON Product.ID = OrderProduct.ProductID";
 
-			return _dbContext.OrderList;
+			using (var connection = _dbContext.CreateConnection())
+			{
+				var orderDictionary = new Dictionary<int, Order>();
+				var result = await connection.QueryAsync<Order, OrderProduct, Product, Payment, Order>(query, (order, orderProduct, product, payment) =>
+				{
+					if (!orderDictionary.TryGetValue(order.Id, out var currentOrder))
+					{
+						currentOrder = order;
+						currentOrder.OrdersProducts = new List<OrderProduct>();
+						currentOrder.Payments = new List<Payment>();
+						orderDictionary.Add(order.Id, currentOrder);
+					}
+
+					if (orderProduct != null)
+					{
+						if (product == null)
+						{
+							orderProduct.Product = new Product();
+						}
+						else
+						{
+							orderProduct.Product = product;
+						}
+
+
+						if (!currentOrder.OrdersProducts.Any(op => op.ProductId == orderProduct.ProductId))
+						{
+							currentOrder.OrdersProducts.Add(orderProduct);
+						}
+					}
+
+					if (payment != null && !currentOrder.Payments.Any(p => p.Id == payment.Id))
+					{
+						currentOrder.Payments.Add(payment);
+					}
+
+					return currentOrder;
+				},
+				splitOn: "ProductID, Name, ID");
+
+				return result.Distinct().ToList();
+			}
+
 		}
 
 		public async Task<Order> GetAsync(int id, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var order = _dbContext.OrderList.FirstOrDefault(x => x.Id == id);
+			var query = "SELECT \"Order\".ID, \"Order\".CustomerID, \"Order\".Total, \"Order\".DeliveryAddressID, \"Order\".Status, " +
+				"\"Order\".OrderedAt, \"Order\".SendAt, OrderProduct.ProductID, OrderProduct.Quantity, Product.Name, Product.UnitPrice, " +
+				"Payment.ID FROM \"Order\" LEFT JOIN OrderProduct ON \"Order\".ID = OrderProduct.OrderID " +
+				"LEFT JOIN Payment ON \"Order\".ID = Payment.OrderID LEFT JOIN Product ON Product.ID = OrderProduct.ProductID";
 
-			return order!;
+			using (var connection = _dbContext.CreateConnection())
+			{
+				var orderDictionary = new Dictionary<int, Order>();
+				var result = await connection.QueryAsync<Order, OrderProduct, Product, Payment, Order>(query, (order, orderProduct, product, payment) =>
+				{
+					if (!orderDictionary.TryGetValue(order.Id, out var currentOrder))
+					{
+						currentOrder = order;
+						currentOrder.OrdersProducts = new List<OrderProduct>();
+						currentOrder.Payments = new List<Payment>();
+						orderDictionary.Add(order.Id, currentOrder);
+					}
+
+					if (orderProduct != null)
+					{
+						if (product == null)
+						{
+							orderProduct.Product = new Product();
+						}
+						else
+						{
+							orderProduct.Product = product;
+						}
+
+
+						if (!currentOrder.OrdersProducts.Any(op => op.ProductId == orderProduct.ProductId))
+						{
+							currentOrder.OrdersProducts.Add(orderProduct);
+						}
+					}
+
+					if (payment != null && !currentOrder.Payments.Any(p => p.Id == payment.Id))
+					{
+						currentOrder.Payments.Add(payment);
+					}
+
+					return currentOrder;
+				},
+				splitOn: "ProductID, Name, ID");
+
+				return result.Distinct().FirstOrDefault();
+			}
 		}
 
-		public async Task<int> CreateAsync(Order request, CancellationToken ct)
+		public async Task<Order> CreateAsync(Order request, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var last = _dbContext.OrderList.OrderBy(x => x.Id).LastOrDefault();
-
-			if (last == null)
-			{
-				request.Id = 1;
-			}
-			else
-			{
-				request.Id = last.Id + 1;
-			}
-
-			_dbContext.OrderList.Add(request);
-
-			return request.Id;
+			request.Id = 999;
+			return request;
 		}
 
 		public async Task<Order> UpdateAsync(int id, Order request, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var order = _dbContext.OrderList.FirstOrDefault(x => x.Id == id);
-
-			if (order != null)
-			{
-				order.CustomerId = request.CustomerId;
-				order.OrdersProducts = request.OrdersProducts;
-				order.Total = request.Total;
-				order.DeliveryAddress = request.DeliveryAddress;
-				order.Status = request.Status;
-				order.OrderedAt = request.OrderedAt;
-				order.SendAt = request.SendAt;
-				order.Payments = request.Payments;
-			}
-
-			return order!;
+			request.Id = id;
+			return request;
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var order = _dbContext.OrderList.FirstOrDefault(x => x.Id == id);
+			var query = "DELETE FROM Order WHERE ID = @Id";
 
-			if (order != null)
+			using (var connection = _dbContext.CreateConnection())
 			{
-				_dbContext.OrderList.Remove(order);
+				using (var transaction = connection.BeginTransaction())
+				{
+					try
+					{
+						await connection.ExecuteAsync(query, new { id }, transaction);
+						transaction.Commit();
+
+						return true;
+					}
+					catch (SqlException)
+					{
+						transaction.Rollback();
+
+						return false;
+					}
+				}
 			}
 		}
 	}

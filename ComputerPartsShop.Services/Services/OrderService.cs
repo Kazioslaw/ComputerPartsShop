@@ -28,45 +28,44 @@ namespace ComputerPartsShop.Services
 		{
 			var orderList = await _orderRepository.GetListAsync(ct);
 
-			return orderList.Select(o => new OrderResponse(o.Id, o.CustomerId, o.OrdersProducts.Select(p => p.ProductId).ToList(), o.Total,
-				o.DeliveryAddress == null ? Guid.NewGuid() : o.DeliveryAddress.Id,
-				o.Status, o.OrderedAt, o.SendAt, o.Payments.Select(p => p.Id).ToList())).ToList();
+			return orderList.Select(o => new OrderResponse(o.Id,
+				o.CustomerId, o.OrdersProducts.Select(p => new ProductInOrderResponse(p.ProductId, p.Product.Name, p.Product.UnitPrice, p.Quantity)).ToList(),
+				o.Total, o.DeliveryAddress == null ? Guid.NewGuid() : o.DeliveryAddress.Id,
+				o.Status, o.OrderedAt, o.SendAt, o.Payments == null ? null! : o.Payments.Select(p => p.Id).ToList())).ToList();
 		}
 
-		public async Task<DetailedOrderResponse> GetAsync(int id, CancellationToken ct)
+		public async Task<OrderResponse> GetAsync(int id, CancellationToken ct)
 		{
 			var order = await _orderRepository.GetAsync(id, ct);
-			var productList = order.OrdersProducts.Select(o => o.Product).ToList();
-			var paymentList = order.Payments;
 
-			return order == null ? null! : new DetailedOrderResponse(
-				order.Id,
-				new CustomerResponse(order.Customer.Id, order.Customer.FirstName, order.Customer.LastName, order.Customer.Username, order.Customer.Email,
-				order.Customer.PhoneNumber), productList.Select(p => new ProductInOrderResponse(p.Id, p.Name, p.UnitPrice,
-				order.OrdersProducts.Where(c => c.ProductId == p.Id).Sum(c => c.Quantity))).ToList(), order.Total,
-				new AddressResponse(order.DeliveryAddress.Id, order.DeliveryAddress.Street, order.DeliveryAddress.City,
-				order.DeliveryAddress.Region, order.DeliveryAddress.ZipCode, order.DeliveryAddress.Country.Alpha3),
-				order.Status, order.OrderedAt, order.SendAt, paymentList.Select(p => new PaymentInOrderResponse(p.Id,
-				new CustomerPaymentSystemResponse(p.CustomerPaymentSystem.Id, p.CustomerPaymentSystem.Customer.Username, p.CustomerPaymentSystem.Customer.Email,
-				p.CustomerPaymentSystem.Provider.Name, p.CustomerPaymentSystem.PaymentReference),
-				p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt)).ToList());
+			if (order == null)
+			{
+				return null;
+			}
+
+			var productList = order.OrdersProducts.Select(o => o.Product).ToList();
+			var paymentList = order.Payments ?? new List<Payment>();
+
+			return new OrderResponse(order.Id,
+				order.CustomerId, order.OrdersProducts.Select(p => new ProductInOrderResponse(p.ProductId, p.Product.Name, p.Product.UnitPrice, p.Quantity)).ToList(),
+				order.Total, order.DeliveryAddress == null ? Guid.NewGuid() : order.DeliveryAddress.Id,
+				order.Status, order.OrderedAt, order.SendAt, order.Payments == null ? null! : order.Payments.Select(p => p.Id).ToList());
 		}
 
 		public async Task<OrderResponse> CreateAsync(OrderRequest entity, CancellationToken ct)
 		{
 			var customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username! ?? entity.Email!, ct);
 			var address = await _addressRepository.GetAsync(entity.AddressId, ct);
-			var productsId = entity.ProductIdList;
-			var productsIdDistinct = productsId.Distinct();
+			var productOrderList = entity.Products;
 			var productList = new List<OrderProduct>();
-			foreach (var productId in productsIdDistinct)
+			foreach (var productOrder in productOrderList)
 			{
-				var product = await _productRepository.GetAsync(productId, ct);
+				var product = await _productRepository.GetAsync(productOrder.Id, ct);
 				var orderProduct = new OrderProduct()
 				{
-					ProductId = productId,
+					ProductId = product.Id,
 					Product = product,
-					Quantity = entity.ProductIdList.Count(id => id == productId),
+					Quantity = productOrder.Quantity,
 				};
 				productList.Add(orderProduct);
 			}
@@ -83,10 +82,10 @@ namespace ComputerPartsShop.Services
 				OrderedAt = DateTime.Now,
 			};
 
-			var orderId = await _orderRepository.CreateAsync(newOrder, ct);
+			var order = await _orderRepository.CreateAsync(newOrder, ct);
 
-			return new OrderResponse(orderId, newOrder.CustomerId, entity.ProductIdList, entity.Total, entity.AddressId, newOrder.Status,
-				newOrder.OrderedAt, null, newOrder.Payments.Select(p => p.Id).ToList());
+			return new OrderResponse(order.Id, newOrder.CustomerId, newOrder.OrdersProducts.Select(x => new ProductInOrderResponse(x.ProductId, x.Product.Name, x.Product.UnitPrice, x.Quantity)).ToList(),
+				entity.Total, entity.AddressId, newOrder.Status, newOrder.OrderedAt, null, newOrder.Payments.Select(p => p.Id).ToList());
 		}
 
 		public async Task<OrderResponse> UpdateAsync(int id, OrderRequest entity, CancellationToken ct)
@@ -94,22 +93,21 @@ namespace ComputerPartsShop.Services
 			var customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username! ?? entity.Email!, ct);
 			var address = await _addressRepository.GetAsync(entity.AddressId, ct);
 
-			var productIdList = entity.ProductIdList;
-			var productsIdDistinct = productIdList.Distinct();
+			var productOrderList = entity.Products;
 			var productList = new List<OrderProduct>();
 
 			var customerPaymentSystem = await _customerPaymentSystemRepository.GetAsync(entity.CustomerPaymentSystemId, ct);
 
 			var payments = customerPaymentSystem.Payments.Where(x => x.OrderId == id).ToList();
 
-			foreach (var productId in productsIdDistinct)
+			foreach (var productOrder in productOrderList)
 			{
-				var product = await _productRepository.GetAsync(productId, ct);
+				var product = await _productRepository.GetAsync(productOrder.Id, ct);
 				var orderProduct = new OrderProduct()
 				{
-					ProductId = productId,
+					ProductId = productOrder.Id,
 					Product = product,
-					Quantity = entity.ProductIdList.Count(id => id == productId),
+					Quantity = productOrder.Quantity
 				};
 				productList.Add(orderProduct);
 			}
@@ -170,13 +168,13 @@ namespace ComputerPartsShop.Services
 			{
 				await _orderRepository.UpdateAsync(id, order, ct);
 			}
-			return new OrderResponse(id, customer.Id, entity.ProductIdList, entity.Total, entity.AddressId,
-				order.Status, entity.OrderedAt, entity.SendAt, payments?.Select(x => x.Id).ToList() ?? new List<int>());
+			return new OrderResponse(id, customer.Id, order.OrdersProducts.Select(x => new ProductInOrderResponse(x.ProductId, x.Product.Name, x.Product.UnitPrice, x.Quantity)).ToList(),
+				entity.Total, entity.AddressId, order.Status, entity.OrderedAt, entity.SendAt, payments?.Select(x => x.Id).ToList() ?? new List<int>());
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await _orderRepository.DeleteAsync(id, ct);
+			return await _orderRepository.DeleteAsync(id, ct);
 		}
 	}
 }

@@ -2,7 +2,7 @@
 
 namespace ComputerPartsShop.Domain.DTO
 {
-	public record OrderResponse(int Id, Guid CustomerId, List<int> ProductIdList, decimal Total, Guid AddressId, DeliveryStatus Status,
+	public record OrderResponse(int Id, Guid CustomerId, List<ProductInOrderResponse> Products, decimal Total, Guid AddressId, DeliveryStatus Status,
 		DateTime? OrderedAt, DateTime? SendAt, List<int> PaymentIdList);
 	public record DetailedOrderResponse(int Id, CustomerResponse Customer, List<ProductInOrderResponse> Products, decimal Total, AddressResponse Address, DeliveryStatus Status,
 		DateTime OrderedAt, DateTime? SendAt, List<PaymentInOrderResponse> Payments);

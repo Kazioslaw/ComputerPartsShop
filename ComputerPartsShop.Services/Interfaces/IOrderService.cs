@@ -5,9 +5,9 @@ namespace ComputerPartsShop.Services
 	public interface IOrderService
 	{
 		public Task<List<OrderResponse>> GetListAsync(CancellationToken ct);
-		public Task<DetailedOrderResponse> GetAsync(int id, CancellationToken ct);
-		public Task<OrderResponse> CreateAsync(OrderRequest entity, CancellationToken ct);
-		public Task<OrderResponse> UpdateAsync(int id, OrderRequest entity, CancellationToken ct);
-		public Task DeleteAsync(int id, CancellationToken ct);
+		public Task<OrderResponse> GetAsync(int id, CancellationToken ct);
+		public Task<OrderResponse> CreateAsync(OrderRequest request, CancellationToken ct);
+		public Task<OrderResponse> UpdateAsync(int id, OrderRequest request, CancellationToken ct);
+		public Task<bool> DeleteAsync(int id, CancellationToken ct);
 	}
 }
