@@ -1,5 +1,6 @@
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
+using System.Text.Json.Serialization;
 
 namespace ComputerPartsShop
 {
@@ -9,9 +10,13 @@ namespace ComputerPartsShop
 		{
 			var builder = WebApplication.CreateBuilder(args);
 
-			// Add services to the container.
-
-			builder.Services.AddControllers();
+			// Add services to the container.			
+			var connectionString = builder.Configuration.GetConnectionString("SqlServer") ?? throw new InvalidOperationException("Connection string 'SqlServer' not found.");
+			builder.Services.AddScoped<DBContext>(sp => new DBContext(connectionString));
+			builder.Services.AddControllers().AddJsonOptions(options =>
+			{
+				options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+			});
 			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddOpenApi();
@@ -41,7 +46,6 @@ namespace ComputerPartsShop
 			builder.Services.AddScoped<IPaymentProviderRepository, PaymentProviderRepository>();
 			builder.Services.AddScoped<IProductRepository, ProductRepository>();
 			builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
-			builder.Services.AddSingleton<TempData>();
 
 			var app = builder.Build();
 
