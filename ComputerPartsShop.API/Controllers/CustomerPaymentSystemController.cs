@@ -31,7 +31,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <returns>List of customer payment systems</returns>
 
 		[HttpGet]
-		public async Task<ActionResult<List<CustomerPaymentSystemResponse>>> GetCustomerPaymentSystemListAsync(CancellationToken ct)
+		public async Task<IActionResult> GetCustomerPaymentSystemListAsync(CancellationToken ct)
 		{
 			try
 			{
@@ -55,7 +55,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Customer payment system</returns>
 		[HttpGet("{id:guid}")]
-		public async Task<ActionResult<DetailedCustomerPaymentSystemResponse>> GetCustomerPaymentSystemAsync(Guid id, CancellationToken ct)
+		public async Task<IActionResult> GetCustomerPaymentSystemAsync(Guid id, CancellationToken ct)
 		{
 			try
 			{
@@ -84,7 +84,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Created customer payment system</returns>
 		[HttpPost]
-		public async Task<ActionResult<CustomerPaymentSystemResponse>> CreateCustomerPaymentSystemAsync(CustomerPaymentSystemRequest request, CancellationToken ct)
+		public async Task<IActionResult> CreateCustomerPaymentSystemAsync(CustomerPaymentSystemRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -108,7 +108,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				var customerPaymentSystem = await _customerPaymentSystemService.CreateAsync(request, ct);
 
-				return Created(nameof(CreateCustomerPaymentSystemAsync), customerPaymentSystem);
+				return Created(nameof(GetCustomerPaymentSystemAsync), customerPaymentSystem);
 			}
 			catch (OperationCanceledException)
 			{
@@ -128,7 +128,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Updated customer payment system</returns>
 		[HttpPut("{id:guid}")]
-		public async Task<ActionResult<CustomerPaymentSystemResponse>> UpdateCustomerPaymentSystemAsync(Guid id, CustomerPaymentSystemRequest request, CancellationToken ct)
+		public async Task<IActionResult> UpdateCustomerPaymentSystemAsync(Guid id, CustomerPaymentSystemRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -171,12 +171,12 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="id">Customer payment system ID</param>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="204">Returns confirmation of deletion</response>
 		/// <response code="404">Returns if the customer payment system was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:guid}")]
-		public async Task<ActionResult> DeleteCustomerPaymentSystemAsync(Guid id, CancellationToken ct)
+		public async Task<IActionResult> DeleteCustomerPaymentSystemAsync(Guid id, CancellationToken ct)
 		{
 			try
 			{
@@ -189,7 +189,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				await _customerPaymentSystemService.DeleteAsync(id, ct);
 
-				return Ok();
+				return NoContent();
 			}
 			catch (OperationCanceledException)
 			{

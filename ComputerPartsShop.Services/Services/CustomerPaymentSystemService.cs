@@ -32,13 +32,17 @@ namespace ComputerPartsShop.Services
 		public async Task<DetailedCustomerPaymentSystemResponse> GetAsync(Guid id, CancellationToken ct)
 		{
 			var customerPaymentSystem = await _customerPaymentSystemRepository.GetAsync(id, ct);
+
+			if (customerPaymentSystem == null)
+			{
+				return null;
+			}
+
 			var paymentsList = customerPaymentSystem.Payments;
 
-			return customerPaymentSystem == null ? null! : new DetailedCustomerPaymentSystemResponse(customerPaymentSystem.Id,
-				customerPaymentSystem.Customer == null ? "Empty" : customerPaymentSystem.Customer.Username,
-				customerPaymentSystem.Customer == null ? "Empty" : customerPaymentSystem.Customer.Email,
-				customerPaymentSystem.Provider == null ? "Empty" : customerPaymentSystem.Provider.Name, customerPaymentSystem.PaymentReference,
-				paymentsList.Select(p => new PaymentInCustomerPaymentSystemResponse(p.Id, p.OrderId, p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt)).ToList());
+			return new DetailedCustomerPaymentSystemResponse(id, customerPaymentSystem.Customer.Username, customerPaymentSystem.Customer.Email, customerPaymentSystem.Provider.Name,
+				customerPaymentSystem.PaymentReference, paymentsList == null ? new List<PaymentInCustomerPaymentSystemResponse>() :
+				paymentsList.Select(x => new PaymentInCustomerPaymentSystemResponse(x.Id, x.OrderId, x.Total, x.Method, x.Status, x.PaymentStartAt, x.PaidAt)).ToList());
 		}
 
 		public async Task<CustomerPaymentSystemResponse> CreateAsync(CustomerPaymentSystemRequest entity, CancellationToken ct)
@@ -58,9 +62,10 @@ namespace ComputerPartsShop.Services
 				PaymentReference = entity.PaymentReference
 			};
 
-			var createdCPSId = await _customerPaymentSystemRepository.CreateAsync(newCustomerPaymentSystem, ct);
+			var createdCPS = await _customerPaymentSystemRepository.CreateAsync(newCustomerPaymentSystem, ct);
 
-			return new CustomerPaymentSystemResponse(createdCPSId, entity.Username, entity.Email, entity.ProviderName, entity.PaymentReference);
+			return new CustomerPaymentSystemResponse(createdCPS.Id, newCustomerPaymentSystem.Customer.Username, newCustomerPaymentSystem.Customer.Email,
+				newCustomerPaymentSystem.Provider.Name, newCustomerPaymentSystem.PaymentReference);
 
 		}
 
@@ -83,9 +88,9 @@ namespace ComputerPartsShop.Services
 			return new CustomerPaymentSystemResponse(id, entity.Username, entity.Email, entity.ProviderName, entity.PaymentReference);
 		}
 
-		public async Task DeleteAsync(Guid id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
 		{
-			await _customerPaymentSystemRepository.DeleteAsync(id, ct);
+			return await _customerPaymentSystemRepository.DeleteAsync(id, ct);
 		}
 	}
 }
