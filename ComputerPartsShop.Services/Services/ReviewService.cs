@@ -28,7 +28,12 @@ namespace ComputerPartsShop.Services
 		{
 			var review = await _reviewRepository.GetAsync(id, ct);
 
-			return review == null ? null! : new ReviewResponse(id, review.Customer?.Username, review.Product.Name, review.Rating, review.Description);
+			if (review == null)
+			{
+				return null;
+			}
+
+			return new ReviewResponse(id, review.Customer?.Username, review.Product.Name, review.Rating, review.Description);
 		}
 
 		public async Task<ReviewResponse> CreateAsync(ReviewRequest entity, CancellationToken ct)
@@ -66,8 +71,8 @@ namespace ComputerPartsShop.Services
 				};
 			}
 
-			var reviewId = await _reviewRepository.CreateAsync(newReview, ct);
-			return new ReviewResponse(reviewId, entity.Username, product.Name, entity.Rating, entity.Description);
+			var review = await _reviewRepository.CreateAsync(newReview, ct);
+			return new ReviewResponse(review.Id, entity.Username, product.Name, entity.Rating, entity.Description);
 		}
 
 		public async Task<ReviewResponse> UpdateAsync(int id, ReviewRequest entity, CancellationToken ct)
@@ -110,9 +115,9 @@ namespace ComputerPartsShop.Services
 			return new ReviewResponse(id, entity.Username, product.Name, entity.Rating, entity.Description);
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await _reviewRepository.DeleteAsync(id, ct);
+			return await _reviewRepository.DeleteAsync(id, ct);
 		}
 	}
 }

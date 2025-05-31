@@ -26,8 +26,12 @@ namespace ComputerPartsShop.Services
 		{
 			var product = await _productRepository.GetAsync(id, ct);
 
-			return product == null ? null! :
-				new ProductResponse(product.Id, product.Name, product.Description, product.UnitPrice, product.Stock, product.Category.Name, product.InternalCode);
+			if (product == null)
+			{
+				return null;
+			}
+
+			return new ProductResponse(product.Id, product.Name, product.Description, product.UnitPrice, product.Stock, product.Category.Name, product.InternalCode);
 		}
 
 		public async Task<ProductResponse> CreateAsync(ProductRequest entity, CancellationToken ct)
@@ -45,9 +49,9 @@ namespace ComputerPartsShop.Services
 				InternalCode = entity.InternalCode,
 			};
 
-			var productId = await _productRepository.CreateAsync(newProduct, ct);
+			var product = await _productRepository.CreateAsync(newProduct, ct);
 
-			return new ProductResponse(productId, entity.Name, entity.Description, entity.UnitPrice, entity.Stock, entity.CategoryName, entity.InternalCode);
+			return new ProductResponse(product.Id, product.Name, product.Description, product.UnitPrice, product.Stock, product.Category.Name, product.InternalCode);
 		}
 
 		public async Task<ProductResponse> UpdateAsync(int id, ProductRequest entity, CancellationToken ct)
@@ -71,9 +75,9 @@ namespace ComputerPartsShop.Services
 				entity.Stock, entity.CategoryName, entity.InternalCode);
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await _productRepository.DeleteAsync(id, ct);
+			return await _productRepository.DeleteAsync(id, ct);
 		}
 	}
 }

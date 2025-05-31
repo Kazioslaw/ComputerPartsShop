@@ -16,6 +16,7 @@ namespace ComputerPartsShop.Services
 		public async Task<List<PaymentProviderResponse>> GetListAsync(CancellationToken ct)
 		{
 			var paymentProviderList = await _providerRepository.GetListAsync(ct);
+			var customerPaymentsSystem = paymentProviderList.Select(x => x.CustomerPayments);
 
 			return paymentProviderList.Select(pp => new PaymentProviderResponse(pp.Id, pp.Name, pp.CustomerPayments.Select(x => x.Id).ToList())).ToList();
 		}
@@ -24,12 +25,34 @@ namespace ComputerPartsShop.Services
 		{
 			var paymentProvider = await _providerRepository.GetAsync(id, ct);
 
+			if (paymentProvider == null)
+			{
+				return null;
+			}
+
 			var customerPaymentSystem = paymentProvider.CustomerPayments;
 
-			return paymentProvider == null ? null! :
+			return
 				new DetailedPaymentProviderResponse(paymentProvider.Id, paymentProvider.Name,
 				customerPaymentSystem.Select(customerPaymentSystem => new CustomerPaymentSystemResponse(customerPaymentSystem.Id, customerPaymentSystem.Customer.Username,
-				customerPaymentSystem.Customer.Email, customerPaymentSystem.Provider.Name, customerPaymentSystem.PaymentReference)).ToList());
+				customerPaymentSystem.Customer.Email, paymentProvider.Name, customerPaymentSystem.PaymentReference)).ToList());
+		}
+
+		public async Task<DetailedPaymentProviderResponse> GetByNameAsync(string name, CancellationToken ct)
+		{
+			var paymentProvider = await _providerRepository.GetByNameAsync(name, ct);
+
+			if (paymentProvider == null)
+			{
+				return null;
+			}
+
+			var customerPaymentSystemList = paymentProvider.CustomerPayments;
+
+			return new DetailedPaymentProviderResponse(paymentProvider.Id, paymentProvider.Name,
+				customerPaymentSystemList.Select(cps => new CustomerPaymentSystemResponse(cps.Id, cps.Customer.Username,
+				cps.Customer.Email, paymentProvider.Name, cps.PaymentReference)).ToList());
+
 		}
 
 		public async Task<PaymentProviderResponse> CreateAsync(PaymentProviderRequest entity, CancellationToken ct)
@@ -39,9 +62,9 @@ namespace ComputerPartsShop.Services
 				Name = entity.Name
 			};
 
-			var paymentProviderId = await _providerRepository.CreateAsync(newPaymentProvider, ct);
+			var paymentProvider = await _providerRepository.CreateAsync(newPaymentProvider, ct);
 
-			return new PaymentProviderResponse(paymentProviderId, entity.Name, new List<Guid>());
+			return new PaymentProviderResponse(paymentProvider.Id, entity.Name, new List<Guid>());
 		}
 
 		public async Task<PaymentProviderResponse> UpdateAsync(int id, PaymentProviderRequest entity, CancellationToken ct)
@@ -56,9 +79,9 @@ namespace ComputerPartsShop.Services
 			return new PaymentProviderResponse(id, entity.Name, new List<Guid>());
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await _providerRepository.DeleteAsync(id, ct);
+			return await _providerRepository.DeleteAsync(id, ct);
 		}
 	}
 }

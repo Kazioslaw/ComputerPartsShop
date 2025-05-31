@@ -26,7 +26,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>List of reviews</returns>
 		[HttpGet]
-		public async Task<ActionResult<List<ReviewResponse>>> GetReviewListAsync(CancellationToken ct)
+		public async Task<IActionResult> GetReviewListAsync(CancellationToken ct)
 		{
 			try
 			{
@@ -50,7 +50,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Review</returns>
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<ReviewResponse>> GetReviewAsync(int id, CancellationToken ct)
+		public async Task<IActionResult> GetReviewAsync(int id, CancellationToken ct)
 		{
 			try
 			{
@@ -79,7 +79,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Created review</returns>
 		[HttpPost]
-		public async Task<ActionResult<ReviewResponse>> CreateReviewAsync(ReviewRequest request, CancellationToken ct)
+		public async Task<IActionResult> CreateReviewAsync(ReviewRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -93,7 +93,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				var review = await _reviewService.CreateAsync(request, ct);
 
-				return Created(nameof(CreateReviewAsync), review);
+				return Ok(review);
 			}
 			catch (OperationCanceledException)
 			{
@@ -113,7 +113,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Updated review</returns>
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<ReviewResponse>> UpdateReviewAsync(int id, ReviewRequest request, CancellationToken ct)
+		public async Task<IActionResult> UpdateReviewAsync(int id, ReviewRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -146,12 +146,12 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="id">Review ID</param>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="204">Returns confirmation of deletion</response>
 		/// <response code="404">Returns if the review was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteReviewAsync(int id, CancellationToken ct)
+		public async Task<IActionResult> DeleteReviewAsync(int id, CancellationToken ct)
 		{
 			try
 			{
@@ -164,7 +164,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				await _reviewService.DeleteAsync(id, ct);
 
-				return Ok();
+				return NoContent();
 			}
 			catch (OperationCanceledException)
 			{

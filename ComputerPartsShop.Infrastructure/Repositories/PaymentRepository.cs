@@ -1,77 +1,71 @@
 ﻿using ComputerPartsShop.Domain.Models;
+using Dapper;
+using Microsoft.Data.SqlClient;
 
 namespace ComputerPartsShop.Infrastructure
 {
 	public class PaymentRepository : IPaymentRepository
 	{
-		private readonly TempData _dbContext;
+		private readonly DBContext _dbContext;
 
-		public PaymentRepository(TempData dbContext)
+		public PaymentRepository(DBContext dbContext)
 		{
 			_dbContext = dbContext;
 		}
 
 		public async Task<List<Payment>> GetListAsync(CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-
-			return _dbContext.PaymentList;
+			var query = "SELECT Payment.ID, Payment.CustomerPaymentID, Payment.OrderID, Payment.Total, Payment.Method, Payment.Status, Payment.PaymentStartAt, Payment.PaidAt FROM Payment";
+			using (var connection = _dbContext.CreateConnection())
+			{
+				var paymentList = await connection.QueryAsync<Payment>(query);
+				return paymentList.ToList();
+			}
 		}
 
 		public async Task<Payment> GetAsync(int id, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.Id == id);
+			var query = "SELECT Payment.ID, CustomerPaymentSystem.ID, CustomerPaymentSystem.Username, CustomerPaymentSystem.Email," +
+				"CustomerPaymentSystem.ProviderName, CustomerPaymentSystem.PaymentReference, " +
+				"Order.Id, Order.Username, Order.Email, ";
 
-			return payment!;
+			return new Payment();
 		}
 
-		public async Task<int> CreateAsync(Payment request, CancellationToken ct)
+		public async Task<Payment> CreateAsync(Payment request, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var last = _dbContext.PaymentList.OrderBy(x => x.Id).FirstOrDefault();
-
-			if (last == null)
-			{
-				request.Id = 1;
-			}
-			else
-			{
-				request.Id = last.Id + 1;
-			}
-
-			_dbContext.PaymentList.Add(request);
-
-			return request.Id;
+			request.Id = 999;
+			return request;
 		}
 
 		public async Task<Payment> UpdateAsync(int id, Payment request, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.Id == id);
-
-			if (payment != null)
-			{
-				payment.CustomerPaymentSystemId = request.CustomerPaymentSystemId;
-				payment.OrderId = request.OrderId;
-				payment.Total = request.Total;
-				payment.Method = request.Method;
-				payment.Status = request.Status;
-				payment.PaymentStartAt = request.PaymentStartAt;
-				payment.PaidAt = request.PaidAt;
-			}
-
-			return payment!;
+			request.Id = id;
+			return request;
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var payment = _dbContext.PaymentList.FirstOrDefault(x => x.Id == id);
+			var query = "DELETE FROM Payment WHERE ID = @Id";
 
-			if (payment != null)
+			using (var connection = _dbContext.CreateConnection())
 			{
-				_dbContext.PaymentList.Remove(payment);
+				using (var transaction = connection.BeginTransaction())
+				{
+					try
+					{
+						await connection.ExecuteAsync(query, new { id }, transaction);
+						transaction.Commit();
+
+						return true;
+					}
+					catch (SqlException)
+					{
+						transaction.Rollback();
+
+						return false;
+					}
+				}
 			}
 		}
 	}

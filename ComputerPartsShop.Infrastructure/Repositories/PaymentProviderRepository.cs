@@ -1,79 +1,191 @@
 ﻿using ComputerPartsShop.Domain.Models;
+using Dapper;
+using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace ComputerPartsShop.Infrastructure
 {
 	public class PaymentProviderRepository : IPaymentProviderRepository
 	{
-		private readonly TempData _dbContext;
+		private readonly DBContext _dbContext;
 
-		public PaymentProviderRepository(TempData dbContext)
+		public PaymentProviderRepository(DBContext dbContext)
 		{
 			_dbContext = dbContext;
 		}
 
 		public async Task<List<PaymentProvider>> GetListAsync(CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
+			var query = "SELECT PaymentProvider.ID, Name, CustomerPaymentSystem.ID FROM PaymentProvider " +
+				"LEFT JOIN CustomerPaymentSystem ON CustomerPaymentSystem.ProviderID = PaymentProvider.ID";
 
-			return _dbContext.PaymentProviderList;
+			var providerDictionary = new Dictionary<int, PaymentProvider>();
+
+			using (var connection = _dbContext.CreateConnection())
+			{
+				var result = await connection.QueryAsync<PaymentProvider, CustomerPaymentSystem, PaymentProvider>(query, (paymentProvider, customerPaymentSystem) =>
+				{
+					if (!providerDictionary.TryGetValue(paymentProvider.Id, out var pp))
+					{
+						pp = paymentProvider;
+						pp.CustomerPayments = new List<CustomerPaymentSystem>();
+						providerDictionary.Add(pp.Id, pp);
+					}
+
+					if (customerPaymentSystem != null)
+					{
+						pp.CustomerPayments.Add(customerPaymentSystem);
+					}
+
+					return pp;
+				}, splitOn: "ID");
+
+				return result.Distinct().ToList();
+			}
 		}
 
 		public async Task<PaymentProvider> GetAsync(int id, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Id == id);
+			var query = "SELECT PaymentProvider.ID, PaymentProvider.Name, CustomerPaymentSystem.ID, CustomerPaymentSystem.PaymentReference, Customer.Username, Customer.Email FROM PaymentProvider " +
+				"LEFT JOIN CustomerPaymentSystem ON CustomerPaymentSystem.ProviderID = PaymentProvider.ID " +
+				"LEFT JOIN Customer ON CustomerPaymentSystem.CustomerID = Customer.ID WHERE PaymentProvider.ID = @Id";
 
-			return paymentProvider!;
+			using (var connection = _dbContext.CreateConnection())
+			{
+				var providerDictionary = new Dictionary<int, PaymentProvider>();
+				var result = await connection.QueryAsync<PaymentProvider, CustomerPaymentSystem, Customer, PaymentProvider>(query, (paymentProvider, customerPaymentSystem, customer) =>
+				{
+					if (!providerDictionary.TryGetValue(paymentProvider.Id, out var pp))
+					{
+						pp = paymentProvider;
+						pp.CustomerPayments = new List<CustomerPaymentSystem>();
+						providerDictionary.Add(pp.Id, pp);
+					}
+
+					if (customerPaymentSystem != null)
+					{
+						customerPaymentSystem.Customer = customer;
+						pp.CustomerPayments.Add(customerPaymentSystem);
+					}
+
+					return pp;
+				}, new { Id = id }, splitOn: "ID, Username");
+
+				return result.Distinct().FirstOrDefault();
+			}
 		}
 
 		public async Task<PaymentProvider> GetByNameAsync(string input, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Name == input);
+			var query = "SELECT PaymentProvider.ID, PaymentProvider.Name, CustomerPaymentSystem.ID, CustomerPaymentSystem.PaymentReference, Customer.Username, Customer.Email FROM PaymentProvider " +
+				"LEFT JOIN CustomerPaymentSystem ON CustomerPaymentSystem.ProviderID = PaymentProvider.ID " +
+				"LEFT JOIN Customer ON CustomerPaymentSystem.CustomerID = Customer.ID WHERE PaymentProvider.Name = @Input";
 
-			return paymentProvider!;
+			using (var connection = _dbContext.CreateConnection())
+			{
+				var providerDictionary = new Dictionary<int, PaymentProvider>();
+				var result = await connection.QueryAsync<PaymentProvider, CustomerPaymentSystem, Customer, PaymentProvider>(query, (paymentProvider, customerPaymentSystem, customer) =>
+				{
+					if (!providerDictionary.TryGetValue(paymentProvider.Id, out var pp))
+					{
+						pp = paymentProvider;
+						pp.CustomerPayments = new List<CustomerPaymentSystem>();
+						providerDictionary.Add(pp.Id, pp);
+					}
+
+					if (customerPaymentSystem != null)
+					{
+						customerPaymentSystem.Customer = customer;
+						pp.CustomerPayments.Add(customerPaymentSystem);
+					}
+
+					return pp;
+				}, new { Input = input }, splitOn: "ID, Username");
+
+				return result.Distinct().FirstOrDefault();
+			}
 		}
 
-		public async Task<int> CreateAsync(PaymentProvider request, CancellationToken ct)
+		public async Task<PaymentProvider> CreateAsync(PaymentProvider request, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var last = _dbContext.PaymentProviderList.OrderBy(x => x.Id).FirstOrDefault();
+			var query = "INSERT INTO PaymentProvider (Name) VALUES (@Name); SELECT CAST(SCOPE_IDENTITY() AS int)";
 
-			if (last == null)
+			var parameters = new DynamicParameters();
+			parameters.Add("Name", request.Name, DbType.String, ParameterDirection.Input);
+
+			using (var connection = _dbContext.CreateConnection())
 			{
-				request.Id = 1;
-			}
-			else
-			{
-				request.Id = last.Id + 1;
-			}
+				using (var transaction = connection.BeginTransaction())
+				{
+					try
+					{
+						request.Id = await connection.QuerySingleAsync<int>(query, parameters, transaction);
+						transaction.Commit();
 
-			_dbContext.PaymentProviderList.Add(request);
+						return request;
+					}
+					catch (SqlException)
+					{
+						transaction.Rollback();
 
-			return request.Id;
+						return null;
+					}
+
+				}
+			}
 		}
 
 		public async Task<PaymentProvider> UpdateAsync(int id, PaymentProvider request, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Id == id);
+			var query = "UPDATE PaymentProvider SET Name = @Name WHERE ID = @Id";
 
-			if (paymentProvider != null)
+			var parameters = new DynamicParameters();
+			parameters.Add("Name", request.Name, DbType.String, ParameterDirection.Input);
+			parameters.Add("Id", request.Id, DbType.Int32, ParameterDirection.Input);
+
+			using (var connection = _dbContext.CreateConnection())
 			{
-				paymentProvider.Name = request.Name;
-			}
+				using (var transaction = connection.BeginTransaction())
+				{
+					try
+					{
+						await connection.ExecuteAsync(query, parameters, transaction);
+						transaction.Commit();
 
-			return paymentProvider!;
+						return request;
+					}
+					catch (SqlException)
+					{
+						transaction.Rollback();
+
+						return null;
+					}
+				}
+			}
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var paymentProvider = _dbContext.PaymentProviderList.FirstOrDefault(x => x.Id == id);
+			var query = "DELETE FROM PaymentProvider WHERE ID = @Id";
 
-			if (paymentProvider != null)
+			using (var connection = _dbContext.CreateConnection())
 			{
-				_dbContext.PaymentProviderList.Remove(paymentProvider);
+				using (var transaction = connection.BeginTransaction())
+				{
+					try
+					{
+						await connection.ExecuteAsync(query, new { id }, transaction);
+						transaction.Commit();
+
+						return true;
+					}
+					catch (SqlException)
+					{
+						transaction.Rollback();
+
+						return false;
+					}
+				}
 			}
 		}
 	}
