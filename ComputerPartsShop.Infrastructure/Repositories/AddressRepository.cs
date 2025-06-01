@@ -19,7 +19,7 @@ namespace ComputerPartsShop.Infrastructure
 			var query = "SELECT Address.ID, Address.Street, Address.City, Address.Region, Address.ZipCode, Country.Alpha3 FROM Address " +
 				"JOIN Country on Address.CountryID = Country.ID;";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var result = await connection.QueryAsync<Address, Country, Address>(query, (address, country) =>
 				{
@@ -37,7 +37,7 @@ namespace ComputerPartsShop.Infrastructure
 			var query = "SELECT Address.ID, Address.Street, Address.City, Address.Region, Address.ZipCode, Country.Alpha3 " +
 				"FROM Address JOIN Country ON Address.CountryID = Country.ID WHERE Address.ID = @Id";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var result = await connection.QueryAsync<Address, Country, Address>(query, (address, country) =>
 				{
@@ -63,7 +63,7 @@ namespace ComputerPartsShop.Infrastructure
 			parameters.Add("ZipCode", request.ZipCode, DbType.String, ParameterDirection.Input);
 			parameters.Add("Alpha3", request.Country.Alpha3, DbType.String, ParameterDirection.Input);
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var result = await connection.QueryAsync<Guid>(query, parameters);
 
@@ -90,7 +90,7 @@ namespace ComputerPartsShop.Infrastructure
 			customerAddressParameters.Add("AddressID", request.Id, DbType.Guid, ParameterDirection.Input);
 
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{
@@ -115,7 +115,7 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<Address> UpdateAsync(Guid oldAddressId, Address request, Guid oldCustomerId, Guid newCustomerId, CancellationToken ct)
 		{
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{
@@ -169,7 +169,7 @@ namespace ComputerPartsShop.Infrastructure
 		{
 			var query = "DELETE FROM Address WHERE ID = @Id";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{

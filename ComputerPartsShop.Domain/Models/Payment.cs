@@ -4,7 +4,7 @@ namespace ComputerPartsShop.Domain.Models
 {
 	public class Payment
 	{
-		public int Id { get; set; }
+		public Guid Id { get; set; }
 		public Guid CustomerPaymentSystemId { get; set; }
 		public CustomerPaymentSystem CustomerPaymentSystem { get; set; }
 		public int OrderId { get; set; }

@@ -21,7 +21,7 @@ namespace ComputerPartsShop.Infrastructure
 
 			var providerDictionary = new Dictionary<int, PaymentProvider>();
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var result = await connection.QueryAsync<PaymentProvider, CustomerPaymentSystem, PaymentProvider>(query, (paymentProvider, customerPaymentSystem) =>
 				{
@@ -50,7 +50,7 @@ namespace ComputerPartsShop.Infrastructure
 				"LEFT JOIN CustomerPaymentSystem ON CustomerPaymentSystem.ProviderID = PaymentProvider.ID " +
 				"LEFT JOIN Customer ON CustomerPaymentSystem.CustomerID = Customer.ID WHERE PaymentProvider.ID = @Id";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var providerDictionary = new Dictionary<int, PaymentProvider>();
 				var result = await connection.QueryAsync<PaymentProvider, CustomerPaymentSystem, Customer, PaymentProvider>(query, (paymentProvider, customerPaymentSystem, customer) =>
@@ -81,7 +81,7 @@ namespace ComputerPartsShop.Infrastructure
 				"LEFT JOIN CustomerPaymentSystem ON CustomerPaymentSystem.ProviderID = PaymentProvider.ID " +
 				"LEFT JOIN Customer ON CustomerPaymentSystem.CustomerID = Customer.ID WHERE PaymentProvider.Name = @Input";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var providerDictionary = new Dictionary<int, PaymentProvider>();
 				var result = await connection.QueryAsync<PaymentProvider, CustomerPaymentSystem, Customer, PaymentProvider>(query, (paymentProvider, customerPaymentSystem, customer) =>
@@ -113,7 +113,7 @@ namespace ComputerPartsShop.Infrastructure
 			var parameters = new DynamicParameters();
 			parameters.Add("Name", request.Name, DbType.String, ParameterDirection.Input);
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{
@@ -143,7 +143,7 @@ namespace ComputerPartsShop.Infrastructure
 			parameters.Add("Name", request.Name, DbType.String, ParameterDirection.Input);
 			parameters.Add("Id", request.Id, DbType.Int32, ParameterDirection.Input);
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{
@@ -168,7 +168,7 @@ namespace ComputerPartsShop.Infrastructure
 		{
 			var query = "DELETE FROM PaymentProvider WHERE ID = @Id";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{

@@ -35,9 +35,9 @@ namespace ComputerPartsShop.Services
 				customer.Reviews.Select(x => new ReviewInCustomerResponse(x.Id, x.Product.Name, x.Rating, x.Description)).ToList());
 		}
 
-		public async Task<CustomerResponse> GetByUsernameOrEmailAsync(string usernameOrEmail, CancellationToken ct)
+		public async Task<CustomerResponse> GetByUsernameOrEmailAsync(string input, CancellationToken ct)
 		{
-			var customer = await _customerRepository.GetByUsernameOrEmailAsync(usernameOrEmail, ct);
+			var customer = await _customerRepository.GetByUsernameOrEmailAsync(input, ct);
 
 			if (customer == null)
 			{

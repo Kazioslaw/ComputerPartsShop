@@ -80,96 +80,47 @@ namespace ComputerPartsShop.Services
 				DeliveryAddress = address,
 				Status = DeliveryStatus.Pending,
 				OrderedAt = DateTime.Now,
+				Payments = new List<Payment>()
 			};
 
 			var order = await _orderRepository.CreateAsync(newOrder, ct);
-
 			return new OrderResponse(order.Id, newOrder.CustomerId, newOrder.OrdersProducts.Select(x => new ProductInOrderResponse(x.ProductId, x.Product.Name, x.Product.UnitPrice, x.Quantity)).ToList(),
 				entity.Total, entity.AddressId, newOrder.Status, newOrder.OrderedAt, null, newOrder.Payments.Select(p => p.Id).ToList());
 		}
 
-		public async Task<OrderResponse> UpdateAsync(int id, OrderRequest entity, CancellationToken ct)
+		public async Task<OrderResponse> UpdateStatusAsync(int id, UpdateOrderRequest entity, CancellationToken ct)
 		{
-			var customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username! ?? entity.Email!, ct);
-			var address = await _addressRepository.GetAsync(entity.AddressId, ct);
 
-			var productOrderList = entity.Products;
-			var productList = new List<OrderProduct>();
+			var order = await _orderRepository.GetAsync(id, ct);
 
-			var customerPaymentSystem = await _customerPaymentSystemRepository.GetAsync(entity.CustomerPaymentSystemId, ct);
-
-			var payments = customerPaymentSystem.Payments.Where(x => x.OrderId == id).ToList();
-
-			foreach (var productOrder in productOrderList)
+			if (order == null)
 			{
-				var product = await _productRepository.GetAsync(productOrder.Id, ct);
-				var orderProduct = new OrderProduct()
-				{
-					ProductId = productOrder.Id,
-					Product = product,
-					Quantity = productOrder.Quantity
-				};
-				productList.Add(orderProduct);
+				return null;
 			}
-
-			Order order = null!;
 
 			switch (entity.Status)
 			{
 				case DeliveryStatus.Pending:
 				case DeliveryStatus.Processing:
-					order = new Order()
-					{
-						CustomerId = customer.Id,
-						Customer = customer,
-						OrdersProducts = productList,
-						Total = entity.Total,
-						DeliveryAddressId = entity.AddressId,
-						DeliveryAddress = address,
-						Status = (DeliveryStatus)entity.Status,
-						OrderedAt = (DateTime)entity.OrderedAt!,
-						Payments = payments ?? new List<Payment>(),
-					};
+					order.Status = (DeliveryStatus)entity.Status;
 					break;
 				case DeliveryStatus.Shipped:
-					order = new Order()
-					{
-						CustomerId = customer.Id,
-						Customer = customer,
-						OrdersProducts = productList,
-						Total = entity.Total,
-						DeliveryAddressId = entity.AddressId,
-						DeliveryAddress = address,
-						Status = (DeliveryStatus)entity.Status,
-						OrderedAt = (DateTime)entity.OrderedAt!,
-						SendAt = DateTime.Now,
-						Payments = payments ?? new List<Payment>()
-					};
+					order.Status = (DeliveryStatus)entity.Status;
+					order.SendAt = DateTime.Now;
 					break;
 				case DeliveryStatus.Delivered:
 				case DeliveryStatus.Returned:
 				case DeliveryStatus.Cancelled:
-					order = new Order()
-					{
-						CustomerId = customer.Id,
-						Customer = customer,
-						OrdersProducts = productList,
-						Total = entity.Total,
-						DeliveryAddressId = entity.AddressId,
-						DeliveryAddress = address,
-						Status = (DeliveryStatus)entity.Status,
-						OrderedAt = (DateTime)entity.OrderedAt!,
-						SendAt = (DateTime)entity.SendAt!,
-						Payments = payments ?? new List<Payment>()
-					};
+					order.Status = (DeliveryStatus)entity.Status;
 					break;
 			}
-			if (order != null)
-			{
-				await _orderRepository.UpdateAsync(id, order, ct);
-			}
-			return new OrderResponse(id, customer.Id, order.OrdersProducts.Select(x => new ProductInOrderResponse(x.ProductId, x.Product.Name, x.Product.UnitPrice, x.Quantity)).ToList(),
-				entity.Total, entity.AddressId, order.Status, entity.OrderedAt, entity.SendAt, payments?.Select(x => x.Id).ToList() ?? new List<int>());
+
+			var updatedOrder = await _orderRepository.UpdateStatusAsync(id, order, ct);
+
+
+
+			return new OrderResponse(id, updatedOrder.CustomerId, updatedOrder.OrdersProducts.Select(x => new ProductInOrderResponse(x.ProductId, x.Product.Name, x.Product.UnitPrice, x.Quantity)).ToList(),
+				updatedOrder.Total, updatedOrder.DeliveryAddressId, updatedOrder.Status, updatedOrder.OrderedAt, updatedOrder.SendAt, new List<Guid>());
 		}
 
 		public async Task<bool> DeleteAsync(int id, CancellationToken ct)

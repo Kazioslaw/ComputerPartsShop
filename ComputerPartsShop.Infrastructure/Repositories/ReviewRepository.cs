@@ -20,7 +20,7 @@ namespace ComputerPartsShop.Infrastructure
 				"LEFT JOIN Customer ON Review.CustomerID = Customer.ID " +
 				"LEFT JOIN Product ON Review.ProductID = Product.ID";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var result = await connection.QueryAsync<Review, Customer, Product, Review>(query, (review, customer, product) =>
 				{
@@ -39,7 +39,7 @@ namespace ComputerPartsShop.Infrastructure
 				"LEFT JOIN Customer ON Review.CustomerID = Customer.ID " +
 				"JOIN Product ON Review.ProductID = Product.ID WHERE Review.ID = @Id";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var result = await connection.QueryAsync<Review, Customer, Product, Review>(query, (review, customer, product) =>
 				{
@@ -65,7 +65,7 @@ namespace ComputerPartsShop.Infrastructure
 			parameters.Add("Description", request.Description ?? (object)DBNull.Value, direction: ParameterDirection.Input);
 			parameters.Add("NewID", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{
@@ -98,7 +98,7 @@ namespace ComputerPartsShop.Infrastructure
 			parameters.Add("Rating", request.Rating, DbType.Byte, ParameterDirection.Input);
 			parameters.Add("Description", request.Description, DbType.String, ParameterDirection.Input);
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{
@@ -123,7 +123,7 @@ namespace ComputerPartsShop.Infrastructure
 		{
 			var query = "DELETE FROM Review WHERE ID = @Id";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{

@@ -18,7 +18,7 @@ namespace ComputerPartsShop.Infrastructure
 		{
 			var query = "SELECT ID, FirstName, LastName, Username, Email, PhoneNumber FROM Customer";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var result = await connection.QueryAsync<Customer>(query);
 
@@ -39,7 +39,7 @@ namespace ComputerPartsShop.Infrastructure
 				"LEFT JOIN PaymentProvider ON PaymentProvider.ID = CustomerPaymentSystem.ProviderID " +
 				"LEFT JOIN Product ON Product.ID = Review.ProductID WHERE Customer.ID = @Id";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var result = await connection.QueryAsync<Customer, Address, Country, CustomerPaymentSystem, PaymentProvider, Review, Product, Customer>(query,
 						(customer, address, country, payment, provider, review, product) =>
@@ -88,9 +88,22 @@ namespace ComputerPartsShop.Infrastructure
 		{
 			var query = "SELECT ID, FirstName, LastName, Username, Email, PhoneNumber FROM Customer WHERE Username = @Input OR Email = @Input";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var result = await connection.QueryAsync<Customer>(query, new { Input = input });
+
+				return result.FirstOrDefault();
+			}
+		}
+
+		public async Task<Customer> GetByAddressIDAsync(Guid addressID, CancellationToken ct)
+		{
+			var query = "SELECT Customer.Username, Customer.Email FROM Customer JOIN CustomerAddress ON Customer.ID = CustomerAddress.CustomerID " +
+				"WHERE CustomerAddress.AddressID = @AddressID";
+
+			using (var connection = await _dbContext.CreateConnection())
+			{
+				var result = await connection.QueryAsync<Customer>(query, new { AddressID = addressID });
 
 				return result.FirstOrDefault();
 			}
@@ -110,7 +123,7 @@ namespace ComputerPartsShop.Infrastructure
 			parameters.Add("PhoneNumber", request.PhoneNumber ?? (object)DBNull.Value, DbType.String, ParameterDirection.Input);
 
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{
@@ -144,7 +157,7 @@ namespace ComputerPartsShop.Infrastructure
 			parameters.Add("Email", request.Email, DbType.String, ParameterDirection.Input);
 			parameters.Add("PhoneNumber", request.PhoneNumber ?? (object)DBNull.Value, DbType.String, ParameterDirection.Input);
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{
@@ -171,7 +184,7 @@ namespace ComputerPartsShop.Infrastructure
 		{
 			var query = "DELETE FROM Customer WHERE ID = @Id";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{

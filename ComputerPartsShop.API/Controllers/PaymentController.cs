@@ -48,8 +48,8 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="404">Returns if the payment was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Payment</returns>
-		[HttpGet("{id:int}")]
-		public async Task<IActionResult> GetPaymentAsync(int id, CancellationToken ct)
+		[HttpGet("{id:guid}")]
+		public async Task<IActionResult> GetPaymentAsync(Guid id, CancellationToken ct)
 		{
 			try
 			{
@@ -86,7 +86,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				var payment = await _paymentService.CreateAsync(request, ct);
 
-				return CreatedAtAction(nameof(GetPaymentAsync), new { id = payment.Id }, payment);
+				return Created(nameof(GetPaymentAsync), payment);
 			}
 			catch (OperationCanceledException)
 			{
@@ -105,8 +105,8 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="404">Returns if the payment was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Updated payment</returns>
-		[HttpPut("{id:int}")]
-		public async Task<IActionResult> UpdatePaymentAsync(int id, PaymentRequest request, CancellationToken ct)
+		[HttpPut("{id:guid}")]
+		public async Task<IActionResult> UpdatePaymentAsync(Guid id, UpdatePaymentRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -117,14 +117,7 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Payment not found");
 				}
 
-				var customerPaymentSystem = await _customerPaymentSystemService.GetAsync(request.CustomerPaymentSystemId, ct);
-
-				if (customerPaymentSystem == null)
-				{
-					return BadRequest("Invalid customer payment system ID");
-				}
-
-				var updatedPayment = await _paymentService.UpdateAsync(id, request, ct);
+				var updatedPayment = await _paymentService.UpdateStatusAsync(id, request, ct);
 
 				return Ok(updatedPayment);
 			}
@@ -143,8 +136,8 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="404">Returns if the payment was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Deletion confirmation</returns>
-		[HttpDelete("{id:int}")]
-		public async Task<IActionResult> DeleteAsync(int id, CancellationToken ct)
+		[HttpDelete("{id:guid}")]
+		public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken ct)
 		{
 			try
 			{

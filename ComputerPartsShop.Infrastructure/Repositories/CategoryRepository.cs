@@ -17,7 +17,7 @@ namespace ComputerPartsShop.Infrastructure
 		{
 			var query = "SELECT ID, Name, Description FROM Category";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var result = await connection.QueryAsync<Category>(query);
 
@@ -29,7 +29,7 @@ namespace ComputerPartsShop.Infrastructure
 		{
 			var query = "SELECT ID, Name, Description FROM Category WHERE ID = @Id";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var result = await connection.QueryFirstOrDefaultAsync<Category>(query, new { id });
 
@@ -41,7 +41,7 @@ namespace ComputerPartsShop.Infrastructure
 		{
 			var query = "SELECT ID, Name, Description FROM Category WHERE Name = @Name";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var result = await connection.QueryFirstOrDefaultAsync<Category>(query, new { name });
 
@@ -58,7 +58,7 @@ namespace ComputerPartsShop.Infrastructure
 			parameters.Add("Name", request.Name, dbType: DbType.String, direction: ParameterDirection.Input);
 			parameters.Add("Description", request.Description, dbType: DbType.String, direction: ParameterDirection.Input);
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{
@@ -88,7 +88,7 @@ namespace ComputerPartsShop.Infrastructure
 			parameters.Add("Name", request.Name, dbType: DbType.String, direction: ParameterDirection.Input);
 			parameters.Add("Description", request.Description, dbType: DbType.String, direction: ParameterDirection.Input);
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{
@@ -114,7 +114,7 @@ namespace ComputerPartsShop.Infrastructure
 		{
 			var query = "DELETE FROM Category WHERE ID = @Id";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{

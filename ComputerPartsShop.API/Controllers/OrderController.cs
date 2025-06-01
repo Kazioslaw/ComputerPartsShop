@@ -104,7 +104,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (address == null)
 				{
-					return BadRequest("Invalid address ID");
+					return BadRequest("That address does not exist or does not belong to the customer.");
 				}
 
 				var order = await _orderService.CreateAsync(request, ct);
@@ -130,7 +130,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Updated order</returns>
 		[HttpPut("{id:int}")]
-		public async Task<IActionResult> UpdateOrderAsync(int id, OrderRequest request, CancellationToken ct)
+		public async Task<IActionResult> UpdateOrderStatusAsync(int id, UpdateOrderRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -141,27 +141,12 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Order not found");
 				}
 
-				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
+				var updatedOrder = await _orderService.UpdateStatusAsync(id, request, ct);
+
+				if (updatedOrder == null)
 				{
-					return BadRequest("Invalid or missing username or email");
+					return BadRequest("Error while updating status");
 				}
-
-				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
-
-				if (customer == null)
-				{
-					return BadRequest("Invalid or missing username or email");
-				}
-
-				var address = await _addressService.GetAsync(request.AddressId, ct);
-
-				if (address == null)
-				{
-					return BadRequest("Invalid address ID");
-				}
-
-
-				var updatedOrder = await _orderService.UpdateAsync(id, request, ct);
 
 				return Ok(updatedOrder);
 			}

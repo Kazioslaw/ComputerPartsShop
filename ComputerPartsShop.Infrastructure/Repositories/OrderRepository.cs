@@ -1,6 +1,7 @@
 ﻿using ComputerPartsShop.Domain.Models;
 using Dapper;
 using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace ComputerPartsShop.Infrastructure
 {
@@ -8,7 +9,7 @@ namespace ComputerPartsShop.Infrastructure
 	{
 		private readonly DBContext _dbContext;
 
-		public OrderRepository(DBContext dbContext)
+		public OrderRepository(DBContext dbContext, IPaymentRepository paymentRepository)
 		{
 			_dbContext = dbContext;
 		}
@@ -21,7 +22,7 @@ namespace ComputerPartsShop.Infrastructure
 				"Payment.ID FROM \"Order\" LEFT JOIN OrderProduct ON \"Order\".ID = OrderProduct.OrderID " +
 				"LEFT JOIN Payment ON \"Order\".ID = Payment.OrderID LEFT JOIN Product ON Product.ID = OrderProduct.ProductID";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var orderDictionary = new Dictionary<int, Order>();
 				var result = await connection.QueryAsync<Order, OrderProduct, Product, Payment, Order>(query, (order, orderProduct, product, payment) =>
@@ -71,9 +72,9 @@ namespace ComputerPartsShop.Infrastructure
 			var query = "SELECT \"Order\".ID, \"Order\".CustomerID, \"Order\".Total, \"Order\".DeliveryAddressID, \"Order\".Status, " +
 				"\"Order\".OrderedAt, \"Order\".SendAt, OrderProduct.ProductID, OrderProduct.Quantity, Product.Name, Product.UnitPrice, " +
 				"Payment.ID FROM \"Order\" LEFT JOIN OrderProduct ON \"Order\".ID = OrderProduct.OrderID " +
-				"LEFT JOIN Payment ON \"Order\".ID = Payment.OrderID LEFT JOIN Product ON Product.ID = OrderProduct.ProductID";
+				"LEFT JOIN Payment ON \"Order\".ID = Payment.OrderID LEFT JOIN Product ON Product.ID = OrderProduct.ProductID WHERE \"Order\".ID = @Id";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				var orderDictionary = new Dictionary<int, Order>();
 				var result = await connection.QueryAsync<Order, OrderProduct, Product, Payment, Order>(query, (order, orderProduct, product, payment) =>
@@ -110,7 +111,7 @@ namespace ComputerPartsShop.Infrastructure
 					}
 
 					return currentOrder;
-				},
+				}, param: new { Id = id },
 				splitOn: "ProductID, Name, ID");
 
 				return result.Distinct().FirstOrDefault();
@@ -119,21 +120,93 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<Order> CreateAsync(Order request, CancellationToken ct)
 		{
-			request.Id = 999;
-			return request;
+			var createOrder = "INSERT INTO \"Order\" (CustomerID, DeliveryAddressID, Total, Status, OrderedAt, SendAt) " +
+				"VALUES (@CustomerID, @DeliveryAddressID, @Total, @Status, @OrderedAt, @SendAt) " +
+				"SELECT CAST(SCOPE_IDENTITY() AS int)";
+
+			using (var connection = await _dbContext.CreateConnection())
+			{
+				using (var transaction = connection.BeginTransaction())
+				{
+					try
+					{
+						var orderParameters = new DynamicParameters();
+						orderParameters.Add("CustomerID", request.CustomerId, DbType.Guid, ParameterDirection.Input);
+						orderParameters.Add("DeliveryAddressID", request.DeliveryAddressId, DbType.Guid, ParameterDirection.Input);
+						orderParameters.Add("Total", request.Total, DbType.Decimal, ParameterDirection.Input);
+						orderParameters.Add("Status", request.Status.ToString(), DbType.String, ParameterDirection.Input);
+						orderParameters.Add("OrderedAt", request.OrderedAt, DbType.DateTime2, ParameterDirection.Input);
+						orderParameters.Add("SendAt", request.SendAt, DbType.DateTime2, ParameterDirection.Input);
+
+						var orderID = await connection.QueryFirstOrDefaultAsync<int>(createOrder, orderParameters, transaction);
+
+						var createOrderProduct = "INSERT INTO OrderProduct (OrderID, ProductID, Quantity) VALUES (@OrderID, @ProductID, @Quantity)";
+
+						var orderProductList = new List<int>();
+
+						foreach (var op in request.OrdersProducts)
+						{
+							var orderProduct = await connection.ExecuteAsync(createOrderProduct, new
+							{
+								OrderID = orderID,
+								ProductID = op.ProductId,
+								Quantity = op.Quantity
+							}, transaction);
+						}
+						request.Id = orderID;
+
+						transaction.Commit();
+
+						return request;
+					}
+					catch (SqlException)
+					{
+						transaction.Rollback();
+
+						return null;
+					}
+				}
+			}
 		}
 
-		public async Task<Order> UpdateAsync(int id, Order request, CancellationToken ct)
+		public async Task<Order> UpdateStatusAsync(int id, Order request, CancellationToken ct)
 		{
-			request.Id = id;
-			return request;
+			var updateStatusQuery = "UPDATE \"Order\" SET Status = @Status, SendAt = @SendAt WHERE ID = @Id";
+
+			var parameters = new DynamicParameters();
+			parameters.Add("Id", request.Id, DbType.Int32, ParameterDirection.Input);
+			parameters.Add("Status", request.Status.ToString(), DbType.String, ParameterDirection.Input);
+			parameters.Add("SendAt", request.SendAt, DbType.DateTime2, ParameterDirection.Input);
+
+			using (var connection = await _dbContext.CreateConnection())
+			{
+				using (var transaction = connection.BeginTransaction())
+				{
+					try
+					{
+						await connection.ExecuteAsync(updateStatusQuery, parameters, transaction);
+						transaction.Commit();
+
+						request.Id = id;
+
+						return request;
+
+					}
+					catch (SqlException)
+					{
+						transaction.Rollback();
+
+						return null;
+					}
+				}
+			}
 		}
 
 		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
 			var query = "DELETE FROM Order WHERE ID = @Id";
 
-			using (var connection = _dbContext.CreateConnection())
+			using (var connection = await _dbContext.CreateConnection())
 			{
 				using (var transaction = connection.BeginTransaction())
 				{

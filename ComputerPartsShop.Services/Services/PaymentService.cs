@@ -22,7 +22,7 @@ namespace ComputerPartsShop.Services
 			return paymentList.Select(p => new PaymentResponse(p.Id, p.CustomerPaymentSystemId, p.OrderId, p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt)).ToList();
 		}
 
-		public async Task<DetailedPaymentResponse> GetAsync(int id, CancellationToken ct)
+		public async Task<PaymentResponse> GetAsync(Guid id, CancellationToken ct)
 		{
 			var payment = await _paymentRepository.GetAsync(id, ct);
 
@@ -31,15 +31,7 @@ namespace ComputerPartsShop.Services
 				return null;
 			}
 
-			return new DetailedPaymentResponse(payment.Id,
-				new CustomerPaymentSystemResponse(payment.CustomerPaymentSystem.Id, payment.CustomerPaymentSystem.Customer.Username,
-				payment.CustomerPaymentSystem.Customer.Email, payment.CustomerPaymentSystem.Provider.Name, payment.CustomerPaymentSystem.PaymentReference),
-				new OrderInPaymentResponse(payment.OrderId, payment.Order.Customer.Username, payment.Order.Customer.Email,
-				payment.Order.OrdersProducts.Select(x => new ProductInPaymentResponse(x.Product.Name, x.Quantity)).ToList(),
-				new AddressResponse(payment.Order.DeliveryAddress.Id, payment.Order.DeliveryAddress.Street, payment.Order.DeliveryAddress.City,
-				payment.Order.DeliveryAddress.Region, payment.Order.DeliveryAddress.ZipCode, payment.Order.DeliveryAddress.Country.Alpha3),
-				payment.Order.Status, payment.Order.OrderedAt, payment.Order.SendAt),
-				payment.Total, payment.Method, payment.Status, payment.PaymentStartAt, payment.PaidAt);
+			return new PaymentResponse(payment.Id, payment.CustomerPaymentSystemId, payment.OrderId, payment.Total, payment.Method, payment.Status, payment.PaymentStartAt, payment.PaidAt);
 		}
 
 		public async Task<PaymentResponse> CreateAsync(PaymentRequest entity, CancellationToken ct)
@@ -56,19 +48,20 @@ namespace ComputerPartsShop.Services
 
 			var payment = await _paymentRepository.CreateAsync(newPayment, ct);
 
-			return new PaymentResponse(payment.Id, entity.CustomerPaymentSystemId, entity.OrderId, entity.Total,
-				entity.Method, newPayment.Status, newPayment.PaymentStartAt, null);
+			if (payment == null)
+			{
+				return null;
+			}
+
+			return new PaymentResponse(payment.Id, payment.CustomerPaymentSystemId, payment.OrderId, payment.Total,
+				payment.Method, payment.Status, payment.PaymentStartAt, null);
 		}
 
-		public async Task<PaymentResponse> UpdateAsync(int id, PaymentRequest entity, CancellationToken ct)
+		public async Task<PaymentResponse> UpdateStatusAsync(Guid id, UpdatePaymentRequest entity, CancellationToken ct)
 		{
 			Payment payment = await _paymentRepository.GetAsync(id, ct);
 
-			payment.CustomerPaymentSystemId = entity.CustomerPaymentSystemId;
-			payment.OrderId = entity.OrderId;
-			payment.Total = entity.Total;
-			payment.Method = entity.Method;
-			payment.Status = entity.Status!;
+
 
 			switch (entity.Status)
 			{
@@ -76,25 +69,24 @@ namespace ComputerPartsShop.Services
 				case PaymentStatus.Authorized:
 				case PaymentStatus.Failed:
 				case PaymentStatus.Cancelled:
-					payment.PaymentStartAt = (DateTime)entity.PaymentStartAt!;
+					payment.Status = entity.Status;
 					break;
 				case PaymentStatus.Completed:
-					payment.PaymentStartAt = (DateTime)entity.PaymentStartAt!;
+					payment.Status = entity.Status;
 					payment.PaidAt = DateTime.Now;
 					break;
 				case PaymentStatus.Refunded:
-					payment.PaymentStartAt = (DateTime)entity.PaymentStartAt!;
-					payment.PaidAt = (DateTime)entity.PaidAt!;
+					payment.Status = entity.Status;
 					break;
 			}
 
-			await _paymentRepository.UpdateAsync(id, payment, ct);
+			await _paymentRepository.UpdateStatusAsync(id, payment, ct);
 
-			return new PaymentResponse(id, entity.CustomerPaymentSystemId, entity.OrderId, entity.Total, entity.Method,
-				entity.Status, entity.PaymentStartAt, entity.PaidAt);
+			return new PaymentResponse(payment.Id, payment.CustomerPaymentSystemId, payment.OrderId, payment.Total, payment.Method,
+				payment.Status, payment.PaymentStartAt, payment.PaidAt);
 		}
 
-		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
 		{
 			return await _paymentRepository.DeleteAsync(id, ct);
 		}
