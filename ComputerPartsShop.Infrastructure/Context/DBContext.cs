@@ -10,8 +10,6 @@ namespace ComputerPartsShop.Infrastructure
 		public DBContext(string connectionString)
 		{
 			_connectionString = connectionString;
-			Console.WriteLine(connectionString);
-			Console.WriteLine(_connectionString);
 
 		}
 
