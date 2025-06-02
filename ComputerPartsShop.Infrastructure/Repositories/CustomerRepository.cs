@@ -45,39 +45,39 @@ namespace ComputerPartsShop.Infrastructure
 						(customer, address, country, payment, provider, review, product) =>
 						{
 							var customerDictionary = new Dictionary<Guid, Customer>();
-							if (!customerDictionary.TryGetValue(customer.Id, out var cust))
+							if (!customerDictionary.TryGetValue(customer.Id, out var currentCustomer))
 							{
-								cust = customer;
-								cust.CustomersAddresses = new List<CustomerAddress>();
-								cust.PaymentInfoList = new List<CustomerPaymentSystem>();
-								cust.Reviews = new List<Review>();
-								customerDictionary.Add(customer.Id, cust);
+								currentCustomer = customer;
+								currentCustomer.CustomersAddresses = new List<CustomerAddress>();
+								currentCustomer.PaymentInfoList = new List<CustomerPaymentSystem>();
+								currentCustomer.Reviews = new List<Review>();
+								customerDictionary.Add(customer.Id, currentCustomer);
 							}
 
-							if (address != null && address.Id != Guid.Empty && !cust.CustomersAddresses.Any(ca => ca.Address.Id == address.Id))
+							if (address != null && address.Id != Guid.Empty && !currentCustomer.CustomersAddresses.Any(ca => ca.Address.Id == address.Id))
 							{
 								address.Country = country;
-								cust.CustomersAddresses.Add(new CustomerAddress
+								currentCustomer.CustomersAddresses.Add(new CustomerAddress
 								{
-									CustomerId = cust.Id,
+									CustomerId = currentCustomer.Id,
 									AddressId = address.Id,
 									Address = address
 								});
 							}
 
-							if (payment != null && payment.Id != Guid.Empty && !cust.PaymentInfoList.Any(pi => pi.Id == payment.Id))
+							if (payment != null && payment.Id != Guid.Empty && !currentCustomer.PaymentInfoList.Any(pi => pi.Id == payment.Id))
 							{
 								payment.Provider = provider;
-								cust.PaymentInfoList.Add(payment);
+								currentCustomer.PaymentInfoList.Add(payment);
 							}
 
-							if (review != null && review.Id != 0 && !cust.Reviews.Any(r => r.Id == review.Id))
+							if (review != null && review.Id != 0 && !currentCustomer.Reviews.Any(r => r.Id == review.Id))
 							{
 								review.Product = product;
-								cust.Reviews.Add(review);
+								currentCustomer.Reviews.Add(review);
 							}
 
-							return cust;
+							return currentCustomer;
 						}, new { Id = id }, splitOn: "ID, Alpha3, ID, Name, ID, Name");
 
 				return result.Distinct().FirstOrDefault();
@@ -86,11 +86,41 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<Customer> GetByUsernameOrEmailAsync(string input, CancellationToken ct)
 		{
-			var query = "SELECT ID, FirstName, LastName, Username, Email, PhoneNumber FROM Customer WHERE Username = @Input OR Email = @Input";
+			var query = "SELECT Customer.ID, Customer.FirstName, Customer.LastName, Customer.Username, Customer.Email, Customer.PhoneNumber, " +
+				"Address.ID, Address.Street, Address.City, Address.Region, Address.ZipCode, Country.Alpha3 FROM Customer " +
+				"LEFT JOIN CustomerAddress ON CustomerAddress.CustomerID = Customer.ID " +
+				"LEFT JOIN Address ON CustomerAddress.AddressID = Address.ID " +
+				"LEFT JOIN Country ON Address.CountryID = Country.ID " +
+				"WHERE Username = @Input OR Email = @Input";
+
+			var customerDictionary = new Dictionary<Guid, Customer>();
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var result = await connection.QueryAsync<Customer>(query, new { Input = input });
+				var result = await connection.QueryAsync<Customer, Address, Country, Customer>(query,
+					(customer, address, country) =>
+					{
+						if (!customerDictionary.TryGetValue(customer.Id, out var currentCustomer))
+						{
+							currentCustomer = customer;
+							customer.CustomersAddresses = new List<CustomerAddress>();
+							customerDictionary.Add(customer.Id, currentCustomer);
+						}
+
+						if (address != null && address.Id != Guid.Empty && !currentCustomer.CustomersAddresses.Any(ca => ca.Address.Id == address.Id))
+						{
+							address.Country = country;
+							currentCustomer.CustomersAddresses.Add(new CustomerAddress
+							{
+								CustomerId = currentCustomer.Id,
+								AddressId = address.Id,
+								Address = address,
+							});
+						}
+
+						return currentCustomer;
+					},
+					splitOn: "ID, Alpha3", param: new { Input = input });
 
 				return result.FirstOrDefault();
 			}

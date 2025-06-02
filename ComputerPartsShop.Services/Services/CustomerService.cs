@@ -35,7 +35,7 @@ namespace ComputerPartsShop.Services
 				customer.Reviews.Select(x => new ReviewInCustomerResponse(x.Id, x.Product.Name, x.Rating, x.Description)).ToList());
 		}
 
-		public async Task<CustomerResponse> GetByUsernameOrEmailAsync(string input, CancellationToken ct)
+		public async Task<CustomerWithAddressResponse> GetByUsernameOrEmailAsync(string input, CancellationToken ct)
 		{
 			var customer = await _customerRepository.GetByUsernameOrEmailAsync(input, ct);
 
@@ -44,7 +44,9 @@ namespace ComputerPartsShop.Services
 				return null;
 			}
 
-			return new CustomerResponse(customer.Id, customer.FirstName, customer.LastName, customer.Username, customer.Email, customer.PhoneNumber);
+			return new CustomerWithAddressResponse(customer.Id, customer.FirstName, customer.LastName, customer.Username, customer.Email, customer.PhoneNumber,
+				customer.CustomersAddresses.Select(x => new AddressResponse(x.AddressId, x.Address.Street, x.Address.City, x.Address.Region, x.Address.ZipCode,
+				x.Address.Country.Alpha3)).ToList());
 		}
 
 		public async Task<CustomerResponse> CreateAsync(CustomerRequest entity, CancellationToken ct)
