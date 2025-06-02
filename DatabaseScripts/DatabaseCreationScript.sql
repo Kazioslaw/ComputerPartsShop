@@ -141,8 +141,8 @@ BEGIN
 		[ProductId] INT,
 		[Quantity] INT NOT NULL,
 		PRIMARY KEY ([OrderId], [ProductId]),
-		FOREIGN KEY ([OrderId]) REFERENCES [Order] ([Id]),
-		FOREIGN KEY ([ProductId]) REFERENCES [Product] ([Id])
+		FOREIGN KEY ([OrderId]) REFERENCES [Order] ([Id]) ON DELETE CASCADE,
+		FOREIGN KEY ([ProductId]) REFERENCES [Product] ([Id]) ON DELETE CASCADE
 	);	
 END;
 
