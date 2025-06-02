@@ -3,7 +3,7 @@ using System.Data;
 
 namespace ComputerPartsShop.Infrastructure
 {
-	public class DBContext : IDisposable
+	public class DBContext
 	{
 		private readonly string _connectionString;
 		private SqlConnection _connection;
@@ -22,11 +22,6 @@ namespace ComputerPartsShop.Infrastructure
 			}
 
 			return _connection;
-		}
-
-		public void Dispose()
-		{
-			_connection?.Dispose();
 		}
 	}
 }
