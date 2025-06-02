@@ -177,9 +177,15 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Order not found");
 				}
 
-				await _orderService.DeleteAsync(id, ct);
+				var isDeleted = await _orderService.DeleteAsync(id, ct);
+
+				if (!isDeleted)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
+				}
 
 				return NoContent();
+
 			}
 			catch (OperationCanceledException)
 			{

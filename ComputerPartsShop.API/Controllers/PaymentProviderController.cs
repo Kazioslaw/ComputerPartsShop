@@ -172,7 +172,12 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Payment provider not found");
 				}
 
-				await _paymentProviderService.DeleteAsync(id, ct);
+				var isDeleted = await _paymentProviderService.DeleteAsync(id, ct);
+
+				if (!isDeleted)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
+				}
 
 				return NoContent();
 			}

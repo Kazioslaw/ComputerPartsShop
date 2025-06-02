@@ -1,4 +1,5 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using AutoMapper;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
@@ -10,35 +11,41 @@ namespace ComputerPartsShop.Services
 		private readonly IAddressRepository _addressRepository;
 		private readonly ICountryRepository _countryRepository;
 		private readonly ICustomerRepository _customerRepository;
+		private readonly IMapper _mapper;
 
-		public AddressService(IAddressRepository addressRepository, ICountryRepository countryRepository, ICustomerRepository customerRepository)
+		public AddressService(IAddressRepository addressRepository, ICountryRepository countryRepository, ICustomerRepository customerRepository, IMapper mapper)
 		{
 			_addressRepository = addressRepository;
 			_countryRepository = countryRepository;
 			_customerRepository = customerRepository;
+			_mapper = mapper;
 		}
 
 
 		public async Task<List<AddressResponse>> GetListAsync(CancellationToken ct)
 		{
-			var addressList = await _addressRepository.GetListAsync(ct);
+			var result = await _addressRepository.GetListAsync(ct);
 
-			return addressList.Select(a => new AddressResponse(a.Id, a.Street, a.City, a.Region, a.ZipCode,
-				a.Country == null ? "Empty" : a.Country.Alpha3)).ToList();
+			var addressList = _mapper.Map<IEnumerable<AddressResponse>>(result);
+
+			return addressList.ToList();
 		}
 
-		public async Task<AddressResponse> GetAsync(Guid id, CancellationToken ct)
+		public async Task<DetailedAddressResponse> GetAsync(Guid id, CancellationToken ct)
 		{
-			var address = await _addressRepository.GetAsync(id, ct);
+			var result = await _addressRepository.GetAsync(id, ct);
 
-			if (address == null)
+			if (result == null)
 			{
 				return null;
 			}
 
-			return new AddressResponse(address.Id, address.Street, address.City, address.Region, address.ZipCode,
-				address.Country == null ? "Empty" : address.Country.Alpha3);
+			var address = _mapper.Map<DetailedAddressResponse>(result);
+
+			return address;
 		}
+
+
 
 		public async Task<AddressResponse> CreateAsync(AddressRequest entity, CancellationToken ct)
 		{
@@ -51,18 +58,18 @@ namespace ComputerPartsShop.Services
 				return null;
 			}
 
-			var newAddres = new Address()
+			var newAddress = _mapper.Map<Address>(entity);
+			newAddress.CountryId = country.Id;
+			newAddress.Country = country;
+
+			var response = await _addressRepository.CreateAsync(newAddress, customer, ct);
+
+			if (response == null)
 			{
-				Street = entity.Street,
-				City = entity.City,
-				Region = entity.Region,
-				ZipCode = entity.ZipCode,
-				CountryId = country.Id,
-			};
+				return null;
+			}
 
-			var createdAddress = await _addressRepository.CreateAsync(newAddres, customer, ct);
-
-			return createdAddress == null ? null! : new AddressResponse(createdAddress.Id, entity.Street, entity.City, entity.Region, entity.ZipCode, entity.Country3Code);
+			return _mapper.Map<AddressResponse>(response);
 		}
 
 		public async Task<AddressResponse> UpdateAsync(Guid id, UpdateAddressRequest entity, CancellationToken ct)
@@ -102,7 +109,9 @@ namespace ComputerPartsShop.Services
 
 			await _addressRepository.UpdateAsync(id, newAddress, oldCustomer.Id, newCustomer.Id, ct);
 
-			return new AddressResponse(newAddress.Id, newAddress.Street, newAddress.City, newAddress.Region, newAddress.ZipCode, newAddress.Country.Alpha3);
+			var result = _mapper.Map<AddressResponse>(newAddress);
+
+			return result;
 		}
 
 		public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)

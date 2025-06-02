@@ -1,4 +1,5 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using AutoMapper;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
@@ -8,71 +9,76 @@ namespace ComputerPartsShop.Services
 	{
 		private readonly ICategoryRepository _categoryRepository;
 		private readonly IProductRepository _productRepository;
+		private readonly IMapper _mapper;
 
-		public ProductService(IProductRepository productRepository, ICategoryRepository categoryRepository)
+		public ProductService(IProductRepository productRepository, ICategoryRepository categoryRepository, IMapper mapper)
 		{
 			_productRepository = productRepository;
 			_categoryRepository = categoryRepository;
+			_mapper = mapper;
 		}
 
 		public async Task<List<ProductResponse>> GetListAsync(CancellationToken ct)
 		{
-			var productList = await _productRepository.GetListAsync(ct);
+			var result = await _productRepository.GetListAsync(ct);
 
-			return productList.Select(p => new ProductResponse(p.Id, p.Name, p.Description, p.UnitPrice, p.Stock, p.Category.Name, p.InternalCode)).ToList();
+			var productList = _mapper.Map<IEnumerable<ProductResponse>>(result);
+
+			return productList.ToList();
 		}
 
 		public async Task<ProductResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var product = await _productRepository.GetAsync(id, ct);
+			var result = await _productRepository.GetAsync(id, ct);
 
-			if (product == null)
+			if (result == null)
 			{
 				return null;
 			}
 
-			return new ProductResponse(product.Id, product.Name, product.Description, product.UnitPrice, product.Stock, product.Category.Name, product.InternalCode);
+			var product = _mapper.Map<ProductResponse>(result);
+
+			return product;
 		}
 
 		public async Task<ProductResponse> CreateAsync(ProductRequest entity, CancellationToken ct)
 		{
 			var category = await _categoryRepository.GetByNameAsync(entity.CategoryName, ct);
 
-			var newProduct = new Product()
+			var newProduct = _mapper.Map<Product>(entity);
+			newProduct.CategoryId = category.Id;
+			newProduct.Category = category;
+
+			var result = await _productRepository.CreateAsync(newProduct, ct);
+
+			if (result == null)
 			{
-				Name = entity.Name,
-				Description = entity.Description,
-				UnitPrice = entity.UnitPrice,
-				Stock = entity.Stock,
-				CategoryId = category.Id,
-				Category = category,
-				InternalCode = entity.InternalCode,
-			};
+				return null;
+			}
 
-			var product = await _productRepository.CreateAsync(newProduct, ct);
+			var createdProduct = _mapper.Map<ProductResponse>(result);
 
-			return new ProductResponse(product.Id, product.Name, product.Description, product.UnitPrice, product.Stock, product.Category.Name, product.InternalCode);
+			return createdProduct;
 		}
 
 		public async Task<ProductResponse> UpdateAsync(int id, ProductRequest entity, CancellationToken ct)
 		{
 			var category = await _categoryRepository.GetByNameAsync(entity.CategoryName, ct);
 
-			var product = new Product()
+			var productToUpdate = _mapper.Map<Product>(entity);
+			productToUpdate.CategoryId = category.Id;
+			productToUpdate.Category = category;
+
+			var result = await _productRepository.UpdateAsync(id, productToUpdate, ct);
+
+			if (result == null)
 			{
-				Name = entity.Name,
-				Description = entity.Description,
-				UnitPrice = entity.UnitPrice,
-				Stock = entity.Stock,
-				CategoryId = category.Id,
-				Category = category,
-				InternalCode = entity.InternalCode,
-			};
+				return null;
+			}
 
-			await _productRepository.UpdateAsync(id, product, ct);
+			var updatedProduct = _mapper.Map<ProductResponse>(result);
 
-			return new ProductResponse(id, entity.Name, entity.Description, entity.UnitPrice,
-				entity.Stock, entity.CategoryName, entity.InternalCode);
+			return updatedProduct;
 		}
 
 		public async Task<bool> DeleteAsync(int id, CancellationToken ct)

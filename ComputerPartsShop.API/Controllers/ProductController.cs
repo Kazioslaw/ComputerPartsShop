@@ -163,7 +163,12 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Product not found");
 				}
 
-				await _productService.DeleteAsync(id, ct);
+				var isDeleted = await _productService.DeleteAsync(id, ct);
+
+				if (!isDeleted)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
+				}
 
 				return NoContent();
 			}

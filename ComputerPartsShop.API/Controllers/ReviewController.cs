@@ -162,7 +162,12 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Review not found");
 				}
 
-				await _reviewService.DeleteAsync(id, ct);
+				var isDeleted = await _reviewService.DeleteAsync(id, ct);
+
+				if (!isDeleted)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
+				}
 
 				return NoContent();
 			}

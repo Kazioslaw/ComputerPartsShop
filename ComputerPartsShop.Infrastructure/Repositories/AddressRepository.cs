@@ -34,19 +34,40 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<Address> GetAsync(Guid id, CancellationToken ct)
 		{
-			var query = "SELECT Address.ID, Address.Street, Address.City, Address.Region, Address.ZipCode, Country.Alpha3 " +
-				"FROM Address JOIN Country ON Address.CountryID = Country.ID WHERE Address.ID = @Id";
+			var query = "SELECT Address.ID, Address.Street, Address.City, Address.Region, Address.ZipCode, Country.Alpha3, Customer.ID, Customer.FirstName, Customer.LastName, Customer.Username, Customer.Email " +
+				"FROM Address " +
+				"JOIN Country ON Address.CountryID = Country.ID " +
+				"LEFT JOIN CustomerAddress ON Address.ID = CustomerAddress.AddressID " +
+				"LEFT JOIN Customer ON CustomerAddress.CustomerID = Customer.ID WHERE Address.ID = @Id";
+
+			var addressDictionary = new Dictionary<Guid, Address>();
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var result = await connection.QueryAsync<Address, Country, Address>(query, (address, country) =>
+				var result = await connection.QueryAsync<Address, Country, Customer, Address>(query, (address, country, customer) =>
 				{
-					address.Country = country;
+					if (!addressDictionary.TryGetValue(id, out var currentAddress))
+					{
+						currentAddress = address;
+						currentAddress.Country = country;
+						currentAddress.Customers = new List<CustomerAddress>();
+						addressDictionary.Add(address.Id, currentAddress);
+					}
 
-					return address;
-				}, new { Id = id }, splitOn: "Alpha3");
+					if (customer != null)
+					{
+						currentAddress.Customers.Add(new CustomerAddress
+						{
+							CustomerId = customer.Id,
+							Customer = customer,
+							AddressId = address.Id,
+						});
+					}
 
-				return result.FirstOrDefault();
+					return currentAddress;
+				}, param: new { Id = id }, splitOn: "Alpha3, ID");
+
+				return result.Distinct().FirstOrDefault();
 			}
 		}
 

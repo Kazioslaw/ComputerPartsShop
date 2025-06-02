@@ -148,7 +148,12 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Payment not found");
 				}
 
-				await _paymentService.DeleteAsync(id, ct);
+				var isDeleted = await _paymentService.DeleteAsync(id, ct);
+
+				if (!isDeleted)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
+				}
 
 				return NoContent();
 			}

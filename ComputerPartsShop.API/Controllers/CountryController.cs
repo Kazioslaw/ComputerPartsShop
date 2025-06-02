@@ -172,7 +172,12 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Country not found");
 				}
 
-				await _countryService.DeleteAsync(id, ct);
+				var isDeleted = await _countryService.DeleteAsync(id, ct);
+
+				if (!isDeleted)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
+				}
 
 				return NoContent();
 			}

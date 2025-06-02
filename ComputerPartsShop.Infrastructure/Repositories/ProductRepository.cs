@@ -80,19 +80,19 @@ namespace ComputerPartsShop.Infrastructure
 			}
 		}
 
-		public async Task<Product> UpdateAsync(int id, Product product, CancellationToken ct)
+		public async Task<Product> UpdateAsync(int id, Product request, CancellationToken ct)
 		{
 
 			var query = "UPDATE Product SET Name = @Name, Description = @Description, " +
 				"UnitPrice = @UnitPrice, Stock = @Stock, CategoryID = @CategoryID, InternalCode = @InternalCode WHERE ID = @ID";
 			var parameters = new DynamicParameters();
-			parameters.Add("Name", product.Name, DbType.String, ParameterDirection.Input);
-			parameters.Add("Description", product.Description, DbType.String, ParameterDirection.Input);
-			parameters.Add("UnitPrice", product.UnitPrice, DbType.Decimal, ParameterDirection.Input);
-			parameters.Add("Stock", product.Stock, DbType.Int32, ParameterDirection.Input);
-			parameters.Add("CategoryID", product.CategoryId, DbType.Int32, ParameterDirection.Input);
-			parameters.Add("InternalCode", product.InternalCode, DbType.String, ParameterDirection.Input);
-			parameters.Add("ID", product.Id, DbType.String, ParameterDirection.Input);
+			parameters.Add("Name", request.Name, DbType.String, ParameterDirection.Input);
+			parameters.Add("Description", request.Description, DbType.String, ParameterDirection.Input);
+			parameters.Add("UnitPrice", request.UnitPrice, DbType.Decimal, ParameterDirection.Input);
+			parameters.Add("Stock", request.Stock, DbType.Int32, ParameterDirection.Input);
+			parameters.Add("CategoryID", request.CategoryId, DbType.Int32, ParameterDirection.Input);
+			parameters.Add("InternalCode", request.InternalCode, DbType.String, ParameterDirection.Input);
+			parameters.Add("ID", request.Id, DbType.String, ParameterDirection.Input);
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
@@ -103,7 +103,7 @@ namespace ComputerPartsShop.Infrastructure
 						await connection.ExecuteAsync(query, parameters, transaction);
 						transaction.Commit();
 
-						return product;
+						return request;
 					}
 					catch (SqlException)
 					{
@@ -117,7 +117,7 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			var query = "DELETE FROM Product WHERE ID = @Id";
+			var productQuery = "DELETE FROM Product WHERE ID = @Id";
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
@@ -125,7 +125,7 @@ namespace ComputerPartsShop.Infrastructure
 				{
 					try
 					{
-						await connection.ExecuteAsync(query, new { id }, transaction);
+						await connection.ExecuteAsync(productQuery, new { id }, transaction);
 						transaction.Commit();
 
 						return true;

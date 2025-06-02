@@ -36,17 +36,20 @@ namespace ComputerPartsShop.Infrastructure
 
 				var response = await connection.QueryAsync<Country, Address, Country>(query, (country, address) =>
 				{
-					Country countryEntry;
-					if (!countryDictionary.TryGetValue(country.Id, out countryEntry))
+					Country currentCountry;
+					if (!countryDictionary.TryGetValue(country.Id, out currentCountry))
 					{
-						countryEntry = country;
-						countryEntry.Addresses = new List<Address>();
-						countryDictionary.Add(countryEntry.Id, countryEntry);
+						currentCountry = country;
+						currentCountry.Addresses = new List<Address>();
+						countryDictionary.Add(currentCountry.Id, currentCountry);
 					}
 
-					countryEntry.Addresses.Add(address);
+					if (address != null && address.Id != Guid.Empty && !currentCountry.Addresses.Any(a => a.Id == address.Id))
+					{
+						currentCountry.Addresses.Add(address);
+					}
 
-					return countryEntry;
+					return currentCountry;
 				}, splitOn: "ID", param: new { id });
 
 				return response.Distinct().FirstOrDefault();
@@ -103,8 +106,10 @@ namespace ComputerPartsShop.Infrastructure
 		public async Task<Country> UpdateAsync(int id, Country request, CancellationToken ct)
 		{
 			var query = "UPDATE Country SET Alpha2 = @Alpha2, Alpha3 = @Alpha3, Name = @Name WHERE ID = @Id";
+			request.Id = id;
 
 			var parameters = new DynamicParameters();
+			parameters.Add("Id", request.Id, DbType.Int32, ParameterDirection.Input);
 			parameters.Add("Alpha2", request.Alpha2, DbType.String, ParameterDirection.Input);
 			parameters.Add("Alpha3", request.Alpha3, DbType.String, ParameterDirection.Input);
 			parameters.Add("Name", request.Name, DbType.String, ParameterDirection.Input);
@@ -117,7 +122,6 @@ namespace ComputerPartsShop.Infrastructure
 					{
 						await connection.ExecuteAsync(query, parameters, transaction);
 						transaction.Commit();
-						request.Id = id;
 
 						return request;
 					}

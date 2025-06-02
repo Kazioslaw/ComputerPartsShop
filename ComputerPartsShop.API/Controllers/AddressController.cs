@@ -86,7 +86,6 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-
 				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
 				{
 					return BadRequest("Invalid or missing username or email");

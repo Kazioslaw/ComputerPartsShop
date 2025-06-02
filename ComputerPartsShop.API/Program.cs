@@ -17,6 +17,9 @@ namespace ComputerPartsShop
 			{
 				options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 			});
+
+			builder.Services.AddAutoMapper(typeof(Program));
+
 			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddOpenApi();

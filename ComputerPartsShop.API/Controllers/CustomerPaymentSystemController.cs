@@ -187,7 +187,12 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Customer payment system not found");
 				}
 
-				await _customerPaymentSystemService.DeleteAsync(id, ct);
+				var isDeleted = await _customerPaymentSystemService.DeleteAsync(id, ct);
+
+				if (!isDeleted)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
+				}
 
 				return NoContent();
 			}

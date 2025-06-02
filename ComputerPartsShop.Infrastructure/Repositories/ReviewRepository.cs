@@ -59,10 +59,10 @@ namespace ComputerPartsShop.Infrastructure
 				"SELECT CAST(SCOPE_IDENTITY() AS int)";
 
 			var parameters = new DynamicParameters();
-			parameters.Add("CustomerID", request.CustomerId ?? (object)DBNull.Value, direction: ParameterDirection.Input);
+			parameters.Add("CustomerID", request.CustomerId, DbType.Guid, direction: ParameterDirection.Input);
 			parameters.Add("ProductID", request.ProductId, DbType.Int32, ParameterDirection.Input);
 			parameters.Add("Rating", request.Rating, DbType.Byte, ParameterDirection.Input);
-			parameters.Add("Description", request.Description ?? (object)DBNull.Value, direction: ParameterDirection.Input);
+			parameters.Add("Description", request.Description, DbType.String, direction: ParameterDirection.Input);
 			parameters.Add("NewID", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
 			using (var connection = await _dbContext.CreateConnection())
@@ -71,7 +71,7 @@ namespace ComputerPartsShop.Infrastructure
 				{
 					try
 					{
-						request.Id = await connection.QuerySingleAsync<int>(query, parameters);
+						request.Id = await connection.QuerySingleAsync<int>(query, parameters, transaction);
 						transaction.Commit();
 
 						return request;
@@ -89,10 +89,13 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<Review> UpdateAsync(int id, Review request, CancellationToken ct)
 		{
-			var query = "UPDATE Review SET CustomerID = @CustomerID, ReviewID = @ReviewID, Rating = @Rating, " +
+			var query = "UPDATE Review SET CustomerID = @CustomerID, ProductID = @ProductID, Rating = @Rating, " +
 				"Description = @Description WHERE ID = @Id";
 
+			request.Id = id;
+
 			var parameters = new DynamicParameters();
+			parameters.Add("ID", request.Id, DbType.Int32, ParameterDirection.Input);
 			parameters.Add("CustomerID", request.CustomerId, DbType.Guid, ParameterDirection.Input);
 			parameters.Add("ProductID", request.ProductId, DbType.Int32, ParameterDirection.Input);
 			parameters.Add("Rating", request.Rating, DbType.Byte, ParameterDirection.Input);
@@ -104,7 +107,7 @@ namespace ComputerPartsShop.Infrastructure
 				{
 					try
 					{
-						await connection.ExecuteAsync(query, parameters);
+						await connection.ExecuteAsync(query, parameters, transaction);
 						transaction.Commit();
 
 						return request;
@@ -129,7 +132,7 @@ namespace ComputerPartsShop.Infrastructure
 				{
 					try
 					{
-						await connection.ExecuteAsync(query, new { id });
+						await connection.ExecuteAsync(query, new { id }, transaction);
 						transaction.Commit();
 
 						return true;

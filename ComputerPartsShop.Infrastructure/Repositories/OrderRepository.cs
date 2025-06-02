@@ -204,7 +204,7 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			var query = "DELETE FROM Order WHERE ID = @Id";
+			var query = "DELETE FROM \"Order\" WHERE ID = @Id";
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
@@ -212,7 +212,7 @@ namespace ComputerPartsShop.Infrastructure
 				{
 					try
 					{
-						await connection.ExecuteAsync(query, new { id }, transaction);
+						await connection.ExecuteAsync(query, new { Id = id }, transaction);
 						transaction.Commit();
 
 						return true;

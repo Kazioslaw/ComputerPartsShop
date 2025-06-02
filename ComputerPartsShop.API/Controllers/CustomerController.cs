@@ -195,7 +195,12 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Customer not found");
 				}
 
-				await _customerService.DeleteAsync(id, ct);
+				var isDeleted = await _customerService.DeleteAsync(id, ct);
+
+				if (!isDeleted)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
+				}
 
 				return NoContent();
 			}

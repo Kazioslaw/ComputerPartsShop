@@ -1,67 +1,64 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using AutoMapper;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Enums;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
-using System.Data;
 
 namespace ComputerPartsShop.Services
 {
 	public class PaymentService : IPaymentService
 	{
 		private readonly IPaymentRepository _paymentRepository;
+		private readonly IMapper _mapper;
 
-		public PaymentService(IPaymentRepository paymentRepository)
+		public PaymentService(IPaymentRepository paymentRepository, IMapper mapper)
 		{
 			_paymentRepository = paymentRepository;
+			_mapper = mapper;
 		}
 
 		public async Task<List<PaymentResponse>> GetListAsync(CancellationToken ct)
 		{
-			var paymentList = await _paymentRepository.GetListAsync(ct);
+			var result = await _paymentRepository.GetListAsync(ct);
 
-			return paymentList.Select(p => new PaymentResponse(p.Id, p.CustomerPaymentSystemId, p.OrderId, p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt)).ToList();
+			var paymentList = _mapper.Map<IEnumerable<PaymentResponse>>(result);
+
+			return paymentList.ToList();
 		}
 
 		public async Task<PaymentResponse> GetAsync(Guid id, CancellationToken ct)
 		{
-			var payment = await _paymentRepository.GetAsync(id, ct);
+			var result = await _paymentRepository.GetAsync(id, ct);
 
-			if (payment == null)
+			if (result == null)
 			{
 				return null;
 			}
 
-			return new PaymentResponse(payment.Id, payment.CustomerPaymentSystemId, payment.OrderId, payment.Total, payment.Method, payment.Status, payment.PaymentStartAt, payment.PaidAt);
+			var payment = _mapper.Map<PaymentResponse>(result);
+
+			return payment;
 		}
 
 		public async Task<PaymentResponse> CreateAsync(PaymentRequest entity, CancellationToken ct)
 		{
-			var newPayment = new Payment()
-			{
-				CustomerPaymentSystemId = entity.CustomerPaymentSystemId,
-				OrderId = entity.OrderId,
-				Total = entity.Total,
-				Method = entity.Method,
-				Status = PaymentStatus.Pending,
-				PaymentStartAt = DateTime.Now
-			};
+			var newPayment = _mapper.Map<Payment>(entity);
 
-			var payment = await _paymentRepository.CreateAsync(newPayment, ct);
+			var result = await _paymentRepository.CreateAsync(newPayment, ct);
 
-			if (payment == null)
+			if (result == null)
 			{
 				return null;
 			}
 
-			return new PaymentResponse(payment.Id, payment.CustomerPaymentSystemId, payment.OrderId, payment.Total,
-				payment.Method, payment.Status, payment.PaymentStartAt, null);
+			var createdPayment = _mapper.Map<PaymentResponse>(result);
+
+			return createdPayment;
 		}
 
 		public async Task<PaymentResponse> UpdateStatusAsync(Guid id, UpdatePaymentRequest entity, CancellationToken ct)
 		{
-			Payment payment = await _paymentRepository.GetAsync(id, ct);
-
-
+			var existingPayment = await _paymentRepository.GetAsync(id, ct);
 
 			switch (entity.Status)
 			{
@@ -69,21 +66,27 @@ namespace ComputerPartsShop.Services
 				case PaymentStatus.Authorized:
 				case PaymentStatus.Failed:
 				case PaymentStatus.Cancelled:
-					payment.Status = entity.Status;
+					existingPayment.Status = entity.Status;
 					break;
 				case PaymentStatus.Completed:
-					payment.Status = entity.Status;
-					payment.PaidAt = DateTime.Now;
+					existingPayment.Status = entity.Status;
+					existingPayment.PaidAt = DateTime.Now;
 					break;
 				case PaymentStatus.Refunded:
-					payment.Status = entity.Status;
+					existingPayment.Status = entity.Status;
 					break;
 			}
 
-			await _paymentRepository.UpdateStatusAsync(id, payment, ct);
+			var result = await _paymentRepository.UpdateStatusAsync(id, existingPayment, ct);
 
-			return new PaymentResponse(payment.Id, payment.CustomerPaymentSystemId, payment.OrderId, payment.Total, payment.Method,
-				payment.Status, payment.PaymentStartAt, payment.PaidAt);
+			if (result == null)
+			{
+				return null;
+			}
+
+			var updatedPayment = _mapper.Map<PaymentResponse>(result);
+
+			return updatedPayment;
 		}
 
 		public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)

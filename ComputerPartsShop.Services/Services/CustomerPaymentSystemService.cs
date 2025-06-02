@@ -1,4 +1,5 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using AutoMapper;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
@@ -9,63 +10,66 @@ namespace ComputerPartsShop.Services
 		private readonly ICustomerPaymentSystemRepository _customerPaymentSystemRepository;
 		private readonly ICustomerRepository _customerRepository;
 		private readonly IPaymentProviderRepository _providerRepository;
+		private readonly IMapper _mapper;
 
 		public CustomerPaymentSystemService(ICustomerPaymentSystemRepository customerPaymentSystemRepository, ICustomerRepository
-			customerRepository, IPaymentProviderRepository providerRepository)
+			customerRepository, IPaymentProviderRepository providerRepository, IMapper mapper)
 		{
 			_customerPaymentSystemRepository = customerPaymentSystemRepository;
 			_customerRepository = customerRepository;
 			_providerRepository = providerRepository;
+			_mapper = mapper;
 		}
 
 		public async Task<List<CustomerPaymentSystemResponse>> GetListAsync(CancellationToken ct)
 		{
-			var customerPaymentSystemList = await _customerPaymentSystemRepository.GetListAsync(ct);
+			var result = await _customerPaymentSystemRepository.GetListAsync(ct);
 
-			return customerPaymentSystemList.Select(customerPaymentSystem => new CustomerPaymentSystemResponse(customerPaymentSystem.Id,
-				customerPaymentSystem.Customer == null ? "Empty" : customerPaymentSystem.Customer.Username,
-				customerPaymentSystem.Customer == null ? "Empty" : customerPaymentSystem.Customer.Email,
-				customerPaymentSystem.Provider == null ? "Empty" : customerPaymentSystem.Provider.Name,
-				customerPaymentSystem.PaymentReference)).ToList();
+			var customerPaymentSystemList = _mapper.Map<IEnumerable<CustomerPaymentSystemResponse>>(result);
+
+			return customerPaymentSystemList.ToList();
 		}
 
 		public async Task<DetailedCustomerPaymentSystemResponse> GetAsync(Guid id, CancellationToken ct)
 		{
-			var customerPaymentSystem = await _customerPaymentSystemRepository.GetAsync(id, ct);
+			var result = await _customerPaymentSystemRepository.GetAsync(id, ct);
 
-			if (customerPaymentSystem == null)
+			if (result == null)
 			{
 				return null;
 			}
 
-			var paymentsList = customerPaymentSystem.Payments;
+			var customerPaymentSystem = _mapper.Map<DetailedCustomerPaymentSystemResponse>(result);
 
-			return new DetailedCustomerPaymentSystemResponse(id, customerPaymentSystem.Customer.Username, customerPaymentSystem.Customer.Email, customerPaymentSystem.Provider.Name,
-				customerPaymentSystem.PaymentReference, paymentsList == null ? new List<PaymentInCustomerPaymentSystemResponse>() :
-				paymentsList.Select(x => new PaymentInCustomerPaymentSystemResponse(x.Id, x.OrderId, x.Total, x.Method, x.Status, x.PaymentStartAt, x.PaidAt)).ToList());
+			return customerPaymentSystem;
 		}
 
 		public async Task<CustomerPaymentSystemResponse> CreateAsync(CustomerPaymentSystemRequest entity, CancellationToken ct)
 		{
-
 			var provider = await _providerRepository.GetByNameAsync(entity.ProviderName, ct);
-
 			var customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username ?? entity.Email, ct);
 
-
-			var newCustomerPaymentSystem = new CustomerPaymentSystem()
+			if (provider == null || customer == null)
 			{
-				CustomerId = customer.Id,
-				Customer = customer,
-				ProviderId = provider.Id,
-				Provider = provider,
-				PaymentReference = entity.PaymentReference
-			};
+				return null;
+			}
 
-			var createdCPS = await _customerPaymentSystemRepository.CreateAsync(newCustomerPaymentSystem, ct);
+			var newCustomerPaymentSystem = _mapper.Map<CustomerPaymentSystem>(entity);
+			newCustomerPaymentSystem.CustomerId = customer.Id;
+			newCustomerPaymentSystem.Customer = customer;
+			newCustomerPaymentSystem.ProviderId = provider.Id;
+			newCustomerPaymentSystem.Provider = provider;
 
-			return new CustomerPaymentSystemResponse(createdCPS.Id, newCustomerPaymentSystem.Customer.Username, newCustomerPaymentSystem.Customer.Email,
-				newCustomerPaymentSystem.Provider.Name, newCustomerPaymentSystem.PaymentReference);
+			var result = await _customerPaymentSystemRepository.CreateAsync(newCustomerPaymentSystem, ct);
+
+			if (result == null)
+			{
+				return null;
+			}
+
+			var createdCPS = _mapper.Map<CustomerPaymentSystemResponse>(result);
+
+			return createdCPS;
 
 		}
 
@@ -74,18 +78,27 @@ namespace ComputerPartsShop.Services
 			var customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username! ?? entity.Email!, ct);
 			var provider = await _providerRepository.GetByNameAsync(entity.ProviderName, ct);
 
-			var customerPaymentSystem = new CustomerPaymentSystem()
+			if (provider == null || customer == null)
 			{
-				CustomerId = customer.Id,
-				Customer = customer,
-				ProviderId = provider.Id,
-				Provider = provider,
-				PaymentReference = entity.PaymentReference
-			};
+				return null;
+			}
 
-			await _customerPaymentSystemRepository.UpdateAsync(id, customerPaymentSystem, ct);
+			var customerPaymentSystemToUpdate = _mapper.Map<CustomerPaymentSystem>(entity);
+			customerPaymentSystemToUpdate.ProviderId = provider.Id;
+			customerPaymentSystemToUpdate.Provider = provider;
+			customerPaymentSystemToUpdate.CustomerId = customer.Id;
+			customerPaymentSystemToUpdate.Customer = customer;
 
-			return new CustomerPaymentSystemResponse(id, entity.Username, entity.Email, entity.ProviderName, entity.PaymentReference);
+			var result = await _customerPaymentSystemRepository.UpdateAsync(id, customerPaymentSystemToUpdate, ct);
+
+			if (result == null)
+			{
+				return null;
+			}
+
+			var updatedCustomerPaymentSystem = _mapper.Map<CustomerPaymentSystemResponse>(result);
+
+			return updatedCustomerPaymentSystem;
 		}
 
 		public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)

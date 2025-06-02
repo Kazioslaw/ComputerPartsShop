@@ -1,4 +1,5 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using AutoMapper;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
@@ -7,73 +8,87 @@ namespace ComputerPartsShop.Services
 	public class CountryService : ICountryService
 	{
 		private readonly ICountryRepository _countryRepository;
+		private readonly IMapper _mapper;
 
-		public CountryService(ICountryRepository countryRepository)
+		public CountryService(ICountryRepository countryRepository, IMapper mapper)
 		{
 			_countryRepository = countryRepository;
+			_mapper = mapper;
 		}
 
 		public async Task<List<CountryResponse>> GetListAsync(CancellationToken ct)
 		{
-			var countryList = await _countryRepository.GetListAsync(ct);
+			var result = await _countryRepository.GetListAsync(ct);
 
-			return countryList.Select(c => new CountryResponse(c.Id, c.Alpha2, c.Alpha3, c.Name)).ToList();
+			var countryList = _mapper.Map<IEnumerable<CountryResponse>>(result);
+
+			return countryList.ToList();
 
 
 		}
 
 		public async Task<DetailedCountryResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var country = await _countryRepository.GetAsync(id, ct);
+			var result = await _countryRepository.GetAsync(id, ct);
 
-			if (country == null)
+			if (result == null)
 			{
 				return null;
 			}
 
-			var addressList = country.Addresses;
+			var country = _mapper.Map<DetailedCountryResponse>(result);
 
-			return new DetailedCountryResponse(country.Id, country.Alpha2, country.Alpha3, country.Name, addressList == null ?
-				country.Addresses.Select(x => new AddressInCountryResponse(x.Id, x.Street, x.City, x.Region, x.ZipCode)).ToList() : new List<AddressInCountryResponse>());
+			return country;
 		}
 
 		public async Task<CountryResponse> GetByAlpha3Async(string Alpha3, CancellationToken ct)
 		{
-			var country = await _countryRepository.GetByCountry3CodeAsync(Alpha3, ct);
+			var result = await _countryRepository.GetByCountry3CodeAsync(Alpha3, ct);
 
-			if (country == null)
+			if (result == null)
 			{
 				return null;
 			}
 
-			return new CountryResponse(country.Id, country.Alpha2, country.Alpha3, country.Name);
+			var country = _mapper.Map<CountryResponse>(result);
+
+			return country;
 		}
 
 		public async Task<CountryResponse> CreateAsync(CountryRequest entity, CancellationToken ct)
 		{
-			var newCountry = new Country()
-			{
-				Alpha2 = entity.Alpha2,
-				Alpha3 = entity.Alpha3,
-				Name = entity.Name,
-			};
+			var newCountry = _mapper.Map<Country>(entity);
+			var result = await _countryRepository.CreateAsync(newCountry, ct);
 
-			var createdCountry = await _countryRepository.CreateAsync(newCountry, ct);
-			return createdCountry == null ? null! : new CountryResponse(createdCountry.Id, entity.Alpha2, entity.Alpha3, entity.Name);
+			if (result == null)
+			{
+				return null;
+			}
+
+			var createdCountry = _mapper.Map<CountryResponse>(result);
+
+			return createdCountry;
 		}
 
 		public async Task<CountryResponse> UpdateAsync(int id, CountryRequest entity, CancellationToken ct)
 		{
-			var country = new Country()
+			var countryToUpdate = new Country()
 			{
 				Alpha2 = entity.Alpha2,
 				Alpha3 = entity.Alpha3,
 				Name = entity.Name
 			};
 
-			await _countryRepository.UpdateAsync(id, country, ct);
+			var result = await _countryRepository.UpdateAsync(id, countryToUpdate, ct);
 
-			return new CountryResponse(id, entity.Alpha2, entity.Alpha3, entity.Name);
+			if (result == null)
+			{
+				return null;
+			}
+
+			var updatedCountry = _mapper.Map<CountryResponse>(result);
+
+			return updatedCountry;
 		}
 
 		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
