@@ -1,5 +1,6 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -9,10 +10,12 @@ namespace ComputerPartsShop.API.Controllers
 	public class CategoryController : ControllerBase
 	{
 		private readonly ICategoryService _categoryService;
+		private readonly IValidator<CategoryRequest> _categoryValidator;
 
-		public CategoryController(ICategoryService categoryService)
+		public CategoryController(ICategoryService categoryService, IValidator<CategoryRequest> categoryValidator)
 		{
 			_categoryService = categoryService;
+			_categoryValidator = categoryValidator;
 		}
 
 		/// <summary>
@@ -109,6 +112,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = await _categoryValidator.ValidateAsync(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var category = await _categoryService.CreateAsync(request, ct);
 
 				if (category == null)
@@ -139,6 +150,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = await _categoryValidator.ValidateAsync(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var category = await _categoryService.GetAsync(id, ct);
 
 				if (category == null)
@@ -147,6 +166,11 @@ namespace ComputerPartsShop.API.Controllers
 				}
 
 				var updatedCategory = await _categoryService.UpdateAsync(id, request, ct);
+
+				if (updatedCategory == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
+				}
 
 				return Ok(updatedCategory);
 			}

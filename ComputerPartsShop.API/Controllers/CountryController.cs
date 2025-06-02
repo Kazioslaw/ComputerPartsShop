@@ -1,5 +1,6 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -9,10 +10,12 @@ namespace ComputerPartsShop.API.Controllers
 	public class CountryController : ControllerBase
 	{
 		private readonly ICountryService _countryService;
+		private readonly IValidator<CountryRequest> _countryValidator;
 
-		public CountryController(ICountryService countryService)
+		public CountryController(ICountryService countryService, IValidator<CountryRequest> countryValidator)
 		{
 			_countryService = countryService;
+			_countryValidator = countryValidator;
 		}
 
 		/// <summary>
@@ -108,9 +111,22 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = await _countryValidator.ValidateAsync(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var country = await _countryService.CreateAsync(request, ct);
 
-				return Ok(country);
+				if (country == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
+				}
+
+				return Created(nameof(GetCountryAsync), country);
 			}
 			catch (OperationCanceledException)
 			{
@@ -133,6 +149,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = await _countryValidator.ValidateAsync(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var country = await _countryService.GetAsync(id, ct);
 
 				if (country == null)
@@ -141,6 +165,11 @@ namespace ComputerPartsShop.API.Controllers
 				}
 
 				var updatedCountry = await _countryService.UpdateAsync(id, request, ct);
+
+				if (updatedCountry == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
+				}
 
 				return Ok(updatedCountry);
 			}

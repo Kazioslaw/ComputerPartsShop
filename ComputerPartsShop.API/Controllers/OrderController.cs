@@ -1,6 +1,7 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -12,15 +13,20 @@ namespace ComputerPartsShop.API.Controllers
 		private readonly IOrderService _orderService;
 		private readonly ICustomerRepository _customerRepository;
 		private readonly IAddressService _addressService;
-
+		private readonly IValidator<OrderRequest> _orderValidator;
+		private readonly IValidator<UpdateOrderRequest> _updateOrderValidator;
 
 		public OrderController(IOrderService orderService,
 			ICustomerRepository customerRepository,
-			IAddressService addressService)
+			IAddressService addressService,
+			IValidator<OrderRequest> orderValidator,
+			IValidator<UpdateOrderRequest> updateOrderValidator)
 		{
 			_orderService = orderService;
 			_customerRepository = customerRepository;
 			_addressService = addressService;
+			_orderValidator = orderValidator;
+			_updateOrderValidator = updateOrderValidator;
 		}
 
 		/// <summary>
@@ -88,9 +94,12 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
+				var validation = await _orderValidator.ValidateAsync(request);
+
+				if (!validation.IsValid)
 				{
-					return BadRequest("Invalid or missing username or email");
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
 				}
 
 				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
@@ -109,6 +118,10 @@ namespace ComputerPartsShop.API.Controllers
 
 				var order = await _orderService.CreateAsync(request, ct);
 
+				if (order == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
+				}
 
 				return Ok(order);
 			}
@@ -134,6 +147,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = _updateOrderValidator.Validate(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var order = await _orderService.GetAsync(id, ct);
 
 				if (order == null)
@@ -145,7 +166,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (updatedOrder == null)
 				{
-					return BadRequest("Error while updating status");
+					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
 				}
 
 				return Ok(updatedOrder);

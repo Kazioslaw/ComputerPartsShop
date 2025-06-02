@@ -1,5 +1,6 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -11,11 +12,13 @@ namespace ComputerPartsShop.API.Controllers
 
 		private readonly IReviewService _reviewService;
 		private readonly IProductService _productService;
+		private readonly IValidator<ReviewRequest> _reviewValidator;
 
-		public ReviewController(IReviewService reviewService, IProductService productService)
+		public ReviewController(IReviewService reviewService, IProductService productService, IValidator<ReviewRequest> reviewValidator)
 		{
 			_reviewService = reviewService;
 			_productService = productService;
+			_reviewValidator = reviewValidator;
 		}
 
 		/// <summary>
@@ -83,6 +86,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = _reviewValidator.Validate(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var product = await _productService.GetAsync(request.ProductId, ct);
 
 
@@ -92,6 +103,11 @@ namespace ComputerPartsShop.API.Controllers
 				}
 
 				var review = await _reviewService.CreateAsync(request, ct);
+
+				if (review == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
+				}
 
 				return Ok(review);
 			}
@@ -117,6 +133,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = _reviewValidator.Validate(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var review = await _reviewService.GetAsync(id, ct);
 
 				if (review == null)
@@ -132,6 +156,11 @@ namespace ComputerPartsShop.API.Controllers
 				}
 
 				var updatedReview = await _reviewService.UpdateAsync(id, request, ct);
+
+				if (updatedReview == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
+				}
 
 				return Ok(updatedReview);
 			}

@@ -1,6 +1,7 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -11,11 +12,13 @@ namespace ComputerPartsShop.API.Controllers
 	{
 		public readonly ICustomerService _customerService;
 		public readonly IAddressRepository _addressRepository;
+		public readonly IValidator<CustomerRequest> _customerValidator;
 
-		public CustomerController(ICustomerService customerService, IAddressRepository addressRepository)
+		public CustomerController(ICustomerService customerService, IAddressRepository addressRepository, IValidator<CustomerRequest> customerValidator)
 		{
 			_customerService = customerService;
 			_addressRepository = addressRepository;
+			_customerValidator = customerValidator;
 		}
 
 		/// <summary>
@@ -113,10 +116,12 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = await _customerValidator.ValidateAsync(request);
 
-				if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Email))
+				if (!validation.IsValid)
 				{
-					return BadRequest("Username and email can't be empty or null");
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
 				}
 
 				var existingUsername = await _customerService.GetByUsernameOrEmailAsync(request.Username, ct);
@@ -131,7 +136,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (customer == null)
 				{
-					return BadRequest("Customer not created");
+					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
 				}
 
 				return Ok(customer);
@@ -157,6 +162,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = await _customerValidator.ValidateAsync(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var customer = await _customerService.GetAsync(id, ct);
 
 				if (customer == null)
@@ -165,6 +178,11 @@ namespace ComputerPartsShop.API.Controllers
 				}
 
 				var updatedCustomer = await _customerService.UpdateAsync(id, request, ct);
+
+				if (updatedCustomer == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
+				}
 
 				return Ok(updatedCustomer);
 			}

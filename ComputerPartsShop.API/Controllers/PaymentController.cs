@@ -1,5 +1,6 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -10,11 +11,18 @@ namespace ComputerPartsShop.API.Controllers
 	{
 		private readonly IPaymentService _paymentService;
 		private readonly ICustomerPaymentSystemService _customerPaymentSystemService;
+		private readonly IValidator<PaymentRequest> _paymentValidator;
+		private readonly IValidator<UpdatePaymentRequest> _updatePaymentValidator;
 
-		public PaymentController(IPaymentService paymentService, ICustomerPaymentSystemService customerPaymentSystemService)
+
+		public PaymentController(IPaymentService paymentService, ICustomerPaymentSystemService customerPaymentSystemService,
+			IValidator<PaymentRequest> paymentValidator,
+			IValidator<UpdatePaymentRequest> updatePaymentValidator)
 		{
 			_paymentService = paymentService;
 			_customerPaymentSystemService = customerPaymentSystemService;
+			_paymentValidator = paymentValidator;
+			_updatePaymentValidator = updatePaymentValidator;
 		}
 
 		/// <summary>
@@ -77,6 +85,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = _paymentValidator.Validate(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var customerPaymentSystem = await _customerPaymentSystemService.GetAsync(request.CustomerPaymentSystemId, ct);
 
 				if (customerPaymentSystem == null)
@@ -85,6 +101,11 @@ namespace ComputerPartsShop.API.Controllers
 				}
 
 				var payment = await _paymentService.CreateAsync(request, ct);
+
+				if (payment == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
+				}
 
 				return Created(nameof(GetPaymentAsync), payment);
 			}
@@ -110,6 +131,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = _updatePaymentValidator.Validate(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var payment = await _paymentService.GetAsync(id, ct);
 
 				if (payment == null)
@@ -118,6 +147,11 @@ namespace ComputerPartsShop.API.Controllers
 				}
 
 				var updatedPayment = await _paymentService.UpdateStatusAsync(id, request, ct);
+
+				if (updatedPayment == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
+				}
 
 				return Ok(updatedPayment);
 			}

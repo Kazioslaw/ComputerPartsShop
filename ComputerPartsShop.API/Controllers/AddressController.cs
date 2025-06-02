@@ -1,6 +1,7 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -12,12 +13,21 @@ namespace ComputerPartsShop.API.Controllers
 		private readonly IAddressService _addressService;
 		private readonly ICustomerRepository _customerRepository;
 		private readonly ICountryService _countryService;
+		private readonly IValidator<AddressRequest> _addressValidator;
+		private readonly IValidator<UpdateAddressRequest> _updateAddressValidator;
 
-		public AddressController(IAddressService addressService, ICustomerRepository customerRepository, ICountryService countryService)
+
+		public AddressController(IAddressService addressService,
+			ICustomerRepository customerRepository,
+			ICountryService countryService,
+			IValidator<AddressRequest> addressValidator,
+			IValidator<UpdateAddressRequest> updateAddressValidator)
 		{
+			_addressValidator = addressValidator;
 			_addressService = addressService;
 			_customerRepository = customerRepository;
 			_countryService = countryService;
+			_updateAddressValidator = updateAddressValidator;
 		}
 
 		/// <summary>
@@ -86,9 +96,12 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
+				var validation = await _addressValidator.ValidateAsync(request);
+
+				if (!validation.IsValid)
 				{
-					return BadRequest("Invalid or missing username or email");
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
 				}
 
 				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username ?? request.Email, ct);
@@ -109,7 +122,7 @@ namespace ComputerPartsShop.API.Controllers
 
 				if (address == null)
 				{
-					return StatusCode(StatusCodes.Status500InternalServerError, "Failed to create address");
+					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
 				}
 
 				return Ok(address);
@@ -137,6 +150,15 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = await _updateAddressValidator.ValidateAsync(request, ct);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
+
 				var address = await _addressService.GetAsync(oldAddressId, ct);
 
 				if (address == null)

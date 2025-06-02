@@ -1,5 +1,8 @@
+using ComputerPartsShop.API.Validators;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using System.Text.Json.Serialization;
 
 namespace ComputerPartsShop
@@ -39,6 +42,7 @@ namespace ComputerPartsShop
 			builder.Services.AddScoped<IPaymentProviderService, PaymentProviderService>();
 			builder.Services.AddScoped<IProductService, ProductService>();
 			builder.Services.AddScoped<IReviewService, ReviewService>();
+
 			builder.Services.AddScoped<IAddressRepository, AddressRepository>();
 			builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 			builder.Services.AddScoped<ICountryRepository, CountryRepository>();
@@ -49,6 +53,20 @@ namespace ComputerPartsShop
 			builder.Services.AddScoped<IPaymentProviderRepository, PaymentProviderRepository>();
 			builder.Services.AddScoped<IProductRepository, ProductRepository>();
 			builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+
+			builder.Services.AddScoped<IValidator<AddressRequest>, AddressRequestValidator>();
+			builder.Services.AddScoped<IValidator<UpdateAddressRequest>, UpdateAddressRequestValidator>();
+			builder.Services.AddScoped<IValidator<CategoryRequest>, CategoryRequestValidator>();
+			builder.Services.AddScoped<IValidator<CountryRequest>, CountryRequestValidator>();
+			builder.Services.AddScoped<IValidator<CustomerPaymentSystemRequest>, CustomerPaymentSystemRequestValidator>();
+			builder.Services.AddScoped<IValidator<CustomerRequest>, CustomerRequestValidator>();
+			builder.Services.AddScoped<IValidator<OrderRequest>, OrderRequestValidator>();
+			builder.Services.AddScoped<IValidator<UpdateOrderRequest>, UpdateOrderRequestValidator>();
+			builder.Services.AddScoped<IValidator<PaymentProviderRequest>, PaymentProviderRequestValidator>();
+			builder.Services.AddScoped<IValidator<PaymentRequest>, PaymentRequestValidator>();
+			builder.Services.AddScoped<IValidator<UpdatePaymentRequest>, UpdatePaymentRequestValidator>();
+			builder.Services.AddScoped<IValidator<ProductRequest>, ProductRequestValidator>();
+			builder.Services.AddScoped<IValidator<ReviewRequest>, ReviewRequestValidator>();
 
 			var app = builder.Build();
 

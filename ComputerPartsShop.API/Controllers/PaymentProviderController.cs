@@ -1,5 +1,6 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -10,10 +11,13 @@ namespace ComputerPartsShop.API.Controllers
 	{
 
 		private readonly IPaymentProviderService _paymentProviderService;
+		private readonly IValidator<PaymentProviderRequest> _paymentProviderValidator;
 
-		public PaymentProviderController(IPaymentProviderService ppService)
+
+		public PaymentProviderController(IPaymentProviderService paymentProviderService, IValidator<PaymentProviderRequest> paymentProviderValidator)
 		{
-			_paymentProviderService = ppService;
+			_paymentProviderService = paymentProviderService;
+			_paymentProviderValidator = paymentProviderValidator;
 		}
 
 		/// <summary>
@@ -109,7 +113,20 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = await _paymentProviderValidator.ValidateAsync(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var paymentProvider = await _paymentProviderService.CreateAsync(request, ct);
+
+				if (paymentProvider == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
+				}
 
 				return Created(nameof(GetPaymentProviderAsync), paymentProvider);
 			}
@@ -134,6 +151,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = await _paymentProviderValidator.ValidateAsync(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var paymentProvider = await _paymentProviderService.GetAsync(id, ct);
 
 				if (paymentProvider == null)
@@ -142,6 +167,11 @@ namespace ComputerPartsShop.API.Controllers
 				}
 
 				var updatedPaymentProvider = await _paymentProviderService.UpdateAsync(id, request, ct);
+
+				if (updatedPaymentProvider == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
+				}
 
 				return Ok(updatedPaymentProvider);
 			}

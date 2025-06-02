@@ -1,6 +1,7 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -11,11 +12,13 @@ namespace ComputerPartsShop.API.Controllers
 	{
 		private readonly ICategoryRepository _categoryRepository;
 		private readonly IProductService _productService;
+		private readonly IValidator<ProductRequest> _productValidator;
 
-		public ProductController(IProductService productService, ICategoryRepository categoryRepository)
+		public ProductController(IProductService productService, ICategoryRepository categoryRepository, IValidator<ProductRequest> productValidator)
 		{
 			_categoryRepository = categoryRepository;
 			_productService = productService;
+			_productValidator = productValidator;
 		}
 
 		/// <summary>
@@ -84,6 +87,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = _productValidator.Validate(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var category = await _categoryRepository.GetByNameAsync(request.CategoryName, ct);
 
 				if (category == null)
@@ -92,6 +103,11 @@ namespace ComputerPartsShop.API.Controllers
 				}
 
 				var product = await _productService.CreateAsync(request, ct);
+
+				if (product == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
+				}
 
 				return Ok(product);
 			}
@@ -118,6 +134,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var validation = _productValidator.Validate(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var product = await _productService.GetAsync(id, ct);
 
 				if (product == null)
@@ -133,6 +157,11 @@ namespace ComputerPartsShop.API.Controllers
 				}
 
 				var updatedProduct = await _productService.UpdateAsync(id, request, ct);
+
+				if (updatedProduct == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
+				}
 
 				return Ok(updatedProduct);
 			}
