@@ -90,15 +90,9 @@ namespace ComputerPartsShop.Services
 
 			var country = await _countryRepository.GetByCountry3CodeAsync(entity.newCountry3Code, ct);
 
-			var newAddress = new Address()
-			{
-				Street = entity.newStreet,
-				City = entity.newCity,
-				Region = entity.newRegion,
-				ZipCode = entity.newZipCode,
-				CountryId = country.Id,
-				Country = country
-			};
+			var newAddress = _mapper.Map<Address>(entity);
+			newAddress.Country = country;
+			newAddress.CountryId = country.Id;
 
 			var existingAddress = await _addressRepository.GetAddressIDByFullDataAsync(newAddress, ct);
 
