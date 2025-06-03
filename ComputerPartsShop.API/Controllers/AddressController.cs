@@ -1,6 +1,7 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -11,13 +12,22 @@ namespace ComputerPartsShop.API.Controllers
 	{
 		private readonly IAddressService _addressService;
 		private readonly ICustomerRepository _customerRepository;
-		private readonly ICountryRepository _countryRepository;
+		private readonly ICountryService _countryService;
+		private readonly IValidator<AddressRequest> _addressValidator;
+		private readonly IValidator<UpdateAddressRequest> _updateAddressValidator;
 
-		public AddressController(IAddressService addressService, ICustomerRepository customerRepository, ICountryRepository countryRepository)
+
+		public AddressController(IAddressService addressService,
+			ICustomerRepository customerRepository,
+			ICountryService countryService,
+			IValidator<AddressRequest> addressValidator,
+			IValidator<UpdateAddressRequest> updateAddressValidator)
 		{
+			_addressValidator = addressValidator;
 			_addressService = addressService;
 			_customerRepository = customerRepository;
-			_countryRepository = countryRepository;
+			_countryService = countryService;
+			_updateAddressValidator = updateAddressValidator;
 		}
 
 		/// <summary>
@@ -28,7 +38,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>List of addresses</returns>
 		[HttpGet]
-		public async Task<ActionResult<List<AddressResponse>>> GetAddressListAsync(CancellationToken ct)
+		public async Task<IActionResult> GetAddressListAsync(CancellationToken ct)
 		{
 			try
 			{
@@ -52,7 +62,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Address</returns>
 		[HttpGet("{id:Guid}")]
-		public async Task<ActionResult<AddressResponse>> GetAddressAsync(Guid id, CancellationToken ct)
+		public async Task<IActionResult> GetAddressAsync(Guid id, CancellationToken ct)
 		{
 			try
 			{
@@ -79,16 +89,19 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="200">Returns the created address</response>
 		/// <response code="400">Returns if username, email or country3code was empty or invalid</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the address could not be created</response>
 		/// <returns>Created address</returns>
 		[HttpPost]
-		public async Task<ActionResult<AddressResponse>> CreateAddressAsync(AddressRequest request, CancellationToken ct)
+		public async Task<IActionResult> CreateAddressAsync([FromBody] AddressRequest request, CancellationToken ct)
 		{
 			try
 			{
+				var validation = await _addressValidator.ValidateAsync(request);
 
-				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
+				if (!validation.IsValid)
 				{
-					return BadRequest("Invalid or missing username or email");
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
 				}
 
 				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username ?? request.Email, ct);
@@ -98,7 +111,7 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest("Invalid or missing username or email");
 				}
 
-				var country = await _countryRepository.GetByCountry3CodeAsync(request.Country3Code, ct);
+				var country = await _countryService.GetByAlpha3Async(request.Country3Code, ct);
 
 				if (country == null)
 				{
@@ -107,7 +120,12 @@ namespace ComputerPartsShop.API.Controllers
 
 				var address = await _addressService.CreateAsync(request, ct);
 
-				return Created(nameof(CreateAddressAsync), address);
+				if (address == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
+				}
+
+				return Ok(address);
 			}
 			catch (OperationCanceledException)
 			{
@@ -118,46 +136,73 @@ namespace ComputerPartsShop.API.Controllers
 		/// <summary>
 		/// Asynchronously updates an address by its ID.
 		/// </summary>
-		/// <param name="id">Address ID</param>
+		/// <param name="oldAddressId">Address ID</param>
 		/// <param name="request">Updated address model</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the updated address</response>
 		/// <response code="400">Returns if username, email or country3code was empty or invalid</response>
-		/// <response code="404">Returns if the address was not found</response>
+		/// <response code="404">Returns if the address was not found</response>		
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the address could not be updated</response>
 		/// <returns>Updated address</returns>
-		[HttpPut("{id:guid}")]
-		public async Task<ActionResult<AddressResponse>> UpdateAddressAsync(Guid id, AddressRequest request, CancellationToken ct)
+		[HttpPut("{oldAddressId:guid}")]
+		public async Task<IActionResult> UpdateAddressAsync(Guid oldAddressId, [FromBody] UpdateAddressRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var address = await _addressService.GetAsync(id, ct);
+				var validation = await _updateAddressValidator.ValidateAsync(request, ct);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
+
+				var address = await _addressService.GetAsync(oldAddressId, ct);
 
 				if (address == null)
 				{
 					return NotFound("Address not found");
 				}
 
-				if (string.IsNullOrWhiteSpace(request.Username) && string.IsNullOrWhiteSpace(request.Email))
+				if (string.IsNullOrWhiteSpace(request.oldUsername) && string.IsNullOrWhiteSpace(request.oldEmail))
+				{
+					return BadRequest("Invalid or missing oldUsername or oldEmail");
+				}
+
+				if (string.IsNullOrWhiteSpace(request.newUsername) && string.IsNullOrWhiteSpace(request.newEmail))
+				{
+					return BadRequest("Invalid or missing newUsername or newEmail");
+				}
+
+				var oldCustomer = await _customerRepository.GetByUsernameOrEmailAsync(request.oldUsername ?? request.oldEmail, ct);
+
+				if (oldCustomer == null)
 				{
 					return BadRequest("Invalid or missing username or email");
 				}
 
-				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username ?? request.Email, ct);
+				var newCustomer = await _customerRepository.GetByUsernameOrEmailAsync(request.newUsername ?? request.newEmail, ct);
 
-				if (customer == null)
+				if (newCustomer == null)
 				{
 					return BadRequest("Invalid or missing username or email");
 				}
 
-				var country = await _countryRepository.GetByCountry3CodeAsync(request.Country3Code, ct);
+				var country = await _countryService.GetByAlpha3Async(request.newCountry3Code, ct);
 
 				if (country == null)
 				{
 					return BadRequest("Country with that alpha3 code was not found");
 				}
 
-				var updatedAddress = await _addressService.UpdateAsync(id, request, ct);
+				var updatedAddress = await _addressService.UpdateAsync(oldAddressId, request, ct);
+
+				if (updatedAddress == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
+				}
 
 				return Ok(updatedAddress);
 			}
@@ -173,12 +218,12 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="id">Address ID</param>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="204">Returns confirmation of deletion</response>
 		/// <response code="404">Returns if the address was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:guid}")]
-		public async Task<ActionResult> DeleteAddressAsync(Guid id, CancellationToken ct)
+		public async Task<IActionResult> DeleteAddressAsync(Guid id, CancellationToken ct)
 		{
 			try
 			{
@@ -189,9 +234,15 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Address not found");
 				}
 
-				await _addressService.DeleteAsync(id, ct);
+				var isDeleted = await _addressService.DeleteAsync(id, ct);
 
-				return Ok();
+				if (!isDeleted)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
+				}
+
+
+				return NoContent();
 			}
 			catch (OperationCanceledException)
 			{

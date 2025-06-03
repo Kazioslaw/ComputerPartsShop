@@ -1,5 +1,6 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -9,10 +10,12 @@ namespace ComputerPartsShop.API.Controllers
 	public class CountryController : ControllerBase
 	{
 		private readonly ICountryService _countryService;
+		private readonly IValidator<CountryRequest> _countryValidator;
 
-		public CountryController(ICountryService countryService)
+		public CountryController(ICountryService countryService, IValidator<CountryRequest> countryValidator)
 		{
 			_countryService = countryService;
+			_countryValidator = countryValidator;
 		}
 
 		/// <summary>
@@ -23,7 +26,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>List of countries</returns>
 		[HttpGet]
-		public async Task<ActionResult<List<CountryResponse>>> GetCountryListAsync(CancellationToken ct)
+		public async Task<IActionResult> GetCountryListAsync(CancellationToken ct)
 		{
 			try
 			{
@@ -47,11 +50,40 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Country</returns>
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<DetailedCountryResponse>> GetCountry(int id, CancellationToken ct)
+		public async Task<IActionResult> GetCountryAsync(int id, CancellationToken ct)
 		{
 			try
 			{
 				var country = await _countryService.GetAsync(id, ct);
+
+				if (country == null)
+				{
+					return NotFound("Country not found");
+				}
+
+				return Ok(country);
+			}
+			catch (OperationCanceledException)
+			{
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+		}
+
+		/// <summary>
+		/// Asynchronously retrieves an country by its Alpha3 code.
+		/// </summary>
+		/// <param name="alpha3">Country alpha3 code</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the country</response>
+		/// <response code="404">Returns if the country was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Country</returns>
+		[HttpGet("{alpha3}")]
+		public async Task<IActionResult> GetCountryByAlpha3Code(string alpha3, CancellationToken ct)
+		{
+			try
+			{
+				var country = await _countryService.GetByAlpha3Async(alpha3, ct);
 
 				if (country == null)
 				{
@@ -75,13 +107,26 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Created country</returns>
 		[HttpPost]
-		public async Task<ActionResult<CountryResponse>> CreateCountryAsync(CountryRequest request, CancellationToken ct)
+		public async Task<IActionResult> CreateCountryAsync(CountryRequest request, CancellationToken ct)
 		{
 			try
 			{
+				var validation = await _countryValidator.ValidateAsync(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var country = await _countryService.CreateAsync(request, ct);
 
-				return Created(nameof(CreateCountryAsync), country);
+				if (country == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
+				}
+
+				return Created(nameof(GetCountryAsync), country);
 			}
 			catch (OperationCanceledException)
 			{
@@ -100,10 +145,18 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Updated country</returns>
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<CountryResponse>> UpdateCountryAsync(int id, CountryRequest request, CancellationToken ct)
+		public async Task<IActionResult> UpdateCountryAsync(int id, CountryRequest request, CancellationToken ct)
 		{
 			try
 			{
+				var validation = await _countryValidator.ValidateAsync(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var country = await _countryService.GetAsync(id, ct);
 
 				if (country == null)
@@ -112,6 +165,11 @@ namespace ComputerPartsShop.API.Controllers
 				}
 
 				var updatedCountry = await _countryService.UpdateAsync(id, request, ct);
+
+				if (updatedCountry == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
+				}
 
 				return Ok(updatedCountry);
 			}
@@ -127,12 +185,12 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="id">Country ID</param>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="204">Returns confirmation of deletion</response>
 		/// <response code="404">Returns if the country was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteCountryAsync(int id, CancellationToken ct)
+		public async Task<IActionResult> DeleteCountryAsync(int id, CancellationToken ct)
 		{
 			try
 			{
@@ -143,9 +201,14 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Country not found");
 				}
 
-				await _countryService.DeleteAsync(id, ct);
+				var isDeleted = await _countryService.DeleteAsync(id, ct);
 
-				return Ok(country);
+				if (!isDeleted)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
+				}
+
+				return NoContent();
 			}
 			catch (OperationCanceledException)
 			{

@@ -1,69 +1,64 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using AutoMapper;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Enums;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
-using System.Data;
 
 namespace ComputerPartsShop.Services
 {
 	public class PaymentService : IPaymentService
 	{
 		private readonly IPaymentRepository _paymentRepository;
+		private readonly IMapper _mapper;
 
-		public PaymentService(IPaymentRepository paymentRepository)
+		public PaymentService(IPaymentRepository paymentRepository, IMapper mapper)
 		{
 			_paymentRepository = paymentRepository;
+			_mapper = mapper;
 		}
 
 		public async Task<List<PaymentResponse>> GetListAsync(CancellationToken ct)
 		{
-			var paymentList = await _paymentRepository.GetListAsync(ct);
+			var result = await _paymentRepository.GetListAsync(ct);
 
-			return paymentList.Select(p => new PaymentResponse(p.Id, p.CustomerPaymentSystemId, p.OrderId, p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt)).ToList();
+			var paymentList = _mapper.Map<IEnumerable<PaymentResponse>>(result);
+
+			return paymentList.ToList();
 		}
 
-		public async Task<DetailedPaymentResponse> GetAsync(int id, CancellationToken ct)
+		public async Task<PaymentResponse> GetAsync(Guid id, CancellationToken ct)
 		{
-			var payment = await _paymentRepository.GetAsync(id, ct);
+			var result = await _paymentRepository.GetAsync(id, ct);
 
-			return payment == null ? null! : new DetailedPaymentResponse(payment.Id,
-				new CustomerPaymentSystemResponse(payment.CustomerPaymentSystem.Id, payment.CustomerPaymentSystem.Customer.Username,
-				payment.CustomerPaymentSystem.Customer.Email, payment.CustomerPaymentSystem.Provider.Name, payment.CustomerPaymentSystem.PaymentReference),
-				new OrderInPaymentResponse(payment.OrderId, payment.Order.Customer.Username, payment.Order.Customer.Email,
-				payment.Order.OrdersProducts.Select(x => new ProductInPaymentResponse(x.Product.Name, x.Quantity)).ToList(),
-				new AddressResponse(payment.Order.DeliveryAddress.Id, payment.Order.DeliveryAddress.Street, payment.Order.DeliveryAddress.City,
-				payment.Order.DeliveryAddress.Region, payment.Order.DeliveryAddress.ZipCode, payment.Order.DeliveryAddress.Country.Alpha3),
-				payment.Order.Status, payment.Order.OrderedAt, payment.Order.SendAt),
-				payment.Total, payment.Method, payment.Status, payment.PaymentStartAt, payment.PaidAt);
+			if (result == null)
+			{
+				return null;
+			}
+
+			var payment = _mapper.Map<PaymentResponse>(result);
+
+			return payment;
 		}
 
 		public async Task<PaymentResponse> CreateAsync(PaymentRequest entity, CancellationToken ct)
 		{
-			var newPayment = new Payment()
+			var newPayment = _mapper.Map<Payment>(entity);
+
+			var result = await _paymentRepository.CreateAsync(newPayment, ct);
+
+			if (result == null)
 			{
-				CustomerPaymentSystemId = entity.CustomerPaymentSystemId,
-				OrderId = entity.OrderId,
-				Total = entity.Total,
-				Method = entity.Method,
-				Status = PaymentStatus.Pending,
-				PaymentStartAt = DateTime.Now
-			};
+				return null;
+			}
 
-			var paymentId = await _paymentRepository.CreateAsync(newPayment, ct);
+			var createdPayment = _mapper.Map<PaymentResponse>(result);
 
-			return new PaymentResponse(paymentId, entity.CustomerPaymentSystemId, entity.OrderId, entity.Total,
-				entity.Method, newPayment.Status, newPayment.PaymentStartAt, null);
+			return createdPayment;
 		}
 
-		public async Task<PaymentResponse> UpdateAsync(int id, PaymentRequest entity, CancellationToken ct)
+		public async Task<PaymentResponse> UpdateStatusAsync(Guid id, UpdatePaymentRequest entity, CancellationToken ct)
 		{
-			Payment payment = await _paymentRepository.GetAsync(id, ct);
-
-			payment.CustomerPaymentSystemId = entity.CustomerPaymentSystemId;
-			payment.OrderId = entity.OrderId;
-			payment.Total = entity.Total;
-			payment.Method = entity.Method;
-			payment.Status = entity.Status!;
+			var existingPayment = await _paymentRepository.GetAsync(id, ct);
 
 			switch (entity.Status)
 			{
@@ -71,27 +66,32 @@ namespace ComputerPartsShop.Services
 				case PaymentStatus.Authorized:
 				case PaymentStatus.Failed:
 				case PaymentStatus.Cancelled:
-					payment.PaymentStartAt = (DateTime)entity.PaymentStartAt!;
+					existingPayment.Status = entity.Status;
 					break;
 				case PaymentStatus.Completed:
-					payment.PaymentStartAt = (DateTime)entity.PaymentStartAt!;
-					payment.PaidAt = DateTime.Now;
+					existingPayment.Status = entity.Status;
+					existingPayment.PaidAt = DateTime.Now;
 					break;
 				case PaymentStatus.Refunded:
-					payment.PaymentStartAt = (DateTime)entity.PaymentStartAt!;
-					payment.PaidAt = (DateTime)entity.PaidAt!;
+					existingPayment.Status = entity.Status;
 					break;
 			}
 
-			await _paymentRepository.UpdateAsync(id, payment, ct);
+			var result = await _paymentRepository.UpdateStatusAsync(id, existingPayment, ct);
 
-			return new PaymentResponse(id, entity.CustomerPaymentSystemId, entity.OrderId, entity.Total, entity.Method,
-				entity.Status, entity.PaymentStartAt, entity.PaidAt);
+			if (result == null)
+			{
+				return null;
+			}
+
+			var updatedPayment = _mapper.Map<PaymentResponse>(result);
+
+			return updatedPayment;
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
 		{
-			await _paymentRepository.DeleteAsync(id, ct);
+			return await _paymentRepository.DeleteAsync(id, ct);
 		}
 	}
 }

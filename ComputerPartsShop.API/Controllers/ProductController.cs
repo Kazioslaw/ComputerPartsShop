@@ -1,6 +1,7 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -11,11 +12,13 @@ namespace ComputerPartsShop.API.Controllers
 	{
 		private readonly ICategoryRepository _categoryRepository;
 		private readonly IProductService _productService;
+		private readonly IValidator<ProductRequest> _productValidator;
 
-		public ProductController(IProductService productService, ICategoryRepository categoryRepository)
+		public ProductController(IProductService productService, ICategoryRepository categoryRepository, IValidator<ProductRequest> productValidator)
 		{
 			_categoryRepository = categoryRepository;
 			_productService = productService;
+			_productValidator = productValidator;
 		}
 
 		/// <summary>
@@ -26,7 +29,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>List of products</returns>
 		[HttpGet]
-		public async Task<ActionResult<List<ProductResponse>>> GetProductListAsync(CancellationToken ct)
+		public async Task<IActionResult> GetProductListAsync(CancellationToken ct)
 		{
 			try
 			{
@@ -50,7 +53,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Product</returns>
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<ProductResponse>> GetProductAsync(int id, CancellationToken ct)
+		public async Task<IActionResult> GetProductAsync(int id, CancellationToken ct)
 		{
 			try
 			{
@@ -80,10 +83,18 @@ namespace ComputerPartsShop.API.Controllers
 		/// <returns>Created product</returns>
 
 		[HttpPost]
-		public async Task<ActionResult<ProductResponse>> CreateProductAsync(ProductRequest request, CancellationToken ct)
+		public async Task<IActionResult> CreateProductAsync(ProductRequest request, CancellationToken ct)
 		{
 			try
 			{
+				var validation = _productValidator.Validate(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var category = await _categoryRepository.GetByNameAsync(request.CategoryName, ct);
 
 				if (category == null)
@@ -93,7 +104,12 @@ namespace ComputerPartsShop.API.Controllers
 
 				var product = await _productService.CreateAsync(request, ct);
 
-				return Created(nameof(CreateProductAsync), product);
+				if (product == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
+				}
+
+				return Ok(product);
 			}
 			catch (OperationCanceledException)
 			{
@@ -114,10 +130,18 @@ namespace ComputerPartsShop.API.Controllers
 		/// <returns>Updated product</returns>
 
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<ProductResponse>> UpdateProductAsync(int id, ProductRequest request, CancellationToken ct)
+		public async Task<IActionResult> UpdateProductAsync(int id, ProductRequest request, CancellationToken ct)
 		{
 			try
 			{
+				var validation = _productValidator.Validate(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var product = await _productService.GetAsync(id, ct);
 
 				if (product == null)
@@ -134,6 +158,11 @@ namespace ComputerPartsShop.API.Controllers
 
 				var updatedProduct = await _productService.UpdateAsync(id, request, ct);
 
+				if (updatedProduct == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
+				}
+
 				return Ok(updatedProduct);
 			}
 			catch (OperationCanceledException)
@@ -147,12 +176,12 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="id">Product ID</param>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="204">Returns confirmation of deletion</response>
 		/// <response code="404">Returns if the product was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Deletion confirmation</returns>
-		[HttpDelete]
-		public async Task<ActionResult> DeleteProductAsync(int id, CancellationToken ct)
+		[HttpDelete("{id:int}")]
+		public async Task<IActionResult> DeleteProductAsync(int id, CancellationToken ct)
 		{
 			try
 			{
@@ -163,9 +192,14 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Product not found");
 				}
 
-				await _productService.DeleteAsync(id, ct);
+				var isDeleted = await _productService.DeleteAsync(id, ct);
 
-				return Ok();
+				if (!isDeleted)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
+				}
+
+				return NoContent();
 			}
 			catch (OperationCanceledException)
 			{

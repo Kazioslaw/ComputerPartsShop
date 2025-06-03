@@ -1,4 +1,5 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using AutoMapper;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
@@ -7,55 +8,87 @@ namespace ComputerPartsShop.Services
 	public class CategoryService : ICategoryService
 	{
 		private readonly ICategoryRepository _categoryRepository;
+		private readonly IMapper _mapper;
 
-		public CategoryService(ICategoryRepository categoryRepository)
+		public CategoryService(ICategoryRepository categoryRepository, IMapper mapper)
 		{
 			_categoryRepository = categoryRepository;
+			_mapper = mapper;
 		}
 
 		public async Task<List<CategoryResponse>> GetListAsync(CancellationToken ct)
 		{
-			var categoryList = await _categoryRepository.GetListAsync(ct);
+			var result = await _categoryRepository.GetListAsync(ct);
 
-			return categoryList.Select(c => new CategoryResponse(c.Id, c.Name, c.Description)).ToList();
+			var categoryList = _mapper.Map<IEnumerable<CategoryResponse>>(result);
+
+			return categoryList.ToList();
 		}
 
 		public async Task<CategoryResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var category = await _categoryRepository.GetAsync(id, ct);
+			var result = await _categoryRepository.GetAsync(id, ct);
 
-			return category == null ? null! : new CategoryResponse(id, category.Name, category.Description);
+			if (result == null)
+			{
+				return null;
+			}
+
+			var category = _mapper.Map<CategoryResponse>(result);
+
+			return category;
+		}
+
+		public async Task<CategoryResponse> GetByNameAsync(string name, CancellationToken ct)
+		{
+			var result = await _categoryRepository.GetByNameAsync(name, ct);
+
+			if (result == null)
+			{
+				return null;
+			}
+
+			var category = _mapper.Map<CategoryResponse>(result);
+
+			return category;
 		}
 
 		public async Task<CategoryResponse> CreateAsync(CategoryRequest entity, CancellationToken ct)
 		{
-			var newCategory = new Category()
+			var newCategory = _mapper.Map<Category>(entity);
+
+			var result = await _categoryRepository.CreateAsync(newCategory, ct);
+
+			if (result == null)
 			{
-				Name = entity.Name,
-				Description = entity.Description,
-			};
+				return null;
+			}
 
-			var createdCategoryId = await _categoryRepository.CreateAsync(newCategory, ct);
+			var createdCategory = _mapper.Map<CategoryResponse>(result);
 
-			return new CategoryResponse(createdCategoryId, entity.Name, entity.Description);
+			return createdCategory;
 		}
 
 		public async Task<CategoryResponse> UpdateAsync(int id, CategoryRequest entity, CancellationToken ct)
 		{
-			var category = new Category()
+			var categoryToUpdate = _mapper.Map<Category>(entity);
+
+
+			var result = await _categoryRepository.UpdateAsync(id, categoryToUpdate, ct);
+
+			if (result == null)
 			{
-				Name = entity.Name,
-				Description = entity.Description,
-			};
+				return null;
+			}
 
-			await _categoryRepository.UpdateAsync(id, category, ct);
+			var updatedCategory = _mapper.Map<CategoryResponse>(result);
 
-			return new CategoryResponse(id, entity.Name, entity.Description);
+			return updatedCategory;
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await _categoryRepository.DeleteAsync(id, ct);
+			return await _categoryRepository.DeleteAsync(id, ct);
 		}
 	}
 }

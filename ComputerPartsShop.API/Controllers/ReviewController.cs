@@ -1,5 +1,6 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -11,11 +12,13 @@ namespace ComputerPartsShop.API.Controllers
 
 		private readonly IReviewService _reviewService;
 		private readonly IProductService _productService;
+		private readonly IValidator<ReviewRequest> _reviewValidator;
 
-		public ReviewController(IReviewService reviewService, IProductService productService)
+		public ReviewController(IReviewService reviewService, IProductService productService, IValidator<ReviewRequest> reviewValidator)
 		{
 			_reviewService = reviewService;
 			_productService = productService;
+			_reviewValidator = reviewValidator;
 		}
 
 		/// <summary>
@@ -26,7 +29,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>List of reviews</returns>
 		[HttpGet]
-		public async Task<ActionResult<List<ReviewResponse>>> GetReviewListAsync(CancellationToken ct)
+		public async Task<IActionResult> GetReviewListAsync(CancellationToken ct)
 		{
 			try
 			{
@@ -50,7 +53,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Review</returns>
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<ReviewResponse>> GetReviewAsync(int id, CancellationToken ct)
+		public async Task<IActionResult> GetReviewAsync(int id, CancellationToken ct)
 		{
 			try
 			{
@@ -79,10 +82,18 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Created review</returns>
 		[HttpPost]
-		public async Task<ActionResult<ReviewResponse>> CreateReviewAsync(ReviewRequest request, CancellationToken ct)
+		public async Task<IActionResult> CreateReviewAsync(ReviewRequest request, CancellationToken ct)
 		{
 			try
 			{
+				var validation = _reviewValidator.Validate(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var product = await _productService.GetAsync(request.ProductId, ct);
 
 
@@ -93,7 +104,12 @@ namespace ComputerPartsShop.API.Controllers
 
 				var review = await _reviewService.CreateAsync(request, ct);
 
-				return Created(nameof(CreateReviewAsync), review);
+				if (review == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
+				}
+
+				return Ok(review);
 			}
 			catch (OperationCanceledException)
 			{
@@ -113,10 +129,18 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Updated review</returns>
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<ReviewResponse>> UpdateReviewAsync(int id, ReviewRequest request, CancellationToken ct)
+		public async Task<IActionResult> UpdateReviewAsync(int id, ReviewRequest request, CancellationToken ct)
 		{
 			try
 			{
+				var validation = _reviewValidator.Validate(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
 				var review = await _reviewService.GetAsync(id, ct);
 
 				if (review == null)
@@ -133,6 +157,11 @@ namespace ComputerPartsShop.API.Controllers
 
 				var updatedReview = await _reviewService.UpdateAsync(id, request, ct);
 
+				if (updatedReview == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
+				}
+
 				return Ok(updatedReview);
 			}
 			catch (OperationCanceledException)
@@ -146,12 +175,12 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="id">Review ID</param>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="204">Returns confirmation of deletion</response>
 		/// <response code="404">Returns if the review was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeleteReviewAsync(int id, CancellationToken ct)
+		public async Task<IActionResult> DeleteReviewAsync(int id, CancellationToken ct)
 		{
 			try
 			{
@@ -162,9 +191,14 @@ namespace ComputerPartsShop.API.Controllers
 					return NotFound("Review not found");
 				}
 
-				await _reviewService.DeleteAsync(id, ct);
+				var isDeleted = await _reviewService.DeleteAsync(id, ct);
 
-				return Ok();
+				if (!isDeleted)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
+				}
+
+				return NoContent();
 			}
 			catch (OperationCanceledException)
 			{

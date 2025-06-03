@@ -1,5 +1,6 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -9,11 +10,14 @@ namespace ComputerPartsShop.API.Controllers
 	public class PaymentProviderController : ControllerBase
 	{
 
-		private readonly IPaymentProviderService _ppService;
+		private readonly IPaymentProviderService _paymentProviderService;
+		private readonly IValidator<PaymentProviderRequest> _paymentProviderValidator;
 
-		public PaymentProviderController(IPaymentProviderService ppService)
+
+		public PaymentProviderController(IPaymentProviderService paymentProviderService, IValidator<PaymentProviderRequest> paymentProviderValidator)
 		{
-			_ppService = ppService;
+			_paymentProviderService = paymentProviderService;
+			_paymentProviderValidator = paymentProviderValidator;
 		}
 
 		/// <summary>
@@ -24,11 +28,11 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>List of payment providers</returns>
 		[HttpGet]
-		public async Task<ActionResult<List<PaymentProviderResponse>>> GetPaymentProviderListAsync(CancellationToken ct)
+		public async Task<IActionResult> GetPaymentProviderListAsync(CancellationToken ct)
 		{
 			try
 			{
-				var paymentProviderList = await _ppService.GetListAsync(ct);
+				var paymentProviderList = await _paymentProviderService.GetListAsync(ct);
 
 				return Ok(paymentProviderList);
 			}
@@ -48,11 +52,40 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Payment provider</returns>
 		[HttpGet("{id:int}")]
-		public async Task<ActionResult<DetailedPaymentProviderResponse>> GetPaymentProviderAsync(int id, CancellationToken ct)
+		public async Task<IActionResult> GetPaymentProviderAsync(int id, CancellationToken ct)
 		{
 			try
 			{
-				var paymentProvider = await _ppService.GetAsync(id, ct);
+				var paymentProvider = await _paymentProviderService.GetAsync(id, ct);
+
+				if (paymentProvider == null)
+				{
+					return NotFound("Payment provider not found");
+				}
+
+				return Ok(paymentProvider);
+			}
+			catch (OperationCanceledException)
+			{
+				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+		}
+
+		/// <summary>
+		/// Asynchronously retrieves an payment provider by its name
+		/// </summary>
+		/// <param name="name">Payment provider name</param>
+		/// <param name="ct">Cancellation token</param>
+		/// <response code="200">Returns the payment provider</response>
+		/// <response code="404">Returns if the payment provider was not found</response>
+		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <returns>Payment provider</returns>
+		[HttpGet("{name}")]
+		public async Task<IActionResult> GetPaymentProviderByNameAsync(string name, CancellationToken ct)
+		{
+			try
+			{
+				var paymentProvider = await _paymentProviderService.GetByNameAsync(name, ct);
 
 				if (paymentProvider == null)
 				{
@@ -76,13 +109,26 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Created payment provider</returns>
 		[HttpPost]
-		public async Task<ActionResult<PaymentProviderResponse>> CreatePaymentProviderAsync(PaymentProviderRequest request, CancellationToken ct)
+		public async Task<IActionResult> CreatePaymentProviderAsync(PaymentProviderRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var paymentProvider = await _ppService.CreateAsync(request, ct);
+				var validation = await _paymentProviderValidator.ValidateAsync(request);
 
-				return Created(nameof(CreatePaymentProviderAsync), paymentProvider);
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
+				var paymentProvider = await _paymentProviderService.CreateAsync(request, ct);
+
+				if (paymentProvider == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
+				}
+
+				return Created(nameof(GetPaymentProviderAsync), paymentProvider);
 			}
 			catch (OperationCanceledException)
 			{
@@ -101,18 +147,31 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Updated payment provider</returns>
 		[HttpPut("{id:int}")]
-		public async Task<ActionResult<PaymentProviderResponse>> UpdatePaymentProviderAsync(int id, PaymentProviderRequest request, CancellationToken ct)
+		public async Task<IActionResult> UpdatePaymentProviderAsync(int id, PaymentProviderRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var paymentProvider = await _ppService.GetAsync(id, ct);
+				var validation = await _paymentProviderValidator.ValidateAsync(request);
+
+				if (!validation.IsValid)
+				{
+					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+					return BadRequest(errors);
+				}
+
+				var paymentProvider = await _paymentProviderService.GetAsync(id, ct);
 
 				if (paymentProvider == null)
 				{
 					return NotFound("Payment provider not found");
 				}
 
-				var updatedPaymentProvider = await _ppService.UpdateAsync(id, request, ct);
+				var updatedPaymentProvider = await _paymentProviderService.UpdateAsync(id, request, ct);
+
+				if (updatedPaymentProvider == null)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
+				}
 
 				return Ok(updatedPaymentProvider);
 			}
@@ -127,25 +186,30 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="id">Payment provider ID</param>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns confirmation of deletion</response>
+		/// <response code="204">Returns confirmation of deletion</response>
 		/// <response code="404">Returns if the payment provider was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
-		public async Task<ActionResult> DeletePaymentProviderAsync(int id, CancellationToken ct)
+		public async Task<IActionResult> DeletePaymentProviderAsync(int id, CancellationToken ct)
 		{
 			try
 			{
-				var paymentProvider = await _ppService.GetAsync(id, ct);
+				var paymentProvider = await _paymentProviderService.GetAsync(id, ct);
 
 				if (paymentProvider == null)
 				{
 					return NotFound("Payment provider not found");
 				}
 
-				await _ppService.DeleteAsync(id, ct);
+				var isDeleted = await _paymentProviderService.DeleteAsync(id, ct);
 
-				return Ok();
+				if (!isDeleted)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
+				}
+
+				return NoContent();
 			}
 			catch (OperationCanceledException)
 			{

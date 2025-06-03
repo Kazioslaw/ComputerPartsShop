@@ -1,74 +1,149 @@
 ﻿using ComputerPartsShop.Domain.Models;
+using Dapper;
+using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace ComputerPartsShop.Infrastructure
 {
 	public class ReviewRepository : IReviewRepository
 	{
-		private readonly TempData _dbContext;
+		private readonly DBContext _dbContext;
 
-		public ReviewRepository(TempData dbContext)
+		public ReviewRepository(DBContext dbContext)
 		{
 			_dbContext = dbContext;
 		}
 
 		public async Task<List<Review>> GetListAsync(CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
+			var query = "SELECT Review.ID, Review.Rating, Review.Description, Customer.Username, Product.Name FROM Review " +
+				"LEFT JOIN Customer ON Review.CustomerID = Customer.ID " +
+				"LEFT JOIN Product ON Review.ProductID = Product.ID";
 
-			return _dbContext.ReviewList;
+			using (var connection = await _dbContext.CreateConnection())
+			{
+				var result = await connection.QueryAsync<Review, Customer, Product, Review>(query, (review, customer, product) =>
+				{
+					review.Customer = customer;
+					review.Product = product;
+					return review;
+				}, splitOn: "Username, Name");
+
+				return result.ToList();
+			}
 		}
 
 		public async Task<Review> GetAsync(int id, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var review = _dbContext.ReviewList.FirstOrDefault(x => x.Id == id);
+			var query = "SELECT Review.ID, Customer.Username, Product.Name, Review.Rating, Review.Description FROM Review " +
+				"LEFT JOIN Customer ON Review.CustomerID = Customer.ID " +
+				"JOIN Product ON Review.ProductID = Product.ID WHERE Review.ID = @Id";
 
-			return review!;
+			using (var connection = await _dbContext.CreateConnection())
+			{
+				var result = await connection.QueryAsync<Review, Customer, Product, Review>(query, (review, customer, product) =>
+				{
+					review.Customer = customer;
+					review.Product = product;
+					return review;
+				}, new { id }, splitOn: "Username, Name");
+
+				return result.FirstOrDefault();
+			}
 		}
 
-		public async Task<int> CreateAsync(Review request, CancellationToken ct)
+		public async Task<Review> CreateAsync(Review request, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var last = _dbContext.ReviewList.LastOrDefault();
+			var query = "INSERT INTO Review (CustomerID, ProductID, Rating, Description) " +
+				"VALUES (@CustomerID, @ProductID, @Rating, @Description); " +
+				"SELECT CAST(SCOPE_IDENTITY() AS int)";
 
-			if (last == null)
+			var parameters = new DynamicParameters();
+			parameters.Add("CustomerID", request.CustomerId, DbType.Guid, direction: ParameterDirection.Input);
+			parameters.Add("ProductID", request.ProductId, DbType.Int32, ParameterDirection.Input);
+			parameters.Add("Rating", request.Rating, DbType.Byte, ParameterDirection.Input);
+			parameters.Add("Description", request.Description, DbType.String, direction: ParameterDirection.Input);
+			parameters.Add("NewID", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+			using (var connection = await _dbContext.CreateConnection())
 			{
-				request.Id = 1;
-			}
-			else
-			{
-				request.Id = last.Id + 1;
+				using (var transaction = connection.BeginTransaction())
+				{
+					try
+					{
+						request.Id = await connection.QuerySingleAsync<int>(query, parameters, transaction);
+						transaction.Commit();
+
+						return request;
+					}
+					catch (SqlException)
+					{
+						transaction.Rollback();
+
+						return null;
+					}
+				}
 			}
 
-			_dbContext.ReviewList.Add(request);
-
-			return request.Id;
 		}
 
 		public async Task<Review> UpdateAsync(int id, Review request, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var review = _dbContext.ReviewList.FirstOrDefault(x => x.Id == id);
+			var query = "UPDATE Review SET CustomerID = @CustomerID, ProductID = @ProductID, Rating = @Rating, " +
+				"Description = @Description WHERE ID = @Id";
 
-			if (review != null)
+			request.Id = id;
+
+			var parameters = new DynamicParameters();
+			parameters.Add("ID", request.Id, DbType.Int32, ParameterDirection.Input);
+			parameters.Add("CustomerID", request.CustomerId, DbType.Guid, ParameterDirection.Input);
+			parameters.Add("ProductID", request.ProductId, DbType.Int32, ParameterDirection.Input);
+			parameters.Add("Rating", request.Rating, DbType.Byte, ParameterDirection.Input);
+			parameters.Add("Description", request.Description, DbType.String, ParameterDirection.Input);
+
+			using (var connection = await _dbContext.CreateConnection())
 			{
-				review.CustomerId = request.CustomerId;
-				review.ProductId = request.ProductId;
-				review.Rating = request.Rating;
-				review.Description = request.Description;
-			}
+				using (var transaction = connection.BeginTransaction())
+				{
+					try
+					{
+						await connection.ExecuteAsync(query, parameters, transaction);
+						transaction.Commit();
 
-			return review!;
+						return request;
+					}
+					catch (SqlException)
+					{
+						transaction.Rollback();
+
+						return null;
+					}
+				}
+			}
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await Task.Delay(500, ct);
-			var review = _dbContext.ReviewList.FirstOrDefault(x => x.Id == id);
+			var query = "DELETE FROM Review WHERE ID = @Id";
 
-			if (review != null)
+			using (var connection = await _dbContext.CreateConnection())
 			{
-				_dbContext.ReviewList.Remove(review);
+				using (var transaction = connection.BeginTransaction())
+				{
+					try
+					{
+						await connection.ExecuteAsync(query, new { id }, transaction);
+						transaction.Commit();
+
+						return true;
+					}
+					catch (SqlException)
+					{
+						transaction.Rollback();
+
+						return false;
+					}
+				}
 			}
 		}
 	}

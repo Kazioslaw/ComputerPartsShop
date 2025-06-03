@@ -1,4 +1,5 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using AutoMapper;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 
@@ -9,31 +10,42 @@ namespace ComputerPartsShop.Services
 		private readonly IReviewRepository _reviewRepository;
 		private readonly ICustomerRepository _customerRepository;
 		private readonly IProductRepository _productRepository;
+		private readonly IMapper _mapper;
 
-		public ReviewService(IReviewRepository reviewRepository, ICustomerRepository customerRepository, IProductRepository productRepository)
+		public ReviewService(IReviewRepository reviewRepository, ICustomerRepository customerRepository, IProductRepository productRepository, IMapper mapper)
 		{
 			_reviewRepository = reviewRepository;
 			_customerRepository = customerRepository;
 			_productRepository = productRepository;
+			_mapper = mapper;
+
 		}
 
 		public async Task<List<ReviewResponse>> GetListAsync(CancellationToken ct)
 		{
-			var reviewList = await _reviewRepository.GetListAsync(ct);
+			var result = await _reviewRepository.GetListAsync(ct);
 
-			return reviewList.Select(r => new ReviewResponse(r.Id, r.Customer?.Username, r.Product.Name, r.Rating, r.Description)).ToList();
+			var reviewList = _mapper.Map<IEnumerable<ReviewResponse>>(result);
+
+			return reviewList.ToList();
 		}
 
 		public async Task<ReviewResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var review = await _reviewRepository.GetAsync(id, ct);
+			var result = await _reviewRepository.GetAsync(id, ct);
 
-			return review == null ? null! : new ReviewResponse(id, review.Customer?.Username, review.Product.Name, review.Rating, review.Description);
+			if (result == null)
+			{
+				return null;
+			}
+
+			var review = _mapper.Map<ReviewResponse>(result);
+
+			return review;
 		}
 
 		public async Task<ReviewResponse> CreateAsync(ReviewRequest entity, CancellationToken ct)
 		{
-			Review newReview;
 			Customer? customer = null;
 			var product = await _productRepository.GetAsync(entity.ProductId, ct);
 
@@ -42,37 +54,29 @@ namespace ComputerPartsShop.Services
 				customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username, ct);
 			}
 
-			if (customer == null)
+			var newReview = _mapper.Map<Review>(entity);
+			newReview.Product = product;
+			if (customer != null)
 			{
-				newReview = new()
-				{
-					ProductId = product.Id,
-					Product = product,
-					Rating = entity.Rating,
-					Description = entity.Description,
-				};
+				newReview.Customer = customer;
+				newReview.CustomerId = customer.Id;
 			}
 
-			else
+			var result = await _reviewRepository.CreateAsync(newReview, ct);
+
+			if (result == null)
 			{
-				newReview = new()
-				{
-					CustomerId = customer.Id,
-					Customer = customer,
-					ProductId = product.Id,
-					Product = product,
-					Rating = entity.Rating,
-					Description = entity.Description,
-				};
+				return null;
 			}
 
-			var reviewId = await _reviewRepository.CreateAsync(newReview, ct);
-			return new ReviewResponse(reviewId, entity.Username, product.Name, entity.Rating, entity.Description);
+			var createdReview = _mapper.Map<ReviewResponse>(result);
+
+			return createdReview;
 		}
 
 		public async Task<ReviewResponse> UpdateAsync(int id, ReviewRequest entity, CancellationToken ct)
 		{
-			Review review;
+			var reviewToUpdate = _mapper.Map<Review>(entity);
 			Customer? customer = null;
 			var product = await _productRepository.GetAsync(entity.ProductId, ct);
 
@@ -81,38 +85,30 @@ namespace ComputerPartsShop.Services
 				customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username, ct);
 			}
 
-			if (customer == null)
+			reviewToUpdate.Product = product;
+			reviewToUpdate.ProductId = product.Id;
+
+			if (customer != null)
 			{
-				review = new()
-				{
-					ProductId = product.Id,
-					Product = product,
-					Rating = entity.Rating,
-					Description = entity.Description,
-				};
+				reviewToUpdate.Customer = customer;
+				reviewToUpdate.CustomerId = customer.Id;
 			}
 
-			else
+			var result = await _reviewRepository.UpdateAsync(id, reviewToUpdate, ct);
+
+			if (result == null)
 			{
-				review = new()
-				{
-					CustomerId = customer.Id,
-					Customer = customer,
-					ProductId = product.Id,
-					Product = product,
-					Rating = entity.Rating,
-					Description = entity.Description,
-				};
+				return null;
 			}
 
-			await _reviewRepository.UpdateAsync(id, review, ct);
+			var updatedReview = _mapper.Map<ReviewResponse>(result);
 
-			return new ReviewResponse(id, entity.Username, product.Name, entity.Rating, entity.Description);
+			return updatedReview;
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
 		{
-			await _reviewRepository.DeleteAsync(id, ct);
+			return await _reviewRepository.DeleteAsync(id, ct);
 		}
 	}
 }
