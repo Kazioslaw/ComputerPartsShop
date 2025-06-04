@@ -4,6 +4,6 @@
 	{
 		public int Id { get; set; }
 		public string Name { get; set; }
-		public List<CustomerPaymentSystem> CustomerPayments { get; set; }
+		public List<UserPaymentSystem> UserPayments { get; set; }
 	}
 }

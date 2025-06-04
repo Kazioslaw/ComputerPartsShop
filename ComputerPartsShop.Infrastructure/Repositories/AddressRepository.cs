@@ -21,53 +21,70 @@ namespace ComputerPartsShop.Infrastructure
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var result = await connection.QueryAsync<Address, Country, Address>(query, (address, country) =>
+				try
 				{
-					address.Country = country;
+					var result = await connection.QueryAsync<Address, Country, Address>(query, (address, country) =>
+					{
+						address.Country = country;
 
-					return address;
-				}, splitOn: "Alpha3");
+						return address;
+					}, splitOn: "Alpha3");
 
-				return result.ToList();
+					return result.ToList();
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+					throw;
+				}
 			}
 		}
 
 		public async Task<Address> GetAsync(Guid id, CancellationToken ct)
 		{
-			var query = "SELECT Address.ID, Address.Street, Address.City, Address.Region, Address.ZipCode, Country.Alpha3, Customer.ID, Customer.FirstName, Customer.LastName, Customer.Username, Customer.Email " +
+			var query = "SELECT Address.ID, Address.Street, Address.City, Address.Region, Address.ZipCode, Country.Alpha3, " +
+				"ShopUser.ID, ShopUser.FirstName, ShopUser.LastName, ShopUser.Username, ShopUser.Email " +
 				"FROM Address " +
 				"JOIN Country ON Address.CountryID = Country.ID " +
-				"LEFT JOIN CustomerAddress ON Address.ID = CustomerAddress.AddressID " +
-				"LEFT JOIN Customer ON CustomerAddress.CustomerID = Customer.ID WHERE Address.ID = @Id";
+				"LEFT JOIN UserAddress ON Address.ID = UserAddress.AddressID " +
+				"LEFT JOIN ShopUser ON UserAddress.UserID = ShopUser.ID WHERE Address.ID = @Id";
 
 			var addressDictionary = new Dictionary<Guid, Address>();
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var result = await connection.QueryAsync<Address, Country, Customer, Address>(query, (address, country, customer) =>
+				try
 				{
-					if (!addressDictionary.TryGetValue(id, out var currentAddress))
+					var result = await connection.QueryAsync<Address, Country, ShopUser, Address>(query, (address, country, user) =>
 					{
-						currentAddress = address;
-						currentAddress.Country = country;
-						currentAddress.Customers = new List<CustomerAddress>();
-						addressDictionary.Add(address.Id, currentAddress);
-					}
-
-					if (customer != null)
-					{
-						currentAddress.Customers.Add(new CustomerAddress
+						if (!addressDictionary.TryGetValue(id, out var currentAddress))
 						{
-							CustomerId = customer.Id,
-							Customer = customer,
-							AddressId = address.Id,
-						});
-					}
+							currentAddress = address;
+							currentAddress.Country = country;
+							currentAddress.Users = new List<UserAddress>();
+							addressDictionary.Add(address.Id, currentAddress);
+						}
 
-					return currentAddress;
-				}, param: new { Id = id }, splitOn: "Alpha3, ID");
+						if (user != null)
+						{
+							currentAddress.Users.Add(new UserAddress
+							{
+								UserId = user.Id,
+								User = user,
+								AddressId = address.Id,
+							});
+						}
 
-				return result.Distinct().FirstOrDefault();
+						return currentAddress;
+					}, param: new { Id = id }, splitOn: "Alpha3, ID");
+
+					return result.Distinct().FirstOrDefault();
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+					throw;
+				}
 			}
 		}
 
@@ -86,29 +103,37 @@ namespace ComputerPartsShop.Infrastructure
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var result = await connection.QueryAsync<Guid>(query, parameters);
+				try
+				{
+					var result = await connection.QueryAsync<Guid>(query, parameters);
 
-				return result.FirstOrDefault();
+					return result.FirstOrDefault();
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+					throw;
+				}
 			}
 		}
 
-		public async Task<Address> CreateAsync(Address request, Customer customer, CancellationToken ct)
+		public async Task<Address> CreateAsync(Address addressRequest, ShopUser userRequest, CancellationToken ct)
 		{
-			request.Id = Guid.NewGuid();
+			addressRequest.Id = Guid.NewGuid();
 			var addressQuery = "INSERT INTO Address (ID, Street, City, Region, ZipCode, CountryID) VALUES (@Id,@Street, @City, @Region, @ZipCode, @CountryID)";
-			var customerAddressQuery = "INSERT INTO CustomerAddress (AddressID, CustomerID) VALUES (@AddressID, @CustomerID)";
+			var userAddressQuery = "INSERT INTO UserAddress (AddressID, UserID) VALUES (@AddressID, @UserID)";
 
 			var parameters = new DynamicParameters();
-			parameters.Add("ID", request.Id, DbType.Guid, ParameterDirection.Input);
-			parameters.Add("Street", request.Street, DbType.String, ParameterDirection.Input);
-			parameters.Add("City", request.City, DbType.String, ParameterDirection.Input);
-			parameters.Add("Region", request.Region, DbType.String, ParameterDirection.Input);
-			parameters.Add("ZipCode", request.ZipCode, DbType.String, ParameterDirection.Input);
-			parameters.Add("CountryID", request.CountryId, DbType.Int32, ParameterDirection.Input);
+			parameters.Add("ID", addressRequest.Id, DbType.Guid, ParameterDirection.Input);
+			parameters.Add("Street", addressRequest.Street, DbType.String, ParameterDirection.Input);
+			parameters.Add("City", addressRequest.City, DbType.String, ParameterDirection.Input);
+			parameters.Add("Region", addressRequest.Region, DbType.String, ParameterDirection.Input);
+			parameters.Add("ZipCode", addressRequest.ZipCode, DbType.String, ParameterDirection.Input);
+			parameters.Add("CountryID", addressRequest.CountryId, DbType.Int32, ParameterDirection.Input);
 
-			var customerAddressParameters = new DynamicParameters();
-			customerAddressParameters.Add("CustomerID", customer.Id, DbType.Guid, ParameterDirection.Input);
-			customerAddressParameters.Add("AddressID", request.Id, DbType.Guid, ParameterDirection.Input);
+			var userAddressParameters = new DynamicParameters();
+			userAddressParameters.Add("UserID", userRequest.Id, DbType.Guid, ParameterDirection.Input);
+			userAddressParameters.Add("AddressID", addressRequest.Id, DbType.Guid, ParameterDirection.Input);
 
 
 			using (var connection = await _dbContext.CreateConnection())
@@ -118,23 +143,24 @@ namespace ComputerPartsShop.Infrastructure
 					try
 					{
 						await connection.ExecuteAsync(addressQuery, parameters, transaction);
-						await connection.ExecuteAsync(customerAddressQuery, customerAddressParameters, transaction);
+						await connection.ExecuteAsync(userAddressQuery, userAddressParameters, transaction);
 						transaction.Commit();
 
-						return request;
+						return addressRequest;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 
 				}
 			}
 		}
 
-		public async Task<Address> UpdateAsync(Guid oldAddressId, Address request, Guid oldCustomerId, Guid newCustomerId, CancellationToken ct)
+		public async Task<Address> UpdateAsync(Guid oldAddressId, Address request, Guid oldUserId, Guid newUserId, CancellationToken ct)
 		{
 			using (var connection = await _dbContext.CreateConnection())
 			{
@@ -158,16 +184,16 @@ namespace ComputerPartsShop.Infrastructure
 							await connection.ExecuteAsync(newAddressQuery, parametersToNewAddress, transaction);
 						}
 
-						var deleteQuery = "DELETE FROM CustomerAddress WHERE AddressID = @AddressID AND CustomerID = @CustomerID";
+						var deleteQuery = "DELETE FROM UserAddress WHERE AddressID = @AddressID AND UserID = @UserID";
 
 						var paramsToDelete = new DynamicParameters();
 						paramsToDelete.Add("AddressID", oldAddressId, DbType.Guid, ParameterDirection.Input);
-						paramsToDelete.Add("CustomerID", oldCustomerId, DbType.Guid, ParameterDirection.Input);
+						paramsToDelete.Add("UserID", oldUserId, DbType.Guid, ParameterDirection.Input);
 
-						var query = "INSERT INTO CustomerAddress (CustomerID, AddressID) VALUES (@CustomerID, @AddressID)";
+						var query = "INSERT INTO UserAddress (UserID, AddressID) VALUES (@UserID, @AddressID)";
 
 						var parameters = new DynamicParameters();
-						parameters.Add("CustomerID", newCustomerId, DbType.Guid, ParameterDirection.Input);
+						parameters.Add("UserID", newUserId, DbType.Guid, ParameterDirection.Input);
 						parameters.Add("AddressID", request.Id, DbType.Guid, ParameterDirection.Input);
 
 						await connection.ExecuteAsync(deleteQuery, paramsToDelete, transaction);
@@ -176,17 +202,18 @@ namespace ComputerPartsShop.Infrastructure
 
 						return request;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 				}
 			}
 		}
 
-		public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+		public async Task DeleteAsync(Guid id, CancellationToken ct)
 		{
 			var query = "DELETE FROM Address WHERE ID = @Id";
 
@@ -196,16 +223,15 @@ namespace ComputerPartsShop.Infrastructure
 				{
 					try
 					{
-						await connection.ExecuteAsync(query, new { id }, transaction);
+						await connection.ExecuteAsync(query, new { ID = id }, transaction);
 						transaction.Commit();
-
-						return true;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return false;
+						throw;
 					}
 				}
 			}

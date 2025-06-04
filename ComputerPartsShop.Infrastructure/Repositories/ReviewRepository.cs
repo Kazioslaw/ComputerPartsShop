@@ -16,50 +16,69 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<List<Review>> GetListAsync(CancellationToken ct)
 		{
-			var query = "SELECT Review.ID, Review.Rating, Review.Description, Customer.Username, Product.Name FROM Review " +
-				"LEFT JOIN Customer ON Review.CustomerID = Customer.ID " +
+			var query = "SELECT Review.ID, Review.Rating, Review.Description, ShopUser.Username, Product.Name FROM Review " +
+				"LEFT JOIN ShopUser ON Review.UserID = ShopUser.ID " +
 				"LEFT JOIN Product ON Review.ProductID = Product.ID";
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var result = await connection.QueryAsync<Review, Customer, Product, Review>(query, (review, customer, product) =>
+				try
 				{
-					review.Customer = customer;
-					review.Product = product;
-					return review;
-				}, splitOn: "Username, Name");
+					var result = await connection.QueryAsync<Review, ShopUser, Product, Review>(query, (review, customer, product) =>
+					{
+						review.User = customer;
+						review.Product = product;
+						return review;
+					}, splitOn: "Username, Name");
 
-				return result.ToList();
+					return result.ToList();
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
 			}
 		}
 
 		public async Task<Review> GetAsync(int id, CancellationToken ct)
 		{
-			var query = "SELECT Review.ID, Customer.Username, Product.Name, Review.Rating, Review.Description FROM Review " +
-				"LEFT JOIN Customer ON Review.CustomerID = Customer.ID " +
+			var query = "SELECT Review.ID, ShopUser.Username, Product.Name, Review.Rating, Review.Description FROM Review " +
+				"LEFT JOIN ShopUser ON Review.UserID = ShopUser.ID " +
 				"JOIN Product ON Review.ProductID = Product.ID WHERE Review.ID = @Id";
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var result = await connection.QueryAsync<Review, Customer, Product, Review>(query, (review, customer, product) =>
-				{
-					review.Customer = customer;
-					review.Product = product;
-					return review;
-				}, new { id }, splitOn: "Username, Name");
 
-				return result.FirstOrDefault();
+				try
+				{
+					var result = await connection.QueryAsync<Review, ShopUser, Product, Review>(query, (review, customer, product) =>
+					{
+						review.User = customer;
+						review.Product = product;
+						return review;
+					}, new { id }, splitOn: "Username, Name");
+
+					return result.FirstOrDefault();
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
 			}
 		}
 
 		public async Task<Review> CreateAsync(Review request, CancellationToken ct)
 		{
-			var query = "INSERT INTO Review (CustomerID, ProductID, Rating, Description) " +
-				"VALUES (@CustomerID, @ProductID, @Rating, @Description); " +
+			var query = "INSERT INTO Review (UserID, ProductID, Rating, Description) " +
+				"VALUES (@UserID, @ProductID, @Rating, @Description); " +
 				"SELECT CAST(SCOPE_IDENTITY() AS int)";
 
 			var parameters = new DynamicParameters();
-			parameters.Add("CustomerID", request.CustomerId, DbType.Guid, direction: ParameterDirection.Input);
+			parameters.Add("UserID", request.UserId, DbType.Guid, direction: ParameterDirection.Input);
 			parameters.Add("ProductID", request.ProductId, DbType.Int32, ParameterDirection.Input);
 			parameters.Add("Rating", request.Rating, DbType.Byte, ParameterDirection.Input);
 			parameters.Add("Description", request.Description, DbType.String, direction: ParameterDirection.Input);
@@ -76,11 +95,12 @@ namespace ComputerPartsShop.Infrastructure
 
 						return request;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 				}
 			}
@@ -89,14 +109,14 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<Review> UpdateAsync(int id, Review request, CancellationToken ct)
 		{
-			var query = "UPDATE Review SET CustomerID = @CustomerID, ProductID = @ProductID, Rating = @Rating, " +
+			var query = "UPDATE Review SET UserID = @UserID, ProductID = @ProductID, Rating = @Rating, " +
 				"Description = @Description WHERE ID = @Id";
 
 			request.Id = id;
 
 			var parameters = new DynamicParameters();
 			parameters.Add("ID", request.Id, DbType.Int32, ParameterDirection.Input);
-			parameters.Add("CustomerID", request.CustomerId, DbType.Guid, ParameterDirection.Input);
+			parameters.Add("UserID", request.UserId, DbType.Guid, ParameterDirection.Input);
 			parameters.Add("ProductID", request.ProductId, DbType.Int32, ParameterDirection.Input);
 			parameters.Add("Rating", request.Rating, DbType.Byte, ParameterDirection.Input);
 			parameters.Add("Description", request.Description, DbType.String, ParameterDirection.Input);
@@ -112,17 +132,18 @@ namespace ComputerPartsShop.Infrastructure
 
 						return request;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 				}
 			}
 		}
 
-		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
 			var query = "DELETE FROM Review WHERE ID = @Id";
 
@@ -134,14 +155,13 @@ namespace ComputerPartsShop.Infrastructure
 					{
 						await connection.ExecuteAsync(query, new { id }, transaction);
 						transaction.Commit();
-
-						return true;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return false;
+						throw;
 					}
 				}
 			}

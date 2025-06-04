@@ -1,4 +1,5 @@
 ﻿using ComputerPartsShop.Domain.DTO;
+using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
@@ -7,33 +8,37 @@ namespace ComputerPartsShop.API.Controllers
 {
 	[ApiController]
 	[Route("[controller]")]
-	public class CategoryController : ControllerBase
+	public class ShopUserController : ControllerBase
 	{
-		private readonly ICategoryService _categoryService;
-		private readonly IValidator<CategoryRequest> _categoryValidator;
+		public readonly IShopUserService _shopUserService;
+		public readonly IAddressRepository _addressRepository;
+		public readonly IValidator<ShopUserRequest> _userValidator;
+		public readonly IValidator<LoginRequest> _loginValidator;
 
-		public CategoryController(ICategoryService categoryService, IValidator<CategoryRequest> categoryValidator)
+		public ShopUserController(IShopUserService shopUserService, IAddressRepository addressRepository, IValidator<ShopUserRequest> userValidator, IValidator<LoginRequest> loginValidator)
 		{
-			_categoryService = categoryService;
-			_categoryValidator = categoryValidator;
+			_shopUserService = shopUserService;
+			_addressRepository = addressRepository;
+			_userValidator = userValidator;
+			_loginValidator = loginValidator;
 		}
 
 		/// <summary>
-		/// Asynchronously retrieves all categories.
+		/// Asynchronously retrieves all users.
 		/// </summary>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns the list of categories</response>
+		/// <response code="200">Returns the list of users</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
-		/// <returns>List of categories</returns>
+		/// <returns>List of users</returns>
 		[HttpGet]
-		public async Task<IActionResult> GetCategoryListAsync(CancellationToken ct)
+		public async Task<IActionResult> GetUserListAsync(CancellationToken ct)
 		{
 			try
 			{
-				var categoryList = await _categoryService.GetListAsync(ct);
+				var userList = await _shopUserService.GetListAsync(ct);
 
-				return Ok(categoryList);
+				return Ok(userList);
 			}
 			catch (OperationCanceledException)
 			{
@@ -46,23 +51,23 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		/// <summary>
-		/// Asynchronously retrieves an category by its ID.
+		/// Asynchronously retrieves an user by its ID.
 		/// </summary>
-		/// <param name="id">Category ID</param>
+		/// <param name="id">User ID</param>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns the category</response>
-		/// <response code="404">Returns if the category was not found</response>
+		/// <response code="200">Returns the user</response>
+		/// <response code="404">Returns if the user was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
-		/// <returns>Category</returns>
-		[HttpGet("{id:int}")]
-		public async Task<IActionResult> GetCategoryAsync(int id, CancellationToken ct)
+		/// <returns>User</returns>
+		[HttpGet("{id:guid}")]
+		public async Task<IActionResult> GetUserAsync(Guid id, CancellationToken ct)
 		{
 			try
 			{
-				var category = await _categoryService.GetAsync(id, ct);
+				var user = await _shopUserService.GetAsync(id, ct);
 
-				return Ok(category);
+				return Ok(user);
 			}
 			catch (OperationCanceledException)
 			{
@@ -75,23 +80,23 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		/// <summary>
-		/// Asynchronously retrieves an category by its name.
+		/// Asynchronously retrieves an user by its Username or Email.
 		/// </summary>
-		/// <param name="name">Category name</param>
+		/// <param name="usernameOrEmail">User Username or Email</param>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns the category</response>
-		/// <response code="404">Returns if the category was not found</response>
+		/// <response code="200">Returns the user</response>
+		/// <response code="404">Returns if the user was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
-		/// <returns>Category</returns>
-		[HttpGet("{name}")]
-		public async Task<IActionResult> GetCategoryByNameAsync(string name, CancellationToken ct)
+		/// <returns>User</returns>
+		[HttpGet("{usernameOrEmail}")]
+		public async Task<IActionResult> GetUserByUsernameOrEmail(string usernameOrEmail, CancellationToken ct)
 		{
 			try
 			{
-				var category = await _categoryService.GetByNameAsync(name, ct);
+				var user = await _shopUserService.GetByUsernameOrEmailAsync(usernameOrEmail, ct);
 
-				return Ok(category);
+				return Ok(user);
 			}
 			catch (OperationCanceledException)
 			{
@@ -104,20 +109,22 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		/// <summary>
-		/// Asynchronously creates a new category.
+		/// Asynchronously creates a new user.
 		/// </summary>
-		/// <param name="request">Category model</param>
+		/// <param name="request">User model</param>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns the created category</response>		
+		/// <response code="200">Returns the user</response>
+		/// <response code="400">Returns if the user was not created</response>
+		/// <response code="404">Returns if the user was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
-		/// <returns>Created category</returns>
+		/// <returns>User</returns>
 		[HttpPost]
-		public async Task<IActionResult> CreateCategoryAsync(CategoryRequest request, CancellationToken ct)
+		public async Task<IActionResult> CreateUserAsync(ShopUserRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var validation = await _categoryValidator.ValidateAsync(request);
+				var validation = await _userValidator.ValidateAsync(request);
 
 				if (!validation.IsValid)
 				{
@@ -125,9 +132,9 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest(errors);
 				}
 
-				var category = await _categoryService.CreateAsync(request, ct);
+				var user = await _shopUserService.CreateAsync(request, ct);
 
-				return Created(nameof(GetCategoryAsync), category);
+				return Ok(user);
 			}
 			catch (OperationCanceledException)
 			{
@@ -140,22 +147,22 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		/// <summary>
-		/// Asynchronously updates an category by its ID.
+		/// Asynchronously updates an user by its ID.
 		/// </summary>
-		/// <param name="id">Category ID</param>
-		/// <param name="request">Updated category model</param>
+		/// <param name="id">User ID</param>
+		/// <param name="request">Updated user model</param>
 		/// <param name="ct">Cancellation token</param>
-		/// <response code="200">Returns the updated category</response>
-		/// <response code="404">Returns if the category was not found</response>
+		/// <response code="200">Returns the updated user</response>
+		/// <response code="404">Returns if the user was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
-		/// <returns>Updated category</returns>
-		[HttpPut("{id:int}")]
-		public async Task<IActionResult> UpdateCategoryAsync(int id, CategoryRequest request, CancellationToken ct)
+		/// <returns>Updated user</returns>
+		[HttpPut("{id:guid}")]
+		public async Task<IActionResult> UpdateUserAsync(Guid id, ShopUserRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var validation = await _categoryValidator.ValidateAsync(request);
+				var validation = await _userValidator.ValidateAsync(request);
 
 				if (!validation.IsValid)
 				{
@@ -163,9 +170,9 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest(errors);
 				}
 
-				var updatedCategory = await _categoryService.UpdateAsync(id, request, ct);
+				var updatedUser = await _shopUserService.UpdateAsync(id, request, ct);
 
-				return Ok(updatedCategory);
+				return Ok(updatedUser);
 			}
 			catch (OperationCanceledException)
 			{
@@ -178,21 +185,21 @@ namespace ComputerPartsShop.API.Controllers
 		}
 
 		/// <summary>
-		/// Asynchronously deletes an category by its ID.
+		/// Asynchronously deletes an user by its ID.
 		/// </summary>
-		/// <param name="id">Category ID</param>
+		/// <param name="id">User ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="204">Returns confirmation of deletion</response>
-		/// <response code="404">Returns if the category was not found</response>
+		/// <response code="404">Returns if the user was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
-		[HttpDelete("{id:int}")]
-		public async Task<IActionResult> DeleteCategoryAsync(int id, CancellationToken ct)
+		[HttpDelete("{id:guid}")]
+		public async Task<IActionResult> DeleteUserAsync(Guid id, CancellationToken ct)
 		{
 			try
 			{
-				await _categoryService.DeleteAsync(id, ct);
+				await _shopUserService.DeleteAsync(id, ct);
 
 				return NoContent();
 			}

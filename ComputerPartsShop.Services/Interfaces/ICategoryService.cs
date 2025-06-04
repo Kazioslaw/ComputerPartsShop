@@ -9,7 +9,7 @@ namespace ComputerPartsShop.Services
 		public Task<CategoryResponse> GetByNameAsync(string name, CancellationToken ct);
 		public Task<CategoryResponse> CreateAsync(CategoryRequest request, CancellationToken ct);
 		public Task<CategoryResponse> UpdateAsync(int id, CategoryRequest request, CancellationToken ct);
-		public Task<bool> DeleteAsync(int id, CancellationToken ct);
+		public Task DeleteAsync(int id, CancellationToken ct);
 
 	}
 }

@@ -10,17 +10,15 @@ namespace ComputerPartsShop.API.Controllers
 	public class PaymentController : ControllerBase
 	{
 		private readonly IPaymentService _paymentService;
-		private readonly ICustomerPaymentSystemService _customerPaymentSystemService;
 		private readonly IValidator<PaymentRequest> _paymentValidator;
 		private readonly IValidator<UpdatePaymentRequest> _updatePaymentValidator;
 
 
-		public PaymentController(IPaymentService paymentService, ICustomerPaymentSystemService customerPaymentSystemService,
+		public PaymentController(IPaymentService paymentService,
 			IValidator<PaymentRequest> paymentValidator,
 			IValidator<UpdatePaymentRequest> updatePaymentValidator)
 		{
 			_paymentService = paymentService;
-			_customerPaymentSystemService = customerPaymentSystemService;
 			_paymentValidator = paymentValidator;
 			_updatePaymentValidator = updatePaymentValidator;
 		}
@@ -31,6 +29,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the list of payments</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>List of payments</returns>
 		[HttpGet]
 		public async Task<IActionResult> GetPaymentListAsync(CancellationToken ct)
@@ -45,6 +44,10 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
 			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode(ex.StatusCode, ex.Message);
+			}
 		}
 
 		/// <summary>
@@ -55,6 +58,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="200">Returns the payment</response>
 		/// <response code="404">Returns if the payment was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Payment</returns>
 		[HttpGet("{id:guid}")]
 		public async Task<IActionResult> GetPaymentAsync(Guid id, CancellationToken ct)
@@ -69,6 +73,10 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
 			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode(ex.StatusCode, ex.Message);
+			}
 		}
 
 		/// <summary>
@@ -77,8 +85,9 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="request">Payment model</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the created payment</response>
-		/// <response code="400">Returns if the Customer payment system id was invalid</response>
+		/// <response code="400">Returns if the User payment system id was invalid</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Created payment</returns>
 		[HttpPost]
 		public async Task<IActionResult> CreatePaymentAsync(PaymentRequest request, CancellationToken ct)
@@ -93,25 +102,17 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest(errors);
 				}
 
-				var customerPaymentSystem = await _customerPaymentSystemService.GetAsync(request.CustomerPaymentSystemId, ct);
-
-				if (customerPaymentSystem == null)
-				{
-					return BadRequest("Invalid customer payment system ID");
-				}
-
 				var payment = await _paymentService.CreateAsync(request, ct);
-
-				if (payment == null)
-				{
-					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
-				}
 
 				return Created(nameof(GetPaymentAsync), payment);
 			}
 			catch (OperationCanceledException)
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode(ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -122,12 +123,13 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="request">Updated payment model</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the updated payment</response>
-		/// <response code="400">Returns if the customer payment system id was invalid</response>
+		/// <response code="400">Returns if the user payment system id was invalid</response>
 		/// <response code="404">Returns if the payment was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Updated payment</returns>
 		[HttpPut("{id:guid}")]
-		public async Task<IActionResult> UpdatePaymentAsync(Guid id, UpdatePaymentRequest request, CancellationToken ct)
+		public async Task<IActionResult> UpdatePaymentStatusAsync(Guid id, UpdatePaymentRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -139,25 +141,17 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest(errors);
 				}
 
-				var payment = await _paymentService.GetAsync(id, ct);
-
-				if (payment == null)
-				{
-					return NotFound("Payment not found");
-				}
-
 				var updatedPayment = await _paymentService.UpdateStatusAsync(id, request, ct);
-
-				if (updatedPayment == null)
-				{
-					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
-				}
 
 				return Ok(updatedPayment);
 			}
 			catch (OperationCanceledException)
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode(ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -169,6 +163,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="204">Returns confirmation of deletion</response>
 		/// <response code="404">Returns if the payment was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:guid}")]
 		public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken ct)
@@ -177,23 +172,17 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				var payment = await _paymentService.GetAsync(id, ct);
 
-				if (payment == null)
-				{
-					return NotFound("Payment not found");
-				}
-
-				var isDeleted = await _paymentService.DeleteAsync(id, ct);
-
-				if (!isDeleted)
-				{
-					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
-				}
+				await _paymentService.DeleteAsync(id, ct);
 
 				return NoContent();
 			}
 			catch (OperationCanceledException)
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode(ex.StatusCode, ex.Message);
 			}
 		}
 	}

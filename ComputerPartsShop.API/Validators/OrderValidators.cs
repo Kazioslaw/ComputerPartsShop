@@ -16,7 +16,7 @@ namespace ComputerPartsShop.API.Validators
 			});
 			RuleFor(x => x.Total).GreaterThan(0).WithMessage("Total must be greater than zero.");
 			RuleFor(x => x.AddressId).NotNull().NotEmpty().WithMessage("AddressID must be provided.");
-			RuleFor(x => x.CustomerPaymentSystemId).NotNull().NotEmpty().WithMessage("CustomerPaymentSystemID must be provided.");
+			RuleFor(x => x.UserPaymentSystemId).NotNull().NotEmpty().WithMessage("UserPaymentSystemID must be provided.");
 			RuleFor(x => x.Status).IsInEnum().When(x => x.Status.HasValue).WithMessage("Status must be valid DeliveryStatus value");
 			RuleFor(x => x.OrderedAt).LessThanOrEqualTo(DateTime.Now).When(x => x.OrderedAt.HasValue).WithMessage("OrderedAt cannot be in the future.");
 			RuleFor(x => x.SendAt).GreaterThanOrEqualTo(x => x.OrderedAt).When(x => x.SendAt.HasValue && x.OrderedAt.HasValue).WithMessage("SendAt must be later than or equal to OrderedAt.");

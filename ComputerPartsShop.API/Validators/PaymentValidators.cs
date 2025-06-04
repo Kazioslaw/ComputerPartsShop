@@ -7,7 +7,7 @@ namespace ComputerPartsShop.API.Validators
 	{
 		public PaymentRequestValidator()
 		{
-			RuleFor(x => x.CustomerPaymentSystemId).NotEmpty().WithMessage("CustomerPaymentSystemId must be provided.");
+			RuleFor(x => x.UserPaymentSystemId).NotEmpty().WithMessage("UserPaymentSystemId must be provided.");
 			RuleFor(x => x.OrderId).GreaterThan(0).WithMessage("OrderId must be greater than zero.");
 			RuleFor(x => x.Total).GreaterThan(0).WithMessage("Total must be greater than zero.");
 			RuleFor(x => x.Method).IsInEnum().WithMessage("Payment method must be a valid value.");

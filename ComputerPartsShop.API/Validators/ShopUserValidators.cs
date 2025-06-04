@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace ComputerPartsShop.API.Validators
 {
-	public class CustomerRequestValidator : AbstractValidator<CustomerRequest>
+	public class ShopUserRequestValidator : AbstractValidator<ShopUserRequest>
 	{
-		public CustomerRequestValidator()
+		public ShopUserRequestValidator()
 		{
 			RuleFor(x => x.FirstName).NotNull().NotEmpty().Length(2, 100).WithMessage("First Name can't be null or empty, and must be between 2 and 100 characters.");
 			RuleFor(x => x.LastName).NotNull().NotEmpty().Length(2, 100).WithMessage("Last Name can't be null or empty, and must be between 2 and 100 characters.");

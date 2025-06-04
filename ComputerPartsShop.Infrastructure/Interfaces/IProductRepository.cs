@@ -6,8 +6,8 @@ namespace ComputerPartsShop.Infrastructure
 	{
 		public Task<List<Product>> GetListAsync(CancellationToken ct);
 		public Task<Product> GetAsync(int id, CancellationToken ct);
-		public Task<Product> CreateAsync(Product product, CancellationToken ct);
-		public Task<Product> UpdateAsync(int id, Product product, CancellationToken ct);
-		public Task<bool> DeleteAsync(int id, CancellationToken ct);
+		public Task<Product> CreateAsync(Product request, CancellationToken ct);
+		public Task<Product> UpdateAsync(int id, Product request, CancellationToken ct);
+		public Task DeleteAsync(int id, CancellationToken ct);
 	}
 }

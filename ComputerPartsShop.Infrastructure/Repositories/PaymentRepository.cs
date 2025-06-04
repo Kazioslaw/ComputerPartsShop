@@ -16,38 +16,56 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<List<Payment>> GetListAsync(CancellationToken ct)
 		{
-			var query = "SELECT Payment.ID, Payment.CustomerPaymentSystemID, Payment.OrderID, Payment.Total, Payment.Method, Payment.Status, Payment.PaymentStartAt, Payment.PaidAt FROM Payment";
+			var query = "SELECT Payment.ID, Payment.UserPaymentSystemID, Payment.OrderID, Payment.Total, Payment.Method, Payment.Status, Payment.PaymentStartAt, Payment.PaidAt FROM Payment";
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var paymentList = await connection.QueryAsync<Payment>(query);
-				return paymentList.ToList();
+				try
+				{
+					var paymentList = await connection.QueryAsync<Payment>(query);
+					return paymentList.ToList();
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
 			}
 		}
 
 		public async Task<Payment> GetAsync(Guid id, CancellationToken ct)
 		{
-			var query = "SELECT Payment.ID, Payment.CustomerPaymentSystemID, Payment.OrderID, Payment.Total, Payment.Method, Payment.Status, Payment.PaymentStartAt, Payment.PaidAt " +
+			var query = "SELECT Payment.ID, Payment.UserPaymentSystemID, Payment.OrderID, Payment.Total, Payment.Method, Payment.Status, Payment.PaymentStartAt, Payment.PaidAt " +
 				"FROM Payment WHERE Payment.ID = @ID";
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var payment = await connection.QueryFirstOrDefaultAsync<Payment>(query, new { ID = id });
+				try
+				{
+					var payment = await connection.QueryFirstOrDefaultAsync<Payment>(query, new { ID = id });
 
-				return payment;
+					return payment;
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
 			}
 		}
 
 		public async Task<Payment> CreateAsync(Payment request, CancellationToken ct)
 		{
-			var query = "INSERT INTO Payment (ID,CustomerPaymentSystemID, OrderID, Total, Method, Status, PaymentStartAt, PaidAt) " +
-				"VALUES (@ID,@CustomerPaymentSystemID, @OrderID, @Total, @Method, @Status, @PaymentStartAt, @PaidAt) " +
+			var query = "INSERT INTO Payment (ID,UserPaymentSystemID, OrderID, Total, Method, Status, PaymentStartAt, PaidAt) " +
+				"VALUES (@ID,@UserPaymentSystemID, @OrderID, @Total, @Method, @Status, @PaymentStartAt, @PaidAt) " +
 				"SELECT CAST(SCOPE_IDENTITY() AS int)";
 
 			request.Id = Guid.NewGuid();
 
 			var parameters = new DynamicParameters();
 			parameters.Add("ID", request.Id, DbType.Guid, ParameterDirection.Input);
-			parameters.Add("CustomerPaymentSystemID", request.CustomerPaymentSystemId, DbType.Guid, ParameterDirection.Input);
+			parameters.Add("UserPaymentSystemID", request.UserPaymentSystemId, DbType.Guid, ParameterDirection.Input);
 			parameters.Add("OrderID", request.OrderId, DbType.Int32, ParameterDirection.Input);
 			parameters.Add("Total", request.Total, DbType.Decimal, ParameterDirection.Input);
 			parameters.Add("Method", request.Method.ToString(), DbType.String, ParameterDirection.Input);
@@ -66,11 +84,12 @@ namespace ComputerPartsShop.Infrastructure
 
 						return request;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 				}
 			}
@@ -98,17 +117,18 @@ namespace ComputerPartsShop.Infrastructure
 
 						return request;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 				}
 			}
 		}
 
-		public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+		public async Task DeleteAsync(Guid id, CancellationToken ct)
 		{
 			var query = "DELETE FROM Payment WHERE ID = @Id";
 
@@ -120,14 +140,13 @@ namespace ComputerPartsShop.Infrastructure
 					{
 						await connection.ExecuteAsync(query, new { ID = id }, transaction);
 						transaction.Commit();
-
-						return true;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return false;
+						throw;
 					}
 				}
 			}

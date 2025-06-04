@@ -10,8 +10,8 @@ namespace ComputerPartsShop.API
 			services.AddScoped<IAddressService, AddressService>();
 			services.AddScoped<ICategoryService, CategoryService>();
 			services.AddScoped<ICountryService, CountryService>();
-			services.AddScoped<ICustomerPaymentSystemService, CustomerPaymentSystemService>();
-			services.AddScoped<ICustomerService, CustomerService>();
+			services.AddScoped<IUserPaymentSystemService, UserPaymentSystemService>();
+			services.AddScoped<IShopUserService, ShopUserService>();
 			services.AddScoped<IOrderService, OrderService>();
 			services.AddScoped<IPaymentService, PaymentService>();
 			services.AddScoped<IPaymentProviderService, PaymentProviderService>();
@@ -26,8 +26,8 @@ namespace ComputerPartsShop.API
 			services.AddScoped<IAddressRepository, AddressRepository>();
 			services.AddScoped<ICategoryRepository, CategoryRepository>();
 			services.AddScoped<ICountryRepository, CountryRepository>();
-			services.AddScoped<ICustomerRepository, CustomerRepository>();
-			services.AddScoped<ICustomerPaymentSystemRepository, CustomerPaymentSystemRepository>();
+			services.AddScoped<IShopUserRepository, ShopUserRepository>();
+			services.AddScoped<IUserPaymentSystemRepository, UserPaymentSystemRepository>();
 			services.AddScoped<IOrderRepository, OrderRepository>();
 			services.AddScoped<IPaymentRepository, PaymentRepository>();
 			services.AddScoped<IPaymentProviderRepository, PaymentProviderRepository>();

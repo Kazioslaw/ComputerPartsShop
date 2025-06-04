@@ -8,6 +8,6 @@ namespace ComputerPartsShop.Services
 		public Task<ReviewResponse> GetAsync(int id, CancellationToken ct);
 		public Task<ReviewResponse> CreateAsync(ReviewRequest request, CancellationToken ct);
 		public Task<ReviewResponse> UpdateAsync(int id, ReviewRequest request, CancellationToken ct);
-		public Task<bool> DeleteAsync(int id, CancellationToken ct);
+		public Task DeleteAsync(int id, CancellationToken ct);
 	}
 }
