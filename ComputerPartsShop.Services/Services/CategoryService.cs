@@ -3,6 +3,7 @@ using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 using Microsoft.Data.SqlClient;
+using System.Net;
 
 namespace ComputerPartsShop.Services
 {
@@ -29,7 +30,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -41,7 +42,7 @@ namespace ComputerPartsShop.Services
 
 				if (result == null)
 				{
-					throw new DataErrorException(404, "Category not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Category not found");
 				}
 
 				var category = _mapper.Map<CategoryResponse>(result);
@@ -50,7 +51,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 
 		}
@@ -63,7 +64,7 @@ namespace ComputerPartsShop.Services
 
 				if (result == null)
 				{
-					throw new DataErrorException(404, "Category not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Category not found");
 				}
 
 				var category = _mapper.Map<CategoryResponse>(result);
@@ -72,15 +73,15 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<CategoryResponse> CreateAsync(CategoryRequest entity, CancellationToken ct)
+		public async Task<CategoryResponse> CreateAsync(CategoryRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var newCategory = _mapper.Map<Category>(entity);
+				var newCategory = _mapper.Map<Category>(request);
 
 				var result = await _categoryRepository.CreateAsync(newCategory, ct);
 
@@ -90,11 +91,11 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<CategoryResponse> UpdateAsync(int id, CategoryRequest entity, CancellationToken ct)
+		public async Task<CategoryResponse> UpdateAsync(int id, CategoryRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -102,17 +103,17 @@ namespace ComputerPartsShop.Services
 
 				if (existingCategory == null)
 				{
-					throw new DataErrorException(404, "Category not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Category not found");
 				}
 
-				var categoryToUpdate = _mapper.Map<Category>(entity);
+				var categoryToUpdate = _mapper.Map<Category>(request);
 
 
 				var result = await _categoryRepository.UpdateAsync(id, categoryToUpdate, ct);
 
 				if (result == null)
 				{
-					throw new DataErrorException(500, "Database operation failed");
+					throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 				}
 
 				var updatedCategory = _mapper.Map<CategoryResponse>(result);
@@ -121,7 +122,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -133,14 +134,14 @@ namespace ComputerPartsShop.Services
 
 				if (category == null)
 				{
-					throw new DataErrorException(404, "Category not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Category not found");
 				}
 
 				await _categoryRepository.DeleteAsync(id, ct);
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 	}

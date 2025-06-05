@@ -4,6 +4,7 @@ using ComputerPartsShop.Domain.Enums;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 using Microsoft.Data.SqlClient;
+using System.Net;
 
 namespace ComputerPartsShop.Services
 {
@@ -38,7 +39,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -50,7 +51,7 @@ namespace ComputerPartsShop.Services
 
 				if (result == null)
 				{
-					throw new DataErrorException(404, "Order not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Order not found");
 				}
 
 				var order = _mapper.Map<OrderResponse>(result);
@@ -59,29 +60,29 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<OrderResponse> CreateAsync(OrderRequest entity, CancellationToken ct)
+		public async Task<OrderResponse> CreateAsync(OrderRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var user = await _userRepository.GetByUsernameOrEmailAsync(entity.Username! ?? entity.Email!, ct);
+				var user = await _userRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
 
 				if (user == null)
 				{
-					throw new DataErrorException(400, "Invalid or missing username or email");
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid or missing username or email");
 				}
 
-				var address = await _addressRepository.GetAsync(entity.AddressId, ct);
+				var address = await _addressRepository.GetAsync(request.AddressId, ct);
 
 				if (address == null)
 				{
-					throw new DataErrorException(400, "That address does not exist or does not belong to the user");
+					throw new DataErrorException(HttpStatusCode.BadRequest, "That address does not exist or does not belong to the user");
 				}
 
-				var productOrderList = entity.Products;
+				var productOrderList = request.Products;
 				var productList = new List<OrderProduct>();
 				foreach (var productOrder in productOrderList)
 				{
@@ -89,7 +90,7 @@ namespace ComputerPartsShop.Services
 
 					if (product == null)
 					{
-						throw new DataErrorException(400, "That product does not exist");
+						throw new DataErrorException(HttpStatusCode.BadRequest, "That product does not exist");
 					}
 
 					var orderProduct = new OrderProduct()
@@ -101,7 +102,7 @@ namespace ComputerPartsShop.Services
 					productList.Add(orderProduct);
 				}
 
-				var newOrder = _mapper.Map<Order>(entity);
+				var newOrder = _mapper.Map<Order>(request);
 				newOrder.UserId = user.Id;
 				newOrder.User = user;
 				newOrder.OrdersProducts = productList;
@@ -116,11 +117,11 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<OrderResponse> UpdateStatusAsync(int id, UpdateOrderRequest entity, CancellationToken ct)
+		public async Task<OrderResponse> UpdateStatusAsync(int id, UpdateOrderRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -128,23 +129,23 @@ namespace ComputerPartsShop.Services
 
 				if (existingOrder == null)
 				{
-					throw new DataErrorException(404, "Order not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Order not found");
 				}
 
-				switch (entity.Status)
+				switch (request.Status)
 				{
 					case DeliveryStatus.Pending:
 					case DeliveryStatus.Processing:
-						existingOrder.Status = (DeliveryStatus)entity.Status;
+						existingOrder.Status = (DeliveryStatus)request.Status;
 						break;
 					case DeliveryStatus.Shipped:
-						existingOrder.Status = (DeliveryStatus)entity.Status;
+						existingOrder.Status = (DeliveryStatus)request.Status;
 						existingOrder.SendAt = DateTime.Now;
 						break;
 					case DeliveryStatus.Delivered:
 					case DeliveryStatus.Returned:
 					case DeliveryStatus.Cancelled:
-						existingOrder.Status = (DeliveryStatus)entity.Status;
+						existingOrder.Status = (DeliveryStatus)request.Status;
 						break;
 				}
 
@@ -156,7 +157,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -168,14 +169,14 @@ namespace ComputerPartsShop.Services
 
 				if (order == null)
 				{
-					throw new DataErrorException(404, "Order not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Order not found");
 				}
 
 				await _orderRepository.DeleteAsync(id, ct);
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 	}

@@ -1,10 +1,12 @@
-﻿namespace ComputerPartsShop.Services
+﻿using System.Net;
+
+namespace ComputerPartsShop.Services
 {
 	public class DataErrorException : Exception
 	{
-		public int StatusCode { get; }
+		public HttpStatusCode StatusCode { get; }
 
-		public DataErrorException(int statusCode, string message) : base(message)
+		public DataErrorException(HttpStatusCode statusCode, string message) : base(message)
 		{
 			StatusCode = statusCode;
 		}

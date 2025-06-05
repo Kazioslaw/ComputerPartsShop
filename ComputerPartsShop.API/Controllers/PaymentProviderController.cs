@@ -1,11 +1,13 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
 {
 	[ApiController]
+	[Authorize(Roles = "Admin")]
 	[Route("[controller]")]
 	public class PaymentProviderController : ControllerBase
 	{
@@ -25,6 +27,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the list of payment providers</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>List of payment providers</returns>
@@ -43,7 +46,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -53,6 +56,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Payment provider ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the payment provider</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the payment provider was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
@@ -77,7 +81,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -87,6 +91,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="name">Payment provider name</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the payment provider</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the payment provider was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Payment provider</returns>
@@ -110,7 +115,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -120,6 +125,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="request">Payment provider model</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the created payment provider</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Created payment provider</returns>
@@ -146,7 +152,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -157,6 +163,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="request">Updated payment provider model</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the updated payment provider</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the payment provider was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
@@ -184,7 +191,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -194,6 +201,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Payment provider ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="204">Returns confirmation of deletion</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the payment provider was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
@@ -213,7 +221,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 	}

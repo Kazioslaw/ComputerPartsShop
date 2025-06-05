@@ -3,6 +3,7 @@ using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 using Microsoft.Data.SqlClient;
+using System.Net;
 
 namespace ComputerPartsShop.Services
 {
@@ -34,7 +35,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -46,7 +47,7 @@ namespace ComputerPartsShop.Services
 
 				if (result == null)
 				{
-					throw new DataErrorException(404, "ShopUser Payment System Not Found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "ShopUser Payment System Not Found");
 				}
 
 				var userPaymentSystem = _mapper.Map<DetailedUserPaymentSystemResponse>(result);
@@ -55,29 +56,29 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<UserPaymentSystemResponse> CreateAsync(UserPaymentSystemRequest entity, CancellationToken ct)
+		public async Task<UserPaymentSystemResponse> CreateAsync(UserPaymentSystemRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var provider = await _providerRepository.GetByNameAsync(entity.ProviderName, ct);
+				var provider = await _providerRepository.GetByNameAsync(request.ProviderName, ct);
 
 				if (provider == null)
 				{
-					throw new DataErrorException(400, "Invalid provider name");
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid provider name");
 				}
 
-				var user = await _userRepository.GetByUsernameOrEmailAsync(entity.Username ?? entity.Email, ct);
+				var user = await _userRepository.GetByUsernameOrEmailAsync(request.Username ?? request.Email, ct);
 
 				if (user == null)
 				{
-					throw new DataErrorException(400, "Invalid or missing username or email");
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid or missing username or email");
 				}
 
-				var newUserPaymentSystem = _mapper.Map<UserPaymentSystem>(entity);
+				var newUserPaymentSystem = _mapper.Map<UserPaymentSystem>(request);
 				newUserPaymentSystem.UserId = user.Id;
 				newUserPaymentSystem.User = user;
 				newUserPaymentSystem.ProviderId = provider.Id;
@@ -91,11 +92,11 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<UserPaymentSystemResponse> UpdateAsync(Guid id, UserPaymentSystemRequest entity, CancellationToken ct)
+		public async Task<UserPaymentSystemResponse> UpdateAsync(Guid id, UserPaymentSystemRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -103,24 +104,24 @@ namespace ComputerPartsShop.Services
 
 				if (userPaymentSystem == null)
 				{
-					throw new DataErrorException(404, "ShopUser Payment System not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "ShopUser Payment System not found");
 				}
 
-				var user = await _userRepository.GetByUsernameOrEmailAsync(entity.Username! ?? entity.Email!, ct);
+				var user = await _userRepository.GetByUsernameOrEmailAsync(request.Username! ?? request.Email!, ct);
 
 				if (user == null)
 				{
-					throw new DataErrorException(400, "Invalid or missing username or email");
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid or missing username or email");
 				}
 
-				var provider = await _providerRepository.GetByNameAsync(entity.ProviderName, ct);
+				var provider = await _providerRepository.GetByNameAsync(request.ProviderName, ct);
 
 				if (provider == null)
 				{
-					throw new DataErrorException(400, "Invalid provider name");
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid provider name");
 				}
 
-				var userPaymentSystemToUpdate = _mapper.Map<UserPaymentSystem>(entity);
+				var userPaymentSystemToUpdate = _mapper.Map<UserPaymentSystem>(request);
 				userPaymentSystemToUpdate.ProviderId = provider.Id;
 				userPaymentSystemToUpdate.Provider = provider;
 				userPaymentSystemToUpdate.UserId = user.Id;
@@ -134,7 +135,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -146,14 +147,14 @@ namespace ComputerPartsShop.Services
 
 				if (userPaymentSystem == null)
 				{
-					throw new DataErrorException(404, "ShopUser payment system not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "ShopUser payment system not found");
 				}
 
 				await _userPaymentSystemRepository.DeleteAsync(id, ct);
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 	}
