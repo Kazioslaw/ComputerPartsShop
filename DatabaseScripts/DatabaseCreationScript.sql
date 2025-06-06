@@ -64,6 +64,7 @@ BEGIN
 		[Email] VARCHAR(50) UNIQUE NOT NULL,
 		[PhoneNumber] VARCHAR(20),
 		[PasswordHash] VARCHAR(256) NOT NULL,
+		[Role] VARCHAR(50) NOT NULL,
 		[RefreshToken] VARCHAR(256),
 		[RefreshTokenExpiresAtUtc] DATETIME2(3)
 	);
