@@ -3,6 +3,7 @@ using ComputerPartsShop.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace ComputerPartsShop.API.Controllers
 {
@@ -95,6 +96,12 @@ namespace ComputerPartsShop.API.Controllers
 			try
 			{
 				var validation = _reviewValidator.Validate(request);
+				var usernameFromToken = HttpContext.User.FindFirst("unique_name")?.Value;
+
+				if (string.IsNullOrWhiteSpace(request.Username) && usernameFromToken != null)
+				{
+					request = request with { Username = usernameFromToken };
+				}
 
 				if (!validation.IsValid)
 				{
@@ -139,7 +146,16 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+
 				var validation = _reviewValidator.Validate(request);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is missing.");
+				}
+
+				request = request with { Username = usernameFromToken };
 
 				if (!validation.IsValid)
 				{
@@ -173,6 +189,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
+		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> DeleteReviewAsync(int id, CancellationToken ct)
 		{
 			try

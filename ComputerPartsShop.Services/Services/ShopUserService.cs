@@ -140,7 +140,7 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task RefreshTokenAsync(string? refreshToken, CancellationToken ct)
+		public async Task<string> RefreshTokenAsync(string? refreshToken, CancellationToken ct)
 		{
 			if (string.IsNullOrEmpty(refreshToken))
 			{
@@ -159,7 +159,7 @@ namespace ComputerPartsShop.Services
 				throw new DataErrorException(HttpStatusCode.BadRequest, "Refresh token is expired");
 			}
 
-			var (jwtToken, expirationDateInUtc) = _authTokenProcessor.GenerateJwtToken(user);
+			var token = _authTokenProcessor.GenerateJwtToken(user);
 			var refreshTokenValue = _authTokenProcessor.GenerateRefreshToken();
 
 			var refreshTokenExiprationDateInUtc = DateTime.UtcNow.AddDays(7);
@@ -170,8 +170,9 @@ namespace ComputerPartsShop.Services
 
 			await _userRepository.UpdateAsync(user.Id, user, ct);
 
-			_authTokenProcessor.WriteAuthTokenAsHttpOnlyCookie("ACCESS_TOKEN", jwtToken, expirationDateInUtc);
 			_authTokenProcessor.WriteAuthTokenAsHttpOnlyCookie("REFRESH_TOKEN", user.RefreshToken, refreshTokenExiprationDateInUtc);
+
+			return token.jwtToken;
 		}
 
 		public async Task<ShopUserResponse> UpdateAsync(Guid id, ShopUserRequest request, CancellationToken ct)

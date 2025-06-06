@@ -92,15 +92,6 @@ namespace ComputerPartsShop
 					ValidAudience = jwtOptions.Audience,
 					IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret))
 				};
-
-				opt.Events = new JwtBearerEvents
-				{
-					OnMessageReceived = context =>
-					{
-						context.Token = context.Request.Cookies["ACCESS_TOKEN"];
-						return Task.CompletedTask;
-					}
-				};
 			});
 
 			builder.Services.AddAuthorization();

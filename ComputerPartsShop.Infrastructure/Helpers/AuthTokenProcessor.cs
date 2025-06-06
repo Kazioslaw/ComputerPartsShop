@@ -31,6 +31,7 @@ namespace ComputerPartsShop.Infrastructure.Helpers
 				new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
 				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
 				new Claim(JwtRegisteredClaimNames.Email, user.Email),
+				new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
 				new Claim(ClaimTypes.Role, user.Role.ToString()),
 				new Claim(ClaimTypes.NameIdentifier, $"{user.FirstName} {user.LastName}"),
 			};
@@ -40,10 +41,6 @@ namespace ComputerPartsShop.Infrastructure.Helpers
 			var token = new JwtSecurityToken(issuer: _jwtOptions.Issuer, audience: _jwtOptions.Audience, claims: claims, expires: expires, signingCredentials: credentials);
 
 			var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
-
-			Console.WriteLine("UTC Now: " + DateTime.UtcNow.ToString("O"));
-			Console.WriteLine("Local Now: " + DateTime.Now.ToString("O"));
-			Console.WriteLine("Expiration: " + expires.ToString("O"));
 
 			return new JwtResult(jwtToken, expires);
 		}

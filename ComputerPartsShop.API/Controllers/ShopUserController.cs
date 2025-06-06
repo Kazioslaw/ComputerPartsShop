@@ -202,9 +202,9 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				var refreshToken = HttpContext.Request.Cookies["REFRESH_TOKEN"];
 
-				await _userService.RefreshTokenAsync(refreshToken, ct);
+				var token = await _userService.RefreshTokenAsync(refreshToken, ct);
 
-				return Ok();
+				return Ok(token);
 			}
 			catch (DataErrorException ex)
 			{

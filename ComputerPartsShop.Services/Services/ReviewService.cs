@@ -135,7 +135,12 @@ namespace ComputerPartsShop.Services
 
 				var result = await _reviewRepository.UpdateAsync(id, reviewToUpdate, ct);
 
-				var updatedReview = _mapper.Map<ReviewResponse>(result);
+				if (result == 0)
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Not allowed to update this review.");
+				}
+
+				var updatedReview = _mapper.Map<ReviewResponse>(reviewToUpdate);
 
 				return updatedReview;
 			}
