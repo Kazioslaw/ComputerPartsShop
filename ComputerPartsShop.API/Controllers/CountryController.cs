@@ -1,11 +1,13 @@
 ﻿using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
 {
 	[ApiController]
+	[Authorize(Roles = "Admin")]
 	[Route("[controller]")]
 	public class CountryController : ControllerBase
 	{
@@ -23,6 +25,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the list of countries</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>List of countries</returns>
@@ -41,7 +44,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -51,6 +54,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Country ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the country</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the country was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Country</returns>
@@ -69,7 +73,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -79,6 +83,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="alpha3">Country alpha3 code</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the country</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the country was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
@@ -98,7 +103,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -108,6 +113,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="request">Country model</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the created country</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Created country</returns>
@@ -134,7 +140,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -145,6 +151,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="request">Updated country model</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the updated country</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the country was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
@@ -172,7 +179,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -182,6 +189,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Country ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="204">Returns confirmation of deletion</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the country was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
@@ -208,7 +216,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 	}

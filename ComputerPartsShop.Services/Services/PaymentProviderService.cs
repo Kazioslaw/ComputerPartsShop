@@ -3,6 +3,7 @@ using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 using Microsoft.Data.SqlClient;
+using System.Net;
 
 namespace ComputerPartsShop.Services
 {
@@ -29,7 +30,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -41,7 +42,7 @@ namespace ComputerPartsShop.Services
 
 				if (result == null)
 				{
-					throw new DataErrorException(404, "Payment provider not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Payment provider not found");
 				}
 
 				var paymentProvider = _mapper.Map<DetailedPaymentProviderResponse>(result);
@@ -50,7 +51,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -62,7 +63,7 @@ namespace ComputerPartsShop.Services
 
 				if (result == null)
 				{
-					throw new DataErrorException(404, "Payment provider not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Payment provider not found");
 				}
 
 				var paymentProvider = _mapper.Map<DetailedPaymentProviderResponse>(result);
@@ -71,15 +72,15 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<PaymentProviderResponse> CreateAsync(PaymentProviderRequest entity, CancellationToken ct)
+		public async Task<PaymentProviderResponse> CreateAsync(PaymentProviderRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var newPaymentProvider = _mapper.Map<PaymentProvider>(entity);
+				var newPaymentProvider = _mapper.Map<PaymentProvider>(request);
 
 				var result = await _paymentProviderRepository.CreateAsync(newPaymentProvider, ct);
 
@@ -89,11 +90,11 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<PaymentProviderResponse> UpdateAsync(int id, PaymentProviderRequest entity, CancellationToken ct)
+		public async Task<PaymentProviderResponse> UpdateAsync(int id, PaymentProviderRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -101,10 +102,10 @@ namespace ComputerPartsShop.Services
 
 				if (paymentProvider == null)
 				{
-					throw new DataErrorException(404, "Payment provider not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Payment provider not found");
 				}
 
-				var paymentProviderToUpdate = _mapper.Map<PaymentProvider>(entity);
+				var paymentProviderToUpdate = _mapper.Map<PaymentProvider>(request);
 
 				var result = await _paymentProviderRepository.UpdateAsync(id, paymentProviderToUpdate, ct);
 
@@ -114,7 +115,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -126,14 +127,14 @@ namespace ComputerPartsShop.Services
 
 				if (paymentProvider == null)
 				{
-					throw new DataErrorException(404, "Payment provider not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Payment provider not found");
 				}
 
 				await _paymentProviderRepository.DeleteAsync(id, ct);
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 	}

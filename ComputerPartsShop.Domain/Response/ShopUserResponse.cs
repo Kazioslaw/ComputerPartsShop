@@ -7,4 +7,5 @@
 	public record ShopUserWithAddressResponse(Guid Id, string FirstName, string LastName, string? Username, string? Email, string? PhoneNumber, List<AddressResponse> AddressList);
 	public record PaymentInfoInShopUserResponse(Guid Id, string ProviderName, string PaymentReference);
 	public record ReviewInShopUserResponse(int Id, string ProductName, byte Rating, string? Description);
+	public record LoginUserResponse(Guid Id, string Username, string Email, string Token, DateTime ExpiresAt, UserRole Role, string RefreshToken);
 }

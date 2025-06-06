@@ -3,6 +3,7 @@ using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 using Microsoft.Data.SqlClient;
+using System.Net;
 
 namespace ComputerPartsShop.Services
 {
@@ -34,7 +35,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -46,7 +47,7 @@ namespace ComputerPartsShop.Services
 
 				if (result == null)
 				{
-					throw new DataErrorException(404, "Review not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Review not found");
 				}
 
 				var review = _mapper.Map<ReviewResponse>(result);
@@ -55,29 +56,29 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<ReviewResponse> CreateAsync(ReviewRequest entity, CancellationToken ct)
+		public async Task<ReviewResponse> CreateAsync(ReviewRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var product = await _productRepository.GetAsync(entity.ProductId, ct);
+				var product = await _productRepository.GetAsync(request.ProductId, ct);
 
 				if (product == null)
 				{
-					throw new DataErrorException(400, "Invalid product id");
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid product id");
 				}
 
 				ShopUser? user = null;
 
-				if (!string.IsNullOrWhiteSpace(entity.Username))
+				if (!string.IsNullOrWhiteSpace(request.Username))
 				{
-					user = await _userRepository.GetByUsernameOrEmailAsync(entity.Username, ct);
+					user = await _userRepository.GetByUsernameOrEmailAsync(request.Username, ct);
 				}
 
-				var newReview = _mapper.Map<Review>(entity);
+				var newReview = _mapper.Map<Review>(request);
 				newReview.Product = product;
 				if (user != null)
 				{
@@ -93,11 +94,11 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<ReviewResponse> UpdateAsync(int id, ReviewRequest entity, CancellationToken ct)
+		public async Task<ReviewResponse> UpdateAsync(int id, ReviewRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -105,22 +106,22 @@ namespace ComputerPartsShop.Services
 
 				if (review == null)
 				{
-					throw new DataErrorException(404, "Review not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Review not found");
 				}
 
-				var product = await _productRepository.GetAsync(entity.ProductId, ct);
+				var product = await _productRepository.GetAsync(request.ProductId, ct);
 
 				if (product == null)
 				{
-					throw new DataErrorException(400, "Invalid product id");
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid product id");
 				}
 
-				var reviewToUpdate = _mapper.Map<Review>(entity);
+				var reviewToUpdate = _mapper.Map<Review>(request);
 				ShopUser? user = null;
 
-				if (!string.IsNullOrWhiteSpace(entity.Username))
+				if (!string.IsNullOrWhiteSpace(request.Username))
 				{
-					user = await _userRepository.GetByUsernameOrEmailAsync(entity.Username, ct);
+					user = await _userRepository.GetByUsernameOrEmailAsync(request.Username, ct);
 				}
 
 				reviewToUpdate.Product = product;
@@ -134,13 +135,18 @@ namespace ComputerPartsShop.Services
 
 				var result = await _reviewRepository.UpdateAsync(id, reviewToUpdate, ct);
 
-				var updatedReview = _mapper.Map<ReviewResponse>(result);
+				if (result == 0)
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Not allowed to update this review.");
+				}
+
+				var updatedReview = _mapper.Map<ReviewResponse>(reviewToUpdate);
 
 				return updatedReview;
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -152,14 +158,14 @@ namespace ComputerPartsShop.Services
 
 				if (review == null)
 				{
-					throw new DataErrorException(404, "Review not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Review not found");
 				}
 
 				await _reviewRepository.DeleteAsync(id, ct);
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 	}
