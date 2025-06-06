@@ -175,11 +175,13 @@ namespace ComputerPartsShop.API.Controllers
 				if (!validation.IsValid)
 				{
 					var errors = validation.Errors.GroupBy(x => x.PropertyName).ToDictionary(x => x.Key, x => x.Select(x => x.ErrorMessage).ToArray());
+
+					return BadRequest(errors);
 				}
 
-				await _userService.LoginAsync(request, ct);
+				var token = await _userService.LoginAsync(request, ct);
 
-				return Ok();
+				return Ok(token);
 			}
 			catch (DataErrorException ex)
 			{

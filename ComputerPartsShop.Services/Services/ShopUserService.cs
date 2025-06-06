@@ -109,7 +109,7 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task LoginAsync(LoginRequest request, CancellationToken ct)
+		public async Task<string> LoginAsync(LoginRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -120,7 +120,7 @@ namespace ComputerPartsShop.Services
 					throw new DataErrorException(HttpStatusCode.Unauthorized, "Username or password is not correct.");
 				}
 
-				var (jwtToken, expirationDateInUtc) = _authTokenProcessor.GenerateJwtToken(user);
+				var token = _authTokenProcessor.GenerateJwtToken(user);
 				var refreshTokenValue = _authTokenProcessor.GenerateRefreshToken();
 
 				var refreshTokenExiprationDateInUtc = DateTime.UtcNow.AddDays(7);
@@ -130,8 +130,9 @@ namespace ComputerPartsShop.Services
 
 				await _userRepository.UpdateAsync(user.Id, user, ct);
 
-				_authTokenProcessor.WriteAuthTokenAsHttpOnlyCookie("ACCESS_TOKEN", jwtToken, expirationDateInUtc);
 				_authTokenProcessor.WriteAuthTokenAsHttpOnlyCookie("REFRESH_TOKEN", user.RefreshToken, refreshTokenExiprationDateInUtc);
+
+				return token.jwtToken;
 			}
 			catch (SqlException)
 			{

@@ -65,7 +65,6 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Order</returns>
 		[HttpGet("{id:int}")]
-		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> GetOrderAsync(int id, CancellationToken ct)
 		{
 			try
