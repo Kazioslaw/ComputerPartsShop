@@ -127,11 +127,11 @@ namespace ComputerPartsShop.Infrastructure
 				{
 					try
 					{
-						var updatedRows = await connection.ExecuteAsync(query, parameters, transaction);
+						var rowsAffected = await connection.ExecuteAsync(query, parameters, transaction);
 
 						transaction.Commit();
 
-						return updatedRows;
+						return rowsAffected;
 					}
 					catch (SqlException ex)
 					{

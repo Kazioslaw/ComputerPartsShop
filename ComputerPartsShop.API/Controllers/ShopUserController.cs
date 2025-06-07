@@ -4,6 +4,8 @@ using ComputerPartsShop.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
+using System.Security.Claims;
 
 namespace ComputerPartsShop.API.Controllers
 {
@@ -192,15 +194,18 @@ namespace ComputerPartsShop.API.Controllers
 		/// <summary>
 		/// Asynchronously refreshing token
 		/// </summary>
-		/// <param name="httpContext"></param>
+		/// <param name="refreshToken">Token for refresh jwt token</param>
 		/// <param name="ct">Cancelation token</param>
-		/// <returns></returns>
+		/// <returns>New Jwt and Refresh tokens</returns>
 		[HttpPost("refresh")]
-		public async Task<IActionResult> RefreshUserTokenAsync(CancellationToken ct)
+		public async Task<IActionResult> RefreshUserTokenAsync(string refreshToken, CancellationToken ct)
 		{
 			try
 			{
-				var refreshToken = HttpContext.Request.Cookies["REFRESH_TOKEN"];
+				if (string.IsNullOrWhiteSpace(refreshToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Refresh token is empty, not valid or expired");
+				}
 
 				var token = await _userService.RefreshTokenAsync(refreshToken, ct);
 
@@ -231,6 +236,15 @@ namespace ComputerPartsShop.API.Controllers
 			try
 			{
 				var validation = await _userValidator.ValidateAsync(request);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+				var emailFromToken = HttpContext.User.FindFirst(ClaimTypes.Email)?.Value;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken) || string.IsNullOrWhiteSpace(emailFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username and Email is missing");
+				}
+
+				request = request with { Username = usernameFromToken, Email = emailFromToken };
 
 				if (!validation.IsValid)
 				{

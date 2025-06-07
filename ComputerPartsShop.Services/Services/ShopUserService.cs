@@ -109,7 +109,7 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task<string> LoginAsync(LoginRequest request, CancellationToken ct)
+		public async Task<TokensResponse> LoginAsync(LoginRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -132,7 +132,7 @@ namespace ComputerPartsShop.Services
 
 				_authTokenProcessor.WriteAuthTokenAsHttpOnlyCookie("REFRESH_TOKEN", user.RefreshToken, refreshTokenExiprationDateInUtc);
 
-				return token.jwtToken;
+				return new TokensResponse(token.jwtToken, refreshTokenValue);
 			}
 			catch (SqlException)
 			{
@@ -140,16 +140,16 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task<string> RefreshTokenAsync(string? refreshToken, CancellationToken ct)
+		public async Task<TokensResponse> RefreshTokenAsync(string? input, CancellationToken ct)
 		{
 			try
 			{
-				if (string.IsNullOrEmpty(refreshToken))
+				if (string.IsNullOrEmpty(input))
 				{
 					throw new DataErrorException(HttpStatusCode.BadRequest, "Refresh token is missing");
 				}
 
-				var user = await _userRepository.GetByRefreshTokenAsync(refreshToken, ct);
+				var user = await _userRepository.GetByRefreshTokenAsync(input, ct);
 
 				if (user == null)
 				{
@@ -172,9 +172,7 @@ namespace ComputerPartsShop.Services
 
 				await _userRepository.UpdateAsync(user.Id, user, ct);
 
-				_authTokenProcessor.WriteAuthTokenAsHttpOnlyCookie("REFRESH_TOKEN", user.RefreshToken, refreshTokenExiprationDateInUtc);
-
-				return token.jwtToken;
+				return new TokensResponse(token.jwtToken, refreshTokenValue);
 			}
 			catch (SqlException)
 			{
@@ -198,7 +196,14 @@ namespace ComputerPartsShop.Services
 
 				var result = await _userRepository.UpdateAsync(id, userToUpdate, ct);
 
-				var updatedUser = _mapper.Map<ShopUserResponse>(result);
+				if (result == 0)
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Not allowed to update this customer");
+				}
+
+				userToUpdate.Id = id;
+
+				var updatedUser = _mapper.Map<ShopUserResponse>(userToUpdate);
 
 				return updatedUser;
 			}

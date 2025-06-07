@@ -1,4 +1,5 @@
 using ComputerPartsShop.API;
+using ComputerPartsShop.Domain;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Infrastructure.Helpers;
 using FluentValidation;

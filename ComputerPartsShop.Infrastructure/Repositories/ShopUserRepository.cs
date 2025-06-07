@@ -37,7 +37,7 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<ShopUser> GetAsync(Guid id, CancellationToken ct)
 		{
-			var query = "SELECT ShopUser.ID, USer.FirstName, ShopUser.LastName, ShopUser.Username, ShopUser.Email, ShopUser.PhoneNumber, " +
+			var query = "SELECT ShopUser.ID, ShopUser.FirstName, ShopUser.LastName, ShopUser.Username, ShopUser.Email, ShopUser.PhoneNumber, " +
 				"Address.ID, Address.Street, Address.City, Address.Region, Address.ZipCode, Country.Alpha3, UserPaymentSystem.ID, UserPaymentSystem.PaymentReference, " +
 				"PaymentProvider.Name, Review.ID, Review.Rating, Review.Description, Product.Name FROM ShopUser " +
 				"LEFT JOIN UserAddress ON UserAddress.UserID = ShopUser.ID " +
@@ -46,7 +46,8 @@ namespace ComputerPartsShop.Infrastructure
 				"LEFT JOIN Review ON Review.UserID = ShopUser.ID " +
 				"LEFT JOIN Country ON Address.CountryID = Country.ID " +
 				"LEFT JOIN PaymentProvider ON PaymentProvider.ID = UserPaymentSystem.ProviderID " +
-				"LEFT JOIN Product ON Product.ID = Review.ProductID WHERE ShopUser.ID = @Id";
+				"LEFT JOIN Product ON Product.ID = Review.ProductID " +
+				"WHERE ShopUser.ID = @Id";
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
@@ -249,10 +250,10 @@ namespace ComputerPartsShop.Infrastructure
 			}
 		}
 
-		public async Task<ShopUser> UpdateAsync(Guid id, ShopUser request, CancellationToken ct)
+		public async Task<int> UpdateAsync(Guid id, ShopUser request, CancellationToken ct)
 		{
-			var query = "UPDATE ShopUser SET FirstName = @FirstName, LastName = @LastName, Username = @Username, Email = @Email, PhoneNumber = @PhoneNumber, Role = @Role, " +
-				"PasswordHash = @PasswordHash, RefreshToken = @RefreshToken, RefreshTokenExpiresAtUtc = @RefreshTokenExpiresAtUtc WHERE ID = @Id";
+			var query = "UPDATE ShopUser SET FirstName = @FirstName, LastName = @LastName, PhoneNumber = @PhoneNumber, Role = @Role, " +
+				"PasswordHash = @PasswordHash, RefreshToken = @RefreshToken, RefreshTokenExpiresAtUtc = @RefreshTokenExpiresAtUtc WHERE ID = @Id AND Username = @Username AND Email = @Email";
 			request.Id = id;
 
 			var parameters = new DynamicParameters();
@@ -273,11 +274,11 @@ namespace ComputerPartsShop.Infrastructure
 				{
 					try
 					{
-						await connection.ExecuteAsync(query, parameters, transaction);
+						var rowsAffected = await connection.ExecuteAsync(query, parameters, transaction);
 
 						transaction.Commit();
 
-						return request;
+						return rowsAffected;
 					}
 					catch (SqlException ex)
 					{

@@ -11,7 +11,7 @@ namespace ComputerPartsShop.Infrastructure
 		public Task<ShopUser> GetByAddressIDAsync(Guid addressID, CancellationToken ct);
 		public Task<ShopUser?> GetByRefreshTokenAsync(string refreshToken, CancellationToken ct);
 		public Task<ShopUser> CreateAsync(ShopUser request, CancellationToken ct);
-		public Task<ShopUser> UpdateAsync(Guid id, ShopUser request, CancellationToken ct);
+		public Task<int> UpdateAsync(Guid id, ShopUser request, CancellationToken ct);
 		public Task DeleteAsync(Guid id, CancellationToken ct);
 
 	}

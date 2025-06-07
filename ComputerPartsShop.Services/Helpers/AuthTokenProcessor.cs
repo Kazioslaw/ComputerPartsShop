@@ -1,4 +1,5 @@
-﻿using ComputerPartsShop.Domain.Models;
+﻿using ComputerPartsShop.Domain;
+using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Domain.Response;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;

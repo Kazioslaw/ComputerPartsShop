@@ -1,4 +1,4 @@
-﻿namespace ComputerPartsShop.Infrastructure
+﻿namespace ComputerPartsShop.Domain
 {
 	public class JwtOptions
 	{
