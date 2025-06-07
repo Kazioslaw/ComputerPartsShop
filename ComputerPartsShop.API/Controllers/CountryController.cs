@@ -1,4 +1,5 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using ComputerPartsShop.Domain;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ComputerPartsShop.API.Controllers
 {
 	[ApiController]
-	[Authorize(Roles = "Admin")]
+	[Authorize(Roles = nameof(UserRole.Admin))]
 	[Route("[controller]")]
 	public class CountryController : ControllerBase
 	{

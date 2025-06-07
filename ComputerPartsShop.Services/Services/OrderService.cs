@@ -43,11 +43,11 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task<OrderResponse> GetAsync(int id, CancellationToken ct)
+		public async Task<OrderResponse> GetAsync(int id, string username, CancellationToken ct)
 		{
 			try
 			{
-				var result = await _orderRepository.GetAsync(id, ct);
+				var result = await _orderRepository.GetAsync(id, username, ct);
 
 				if (result == null)
 				{
@@ -75,7 +75,7 @@ namespace ComputerPartsShop.Services
 					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid or missing username or email");
 				}
 
-				var address = await _addressRepository.GetAsync(request.AddressId, ct);
+				var address = await _addressRepository.GetAsync(request.AddressId, "", ct);
 
 				if (address == null)
 				{
@@ -121,11 +121,11 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task<OrderResponse> UpdateStatusAsync(int id, UpdateOrderRequest request, CancellationToken ct)
+		public async Task<OrderResponse> UpdateStatusAsync(int id, string username, UpdateOrderRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var existingOrder = await _orderRepository.GetAsync(id, ct);
+				var existingOrder = await _orderRepository.GetAsync(id, username, ct);
 
 				if (existingOrder == null)
 				{
@@ -161,11 +161,11 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task DeleteAsync(int id, CancellationToken ct)
+		public async Task DeleteAsync(int id, string username, CancellationToken ct)
 		{
 			try
 			{
-				var order = await _orderRepository.GetAsync(id, ct);
+				var order = await _orderRepository.GetAsync(id, username, ct);
 
 				if (order == null)
 				{

@@ -1,8 +1,10 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using ComputerPartsShop.Domain;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace ComputerPartsShop.API.Controllers
 {
@@ -32,7 +34,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <returns>List of user payment systems</returns>
 
 		[HttpGet]
-		[Authorize(Roles = "Admin")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> GetUserPaymentSystemListAsync(CancellationToken ct)
 		{
 			try
@@ -67,7 +69,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-				var userPaymentSystem = await _userPaymentSystemService.GetAsync(id, ct);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
+				var userPaymentSystem = await _userPaymentSystemService.GetAsync(id, usernameFromToken, ct);
 
 				return Ok(userPaymentSystem);
 			}
@@ -136,6 +145,13 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
 				var validation = await _userPaymentSystemValidator.ValidateAsync(request);
 
 				if (!validation.IsValid)
@@ -144,7 +160,7 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest(errors);
 				}
 
-				var userPaymentSystemUpdated = await _userPaymentSystemService.UpdateAsync(id, request, ct);
+				var userPaymentSystemUpdated = await _userPaymentSystemService.UpdateAsync(id, usernameFromToken, request, ct);
 
 				if (userPaymentSystemUpdated == null)
 				{
@@ -179,7 +195,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-				await _userPaymentSystemService.DeleteAsync(id, ct);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
+				await _userPaymentSystemService.DeleteAsync(id, usernameFromToken, ct);
 
 				return NoContent();
 			}

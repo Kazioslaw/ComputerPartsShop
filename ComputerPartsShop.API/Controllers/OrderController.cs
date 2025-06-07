@@ -1,8 +1,10 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using ComputerPartsShop.Domain;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace ComputerPartsShop.API.Controllers
 {
@@ -34,7 +36,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>List of orders</returns>
 		[HttpGet]
-		[Authorize(Roles = "Admin")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> GetOrderListAsync(CancellationToken ct)
 		{
 			try
@@ -69,7 +71,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-				var order = await _orderService.GetAsync(id, ct);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
+				var order = await _orderService.GetAsync(id, usernameFromToken, ct);
 
 				return Ok(order);
 			}
@@ -140,11 +149,18 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Updated order</returns>
 		[HttpPut("{id:int}")]
-		[Authorize(Roles = "Admin")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> UpdateOrderStatusAsync(int id, UpdateOrderRequest request, CancellationToken ct)
 		{
 			try
 			{
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
 				var validation = _updateOrderValidator.Validate(request);
 
 				if (!validation.IsValid)
@@ -153,7 +169,7 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest(errors);
 				}
 
-				var updatedOrder = await _orderService.UpdateStatusAsync(id, request, ct);
+				var updatedOrder = await _orderService.UpdateStatusAsync(id, usernameFromToken, request, ct);
 
 				return Ok(updatedOrder);
 			}
@@ -179,12 +195,12 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
-		[Authorize(Roles = "Admin")]
-		public async Task<IActionResult> DeleteOrderAsync(int id, CancellationToken ct)
+		[Authorize(Roles = nameof(UserRole.Admin))]
+		public async Task<IActionResult> DeleteOrderAsync(int id, string customerUsername, CancellationToken ct)
 		{
 			try
 			{
-				await _orderService.DeleteAsync(id, ct);
+				await _orderService.DeleteAsync(id, customerUsername, ct);
 
 				return NoContent();
 

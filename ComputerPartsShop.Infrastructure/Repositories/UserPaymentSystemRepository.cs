@@ -44,14 +44,14 @@ namespace ComputerPartsShop.Infrastructure
 			}
 		}
 
-		public async Task<UserPaymentSystem> GetAsync(Guid id, CancellationToken ct)
+		public async Task<UserPaymentSystem> GetAsync(Guid id, string username, CancellationToken ct)
 		{
 			var query = "SELECT UserPaymentSystem.ID, UserPaymentSystem.PaymentReference, ShopUser.Username, ShopUser.Email, PaymentProvider.Name, Payment.ID, Payment.OrderID, " +
 				"Payment.Total, Payment.Method, Payment.Status, Payment.PaymentStartAt, Payment.PaidAt FROM UserPaymentSystem " +
 				"LEFT JOIN ShopUser ON ShopUser.ID = UserPaymentSystem.UserID " +
 				"LEFT JOIN PaymentProvider ON PaymentProvider.ID = UserPaymentSystem.ProviderID " +
 				"LEFT JOIN Payment ON Payment.UserPaymentSystemID = UserPaymentSystem.ID " +
-				"WHERE UserPaymentSystem.ID = @ID";
+				"WHERE UserPaymentSystem.ID = @ID AND ShopUser.Username = @Username";
 
 			var userPaymentSystemDictionary = new Dictionary<Guid, UserPaymentSystem>();
 
@@ -77,7 +77,7 @@ namespace ComputerPartsShop.Infrastructure
 						}
 
 						return cps;
-					}, new { ID = id }, splitOn: "Username, Name, ID");
+					}, new { ID = id, Username = username }, splitOn: "Username, Name, ID");
 
 					return result.Distinct().FirstOrDefault();
 				}

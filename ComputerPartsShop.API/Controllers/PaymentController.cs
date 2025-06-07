@@ -1,8 +1,10 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using ComputerPartsShop.Domain;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace ComputerPartsShop.API.Controllers
 {
@@ -35,12 +37,18 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>List of payments</returns>
 		[HttpGet]
-		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> GetPaymentListAsync(CancellationToken ct)
 		{
 			try
 			{
-				var paymentList = await _paymentService.GetListAsync(ct);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
+				var paymentList = await _paymentService.GetListAsync(usernameFromToken, ct);
 
 				return Ok(paymentList);
 			}
@@ -66,12 +74,19 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Payment</returns>
 		[HttpGet("{id:guid}")]
-		[Authorize(Roles = "Admin")]
+		[Authorize]
 		public async Task<IActionResult> GetPaymentAsync(Guid id, CancellationToken ct)
 		{
 			try
 			{
-				var payment = await _paymentService.GetAsync(id, ct);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
+				var payment = await _paymentService.GetAsync(id, usernameFromToken, ct);
 
 				return Ok(payment);
 			}
@@ -101,6 +116,13 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
 				var validation = _paymentValidator.Validate(request);
 
 				if (!validation.IsValid)
@@ -109,7 +131,7 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest(errors);
 				}
 
-				var payment = await _paymentService.CreateAsync(request, ct);
+				var payment = await _paymentService.CreateAsync(usernameFromToken, request, ct);
 
 				return Created(nameof(GetPaymentAsync), payment);
 			}
@@ -137,8 +159,8 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Updated payment</returns>
 		[HttpPut("{id:guid}")]
-		[Authorize(Roles = "Admin")]
-		public async Task<IActionResult> UpdatePaymentStatusAsync(Guid id, UpdatePaymentRequest request, CancellationToken ct)
+		[Authorize(Roles = nameof(UserRole.Admin))]
+		public async Task<IActionResult> UpdatePaymentStatusAsync(Guid id, string customerUsername, UpdatePaymentRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -150,7 +172,7 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest(errors);
 				}
 
-				var updatedPayment = await _paymentService.UpdateStatusAsync(id, request, ct);
+				var updatedPayment = await _paymentService.UpdateStatusAsync(id, customerUsername, request, ct);
 
 				return Ok(updatedPayment);
 			}
@@ -176,14 +198,14 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:guid}")]
-		[Authorize(Roles = "Admin")]
-		public async Task<IActionResult> DeleteAsync(Guid id, CancellationToken ct)
+		[Authorize(Roles = nameof(UserRole.Admin))]
+		public async Task<IActionResult> DeleteAsync(Guid id, string customerUsername, CancellationToken ct)
 		{
 			try
 			{
-				var payment = await _paymentService.GetAsync(id, ct);
+				var payment = await _paymentService.GetAsync(id, customerUsername, ct);
 
-				await _paymentService.DeleteAsync(id, ct);
+				await _paymentService.DeleteAsync(id, customerUsername, ct);
 
 				return NoContent();
 			}

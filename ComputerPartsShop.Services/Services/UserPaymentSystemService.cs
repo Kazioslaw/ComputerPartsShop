@@ -39,11 +39,11 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task<DetailedUserPaymentSystemResponse> GetAsync(Guid id, CancellationToken ct)
+		public async Task<DetailedUserPaymentSystemResponse> GetAsync(Guid id, string username, CancellationToken ct)
 		{
 			try
 			{
-				var result = await _userPaymentSystemRepository.GetAsync(id, ct);
+				var result = await _userPaymentSystemRepository.GetAsync(id, username, ct);
 
 				if (result == null)
 				{
@@ -96,11 +96,11 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task<UserPaymentSystemResponse> UpdateAsync(Guid id, UserPaymentSystemRequest request, CancellationToken ct)
+		public async Task<UserPaymentSystemResponse> UpdateAsync(Guid id, string username, UserPaymentSystemRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var userPaymentSystem = await _userPaymentSystemRepository.GetAsync(id, ct);
+				var userPaymentSystem = await _userPaymentSystemRepository.GetAsync(id, username, ct);
 
 				if (userPaymentSystem == null)
 				{
@@ -139,11 +139,11 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task DeleteAsync(Guid id, CancellationToken ct)
+		public async Task DeleteAsync(Guid id, string username, CancellationToken ct)
 		{
 			try
 			{
-				var userPaymentSystem = await _userPaymentSystemRepository.GetAsync(id, ct);
+				var userPaymentSystem = await _userPaymentSystemRepository.GetAsync(id, username, ct);
 
 				if (userPaymentSystem == null)
 				{

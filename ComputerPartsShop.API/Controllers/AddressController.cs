@@ -3,6 +3,7 @@ using ComputerPartsShop.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace ComputerPartsShop.API.Controllers
 {
@@ -35,12 +36,18 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>List of addresses</returns>
 		[HttpGet]
-		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> GetAddressListAsync(CancellationToken ct)
 		{
 			try
 			{
-				var addressList = await _addressService.GetListAsync(ct);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
+				var addressList = await _addressService.GetListAsync(usernameFromToken, ct);
 
 				return Ok(addressList);
 			}
@@ -70,7 +77,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-				var address = await _addressService.GetAsync(id, ct);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
+				var address = await _addressService.GetAsync(id, usernameFromToken, ct);
 
 				return Ok(address);
 			}
@@ -136,6 +150,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Updated address</returns>
 		[HttpPut("{oldAddressId:guid}")]
+		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> UpdateAddressAsync(Guid oldAddressId, [FromBody] UpdateAddressRequest request, CancellationToken ct)
 		{
 			try
@@ -178,7 +193,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-				await _addressService.DeleteAsync(id, ct);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
+				await _addressService.DeleteAsync(id, usernameFromToken, ct);
 
 				return NoContent();
 			}

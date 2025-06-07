@@ -25,11 +25,11 @@ namespace ComputerPartsShop.Services
 
 		}
 
-		public async Task<List<PaymentResponse>> GetListAsync(CancellationToken ct)
+		public async Task<List<PaymentResponse>> GetListAsync(string username, CancellationToken ct)
 		{
 			try
 			{
-				var result = await _paymentRepository.GetListAsync(ct);
+				var result = await _paymentRepository.GetListAsync(username, ct);
 
 				var paymentList = _mapper.Map<IEnumerable<PaymentResponse>>(result);
 
@@ -41,11 +41,11 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task<PaymentResponse> GetAsync(Guid id, CancellationToken ct)
+		public async Task<PaymentResponse> GetAsync(Guid id, string username, CancellationToken ct)
 		{
 			try
 			{
-				var result = await _paymentRepository.GetAsync(id, ct);
+				var result = await _paymentRepository.GetAsync(id, username, ct);
 
 				if (result == null)
 				{
@@ -62,18 +62,18 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task<PaymentResponse> CreateAsync(PaymentRequest request, CancellationToken ct)
+		public async Task<PaymentResponse> CreateAsync(string username, PaymentRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var userPaymentSystem = await _userPaymentSystemRepository.GetAsync(request.UserPaymentSystemId, ct);
+				var userPaymentSystem = await _userPaymentSystemRepository.GetAsync(request.UserPaymentSystemId, username, ct);
 
 				if (userPaymentSystem == null)
 				{
 					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid user payment system");
 				}
 
-				var order = await _orderRepository.GetAsync(request.OrderId, ct);
+				var order = await _orderRepository.GetAsync(request.OrderId, username, ct);
 
 				if (order == null)
 				{
@@ -97,11 +97,11 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task<PaymentResponse> UpdateStatusAsync(Guid id, UpdatePaymentRequest request, CancellationToken ct)
+		public async Task<PaymentResponse> UpdateStatusAsync(Guid id, string username, UpdatePaymentRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var existingPayment = await _paymentRepository.GetAsync(id, ct);
+				var existingPayment = await _paymentRepository.GetAsync(id, username, ct);
 
 				if (existingPayment == null)
 				{
@@ -137,18 +137,18 @@ namespace ComputerPartsShop.Services
 			}
 		}
 
-		public async Task DeleteAsync(Guid id, CancellationToken ct)
+		public async Task DeleteAsync(Guid id, string username, CancellationToken ct)
 		{
 			try
 			{
-				var payment = _paymentRepository.GetAsync(id, ct);
+				var payment = _paymentRepository.GetAsync(id, username, ct);
 
 				if (payment == null)
 				{
 					throw new DataErrorException(HttpStatusCode.NotFound, "Payment not found");
 				}
 
-				await _paymentRepository.DeleteAsync(id, ct);
+				await _paymentRepository.DeleteAsync(id, username, ct);
 			}
 			catch (SqlException)
 			{

@@ -1,4 +1,5 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using ComputerPartsShop.Domain;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -189,7 +190,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
-		[Authorize(Roles = "Admin")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> DeleteReviewAsync(int id, CancellationToken ct)
 		{
 			try

@@ -14,9 +14,13 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<Payment>> GetListAsync(CancellationToken ct)
+		public async Task<List<Payment>> GetListAsync(string username, CancellationToken ct)
 		{
-			var query = "SELECT Payment.ID, Payment.UserPaymentSystemID, Payment.OrderID, Payment.Total, Payment.Method, Payment.Status, Payment.PaymentStartAt, Payment.PaidAt FROM Payment";
+			var query = "SELECT Payment.ID, Payment.UserPaymentSystemID, Payment.OrderID, Payment.Total, " +
+				"Payment.Method, Payment.Status, Payment.PaymentStartAt, Payment.PaidAt FROM Payment " +
+				"JOIN UserPaymentSystem ON UserPaymentSystem.ID = Payment.UserPaymentSystemID " +
+				"JOIN ShopUser ON ShopUser.ID = UserPaymentSystem.UserID " +
+				"WHERE Username = @Username";
 			using (var connection = await _dbContext.CreateConnection())
 			{
 				try
@@ -33,16 +37,19 @@ namespace ComputerPartsShop.Infrastructure
 			}
 		}
 
-		public async Task<Payment> GetAsync(Guid id, CancellationToken ct)
+		public async Task<Payment> GetAsync(Guid id, string username, CancellationToken ct)
 		{
-			var query = "SELECT Payment.ID, Payment.UserPaymentSystemID, Payment.OrderID, Payment.Total, Payment.Method, Payment.Status, Payment.PaymentStartAt, Payment.PaidAt " +
-				"FROM Payment WHERE Payment.ID = @ID";
+			var query = "SELECT Payment.ID, Payment.UserPaymentSystemID, Payment.OrderID, Payment.Total, Payment.Method, Payment.Status, " +
+				"Payment.PaymentStartAt, Payment.PaidAt FROM Payment " +
+				"JOIN UserPaymentSystem ON UserPaymentSystem.ID = Payment.UserPaymentSystemID " +
+				"JOIN ShopUser ON ShopUser.ID = UserPaymentSystem.UserID " +
+				"WHERE Payment.ID = @ID AND Username = @Username";
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
 				try
 				{
-					var payment = await connection.QueryFirstOrDefaultAsync<Payment>(query, new { ID = id });
+					var payment = await connection.QueryFirstOrDefaultAsync<Payment>(query, new { ID = id, Username = username });
 
 					return payment;
 				}
@@ -128,7 +135,7 @@ namespace ComputerPartsShop.Infrastructure
 			}
 		}
 
-		public async Task DeleteAsync(Guid id, CancellationToken ct)
+		public async Task DeleteAsync(Guid id, string username, CancellationToken ct)
 		{
 			var query = "DELETE FROM Payment WHERE ID = @Id";
 

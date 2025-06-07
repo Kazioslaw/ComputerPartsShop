@@ -1,4 +1,5 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using ComputerPartsShop.Domain;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
 using FluentValidation;
@@ -92,7 +93,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <returns>Created product</returns>
 
 		[HttpPost]
-		[Authorize(Roles = "Admin")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> CreateProductAsync(ProductRequest request, CancellationToken ct)
 		{
 			try
@@ -134,7 +135,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <returns>Updated product</returns>
 
 		[HttpPut("{id:int}")]
-		[Authorize(Roles = "Admin")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> UpdateProductAsync(int id, ProductRequest request, CancellationToken ct)
 		{
 			try
@@ -173,7 +174,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
-		[Authorize(Roles = "Admin")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> DeleteProductAsync(int id, CancellationToken ct)
 		{
 			try

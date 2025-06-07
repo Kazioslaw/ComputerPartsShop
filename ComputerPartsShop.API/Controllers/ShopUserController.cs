@@ -1,4 +1,5 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using ComputerPartsShop.Domain;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
 using FluentValidation;
@@ -36,7 +37,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>List of users</returns>
 		[HttpGet]
-		[Authorize(Roles = "Admin")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> GetUserListAsync(CancellationToken ct)
 		{
 			try
@@ -67,7 +68,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>User</returns>
 		[HttpGet("{id:guid}")]
-		[Authorize(Roles = "Admin")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> GetUserAsync(Guid id, CancellationToken ct)
 		{
 			try
@@ -98,7 +99,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>User</returns>
 		[HttpGet("{usernameOrEmail}")]
-		[Authorize(Roles = "Admin")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> GetUserByUsernameOrEmail(string usernameOrEmail, CancellationToken ct)
 		{
 			try
@@ -278,7 +279,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:guid}")]
-		[Authorize(Roles = "Admin")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> DeleteUserAsync(Guid id, CancellationToken ct)
 		{
 			try
