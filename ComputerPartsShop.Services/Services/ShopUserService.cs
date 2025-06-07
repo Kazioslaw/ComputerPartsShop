@@ -142,37 +142,44 @@ namespace ComputerPartsShop.Services
 
 		public async Task<string> RefreshTokenAsync(string? refreshToken, CancellationToken ct)
 		{
-			if (string.IsNullOrEmpty(refreshToken))
+			try
 			{
-				throw new DataErrorException(HttpStatusCode.BadRequest, "Refresh token is missing");
+				if (string.IsNullOrEmpty(refreshToken))
+				{
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Refresh token is missing");
+				}
+
+				var user = await _userRepository.GetByRefreshTokenAsync(refreshToken, ct);
+
+				if (user == null)
+				{
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Unable to retrieve user for refresh token");
+				}
+
+				if (user.RefreshTokenExpiresAtUtc < DateTime.UtcNow)
+				{
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Refresh token is expired");
+				}
+
+				var token = _authTokenProcessor.GenerateJwtToken(user);
+				var refreshTokenValue = _authTokenProcessor.GenerateRefreshToken();
+
+				var refreshTokenExiprationDateInUtc = DateTime.UtcNow.AddDays(7);
+
+				user.RefreshToken = refreshTokenValue;
+				user.RefreshTokenExpiresAtUtc = refreshTokenExiprationDateInUtc;
+
+
+				await _userRepository.UpdateAsync(user.Id, user, ct);
+
+				_authTokenProcessor.WriteAuthTokenAsHttpOnlyCookie("REFRESH_TOKEN", user.RefreshToken, refreshTokenExiprationDateInUtc);
+
+				return token.jwtToken;
 			}
-
-			var user = await _userRepository.GetByRefreshTokenAsync(refreshToken, ct);
-
-			if (user == null)
+			catch (SqlException)
 			{
-				throw new DataErrorException(HttpStatusCode.BadRequest, "Unable to retrieve user for refresh token");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
-
-			if (user.RefreshTokenExpiresAtUtc < DateTime.UtcNow)
-			{
-				throw new DataErrorException(HttpStatusCode.BadRequest, "Refresh token is expired");
-			}
-
-			var token = _authTokenProcessor.GenerateJwtToken(user);
-			var refreshTokenValue = _authTokenProcessor.GenerateRefreshToken();
-
-			var refreshTokenExiprationDateInUtc = DateTime.UtcNow.AddDays(7);
-
-			user.RefreshToken = refreshTokenValue;
-			user.RefreshTokenExpiresAtUtc = refreshTokenExiprationDateInUtc;
-
-
-			await _userRepository.UpdateAsync(user.Id, user, ct);
-
-			_authTokenProcessor.WriteAuthTokenAsHttpOnlyCookie("REFRESH_TOKEN", user.RefreshToken, refreshTokenExiprationDateInUtc);
-
-			return token.jwtToken;
 		}
 
 		public async Task<ShopUserResponse> UpdateAsync(Guid id, ShopUserRequest request, CancellationToken ct)
@@ -187,6 +194,7 @@ namespace ComputerPartsShop.Services
 				}
 
 				var userToUpdate = _mapper.Map<ShopUser>(request);
+				userToUpdate.PasswordHash = _passwordHasher.Hash(request.Password);
 
 				var result = await _userRepository.UpdateAsync(id, userToUpdate, ct);
 
