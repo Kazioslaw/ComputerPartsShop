@@ -127,9 +127,16 @@ namespace ComputerPartsShop.Services
 				userPaymentSystemToUpdate.UserId = user.Id;
 				userPaymentSystemToUpdate.User = user;
 
-				var result = await _userPaymentSystemRepository.UpdateAsync(id, userPaymentSystemToUpdate, ct);
+				var rowsAffected = await _userPaymentSystemRepository.UpdateAsync(id, username, userPaymentSystemToUpdate, ct);
 
-				var updatedUserPaymentSystem = _mapper.Map<UserPaymentSystemResponse>(result);
+				userPaymentSystemToUpdate.Id = id;
+
+				if (rowsAffected == 0)
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Not allowed to update this payment system");
+				}
+
+				var updatedUserPaymentSystem = _mapper.Map<UserPaymentSystemResponse>(userPaymentSystemToUpdate);
 
 				return updatedUserPaymentSystem;
 			}
@@ -150,7 +157,12 @@ namespace ComputerPartsShop.Services
 					throw new DataErrorException(HttpStatusCode.NotFound, "ShopUser payment system not found");
 				}
 
-				await _userPaymentSystemRepository.DeleteAsync(id, ct);
+				var result = await _userPaymentSystemRepository.DeleteAsync(id, username, ct);
+
+				if (result)
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Not allow to delete this payment system");
+				}
 			}
 			catch (SqlException)
 			{
