@@ -25,7 +25,7 @@ namespace ComputerPartsShop.Infrastructure
 			{
 				try
 				{
-					var paymentList = await connection.QueryAsync<Payment>(query);
+					var paymentList = await connection.QueryAsync<Payment>(query, param: new { Username = username });
 					return paymentList.ToList();
 				}
 				catch (SqlException ex)

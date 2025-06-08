@@ -42,7 +42,7 @@ namespace ComputerPartsShop.Infrastructure
 						return pp;
 					}, splitOn: "ID");
 
-					return result.Distinct().ToList();
+					return result.Distinct().OrderBy(x => x.Id).ToList();
 				}
 				catch (SqlException ex)
 				{
@@ -55,7 +55,8 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<PaymentProvider> GetAsync(int id, CancellationToken ct)
 		{
-			var query = "SELECT PaymentProvider.ID, PaymentProvider.Name, UserPaymentSystem.ID, UserPaymentSystem.PaymentReference, ShopUser.Username, ShopUser.Email FROM PaymentProvider " +
+			var query = "SELECT PaymentProvider.ID, PaymentProvider.Name, UserPaymentSystem.ID, " +
+				"UserPaymentSystem.PaymentReference, ShopUser.Username, ShopUser.Email FROM PaymentProvider " +
 				"LEFT JOIN UserPaymentSystem ON UserPaymentSystem.ProviderID = PaymentProvider.ID " +
 				"LEFT JOIN ShopUser ON UserPaymentSystem.UserID = ShopUser.ID WHERE PaymentProvider.ID = @Id";
 

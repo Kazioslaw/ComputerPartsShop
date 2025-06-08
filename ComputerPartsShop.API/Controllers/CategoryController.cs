@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace ComputerPartsShop.API.Controllers
 {
 	[ApiController]
-	[Authorize(Roles = nameof(UserRole.Admin))]
 	[Route("[controller]")]
 	public class CategoryController : ControllerBase
 	{
@@ -120,6 +119,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Created category</returns>
 		[HttpPost]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> CreateCategoryAsync(CategoryRequest request, CancellationToken ct)
 		{
 			try
@@ -159,6 +159,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Updated category</returns>
 		[HttpPut("{id:int}")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> UpdateCategoryAsync(int id, CategoryRequest request, CancellationToken ct)
 		{
 			try
@@ -197,6 +198,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> DeleteCategoryAsync(int id, CancellationToken ct)
 		{
 			try

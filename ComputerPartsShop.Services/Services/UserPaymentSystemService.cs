@@ -47,7 +47,7 @@ namespace ComputerPartsShop.Services
 
 				if (result == null)
 				{
-					throw new DataErrorException(HttpStatusCode.NotFound, "ShopUser Payment System Not Found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "User Payment System Not Found");
 				}
 
 				var userPaymentSystem = _mapper.Map<DetailedUserPaymentSystemResponse>(result);

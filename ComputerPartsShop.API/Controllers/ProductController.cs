@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace ComputerPartsShop.API.Controllers
 {
 	[ApiController]
-	[Authorize]
 	[Route("[controller]")]
 	public class ProductController : ControllerBase
 	{
