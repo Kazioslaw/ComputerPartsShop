@@ -60,7 +60,7 @@ namespace ComputerPartsShop.API.Mappings
 
 			CreateMap<PaymentProvider, PaymentProviderResponse>().ConstructUsing(pp => new PaymentProviderResponse(pp.Id, pp.Name, pp.UserPayments.Select(cps => cps.Id).ToList()));
 			CreateMap<PaymentProvider, DetailedPaymentProviderResponse>().ConstructUsing(pp => new DetailedPaymentProviderResponse(pp.Id, pp.Name,
-				pp.UserPayments.Select(cps => new UserPaymentSystemResponse(cps.Id, cps.User.Username, cps.User.Email, cps.Provider.Name, cps.PaymentReference)).ToList()));
+				pp.UserPayments.Select(cps => new UserPaymentSystemResponse(cps.Id, cps.User.Username, cps.User.Email, pp.Name, cps.PaymentReference)).ToList()));
 			CreateMap<PaymentProviderRequest, PaymentProvider>();
 
 			CreateMap<Payment, PaymentResponse>().ConstructUsing(p => new PaymentResponse(p.Id, p.UserPaymentSystemId, p.OrderId, p.Total, p.Method, p.Status, p.PaymentStartAt, p.PaidAt));

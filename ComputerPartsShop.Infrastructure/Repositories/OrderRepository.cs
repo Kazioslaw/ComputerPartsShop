@@ -77,12 +77,15 @@ namespace ComputerPartsShop.Infrastructure
 
 		}
 
-		public async Task<Order> GetAsync(int id, CancellationToken ct)
+		public async Task<Order> GetAsync(int id, string username, CancellationToken ct)
 		{
 			var query = "SELECT \"Order\".ID, \"Order\".UserID, \"Order\".Total, \"Order\".DeliveryAddressID, \"Order\".Status, " +
 				"\"Order\".OrderedAt, \"Order\".SendAt, OrderProduct.ProductID, OrderProduct.Quantity, Product.Name, Product.UnitPrice, " +
 				"Payment.ID FROM \"Order\" LEFT JOIN OrderProduct ON \"Order\".ID = OrderProduct.OrderID " +
-				"LEFT JOIN Payment ON \"Order\".ID = Payment.OrderID LEFT JOIN Product ON Product.ID = OrderProduct.ProductID WHERE \"Order\".ID = @Id";
+				"LEFT JOIN Payment ON \"Order\".ID = Payment.OrderID " +
+				"LEFT JOIN Product ON Product.ID = OrderProduct.ProductID " +
+				"JOIN ShopUser ON \"Order\".UserID = ShopUser.ID " +
+				"WHERE \"Order\".ID = @Id AND ShopUser.Username = @Username";
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
@@ -123,7 +126,7 @@ namespace ComputerPartsShop.Infrastructure
 						}
 
 						return currentOrder;
-					}, param: new { Id = id },
+					}, param: new { Id = id, Username = username },
 					splitOn: "ProductID, Name, ID");
 
 					return result.Distinct().FirstOrDefault();

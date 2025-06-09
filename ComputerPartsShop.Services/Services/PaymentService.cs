@@ -4,6 +4,7 @@ using ComputerPartsShop.Domain.Enums;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 using Microsoft.Data.SqlClient;
+using System.Net;
 
 namespace ComputerPartsShop.Services
 {
@@ -24,11 +25,11 @@ namespace ComputerPartsShop.Services
 
 		}
 
-		public async Task<List<PaymentResponse>> GetListAsync(CancellationToken ct)
+		public async Task<List<PaymentResponse>> GetListAsync(string username, CancellationToken ct)
 		{
 			try
 			{
-				var result = await _paymentRepository.GetListAsync(ct);
+				var result = await _paymentRepository.GetListAsync(username, ct);
 
 				var paymentList = _mapper.Map<IEnumerable<PaymentResponse>>(result);
 
@@ -36,19 +37,19 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<PaymentResponse> GetAsync(Guid id, CancellationToken ct)
+		public async Task<PaymentResponse> GetAsync(Guid id, string username, CancellationToken ct)
 		{
 			try
 			{
-				var result = await _paymentRepository.GetAsync(id, ct);
+				var result = await _paymentRepository.GetAsync(id, username, ct);
 
 				if (result == null)
 				{
-					throw new DataErrorException(404, "Payment not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Payment not found");
 				}
 
 				var payment = _mapper.Map<PaymentResponse>(result);
@@ -57,29 +58,29 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<PaymentResponse> CreateAsync(PaymentRequest entity, CancellationToken ct)
+		public async Task<PaymentResponse> CreateAsync(string username, PaymentRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var userPaymentSystem = await _userPaymentSystemRepository.GetAsync(entity.UserPaymentSystemId, ct);
+				var userPaymentSystem = await _userPaymentSystemRepository.GetAsync(request.UserPaymentSystemId, username, ct);
 
 				if (userPaymentSystem == null)
 				{
-					throw new DataErrorException(400, "Invalid user payment system");
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid user payment system");
 				}
 
-				var order = await _orderRepository.GetAsync(entity.OrderId, ct);
+				var order = await _orderRepository.GetAsync(request.OrderId, username, ct);
 
 				if (order == null)
 				{
-					throw new DataErrorException(400, "Invalid order");
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid order");
 				}
 
-				var newPayment = _mapper.Map<Payment>(entity);
+				var newPayment = _mapper.Map<Payment>(request);
 				newPayment.UserPaymentSystemId = userPaymentSystem.Id;
 				newPayment.UserPaymentSystem = userPaymentSystem;
 
@@ -92,35 +93,35 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<PaymentResponse> UpdateStatusAsync(Guid id, UpdatePaymentRequest entity, CancellationToken ct)
+		public async Task<PaymentResponse> UpdateStatusAsync(Guid id, string username, UpdatePaymentRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var existingPayment = await _paymentRepository.GetAsync(id, ct);
+				var existingPayment = await _paymentRepository.GetAsync(id, username, ct);
 
 				if (existingPayment == null)
 				{
-					throw new DataErrorException(404, "Payment not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Payment not found");
 				}
 
-				switch (entity.Status)
+				switch (request.Status)
 				{
 					case PaymentStatus.Pending:
 					case PaymentStatus.Authorized:
 					case PaymentStatus.Failed:
 					case PaymentStatus.Cancelled:
-						existingPayment.Status = entity.Status;
+						existingPayment.Status = request.Status;
 						break;
 					case PaymentStatus.Completed:
-						existingPayment.Status = entity.Status;
+						existingPayment.Status = request.Status;
 						existingPayment.PaidAt = DateTime.Now;
 						break;
 					case PaymentStatus.Refunded:
-						existingPayment.Status = entity.Status;
+						existingPayment.Status = request.Status;
 						break;
 				}
 
@@ -132,26 +133,26 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task DeleteAsync(Guid id, CancellationToken ct)
+		public async Task DeleteAsync(Guid id, string username, CancellationToken ct)
 		{
 			try
 			{
-				var payment = _paymentRepository.GetAsync(id, ct);
+				var payment = _paymentRepository.GetAsync(id, username, ct);
 
 				if (payment == null)
 				{
-					throw new DataErrorException(404, "Payment not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Payment not found");
 				}
 
-				await _paymentRepository.DeleteAsync(id, ct);
+				await _paymentRepository.DeleteAsync(id, username, ct);
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 	}

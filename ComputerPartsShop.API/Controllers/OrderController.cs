@@ -1,11 +1,15 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using ComputerPartsShop.Domain;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace ComputerPartsShop.API.Controllers
 {
 	[ApiController]
+	[Authorize]
 	[Route("[controller]")]
 	public class OrderController : ControllerBase
 	{
@@ -27,10 +31,12 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the list of orders</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>List of orders</returns>
 		[HttpGet]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> GetOrderListAsync(CancellationToken ct)
 		{
 			try
@@ -45,7 +51,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -55,6 +61,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Order ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the order</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the order was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
@@ -64,7 +71,14 @@ namespace ComputerPartsShop.API.Controllers
 		{
 			try
 			{
-				var order = await _orderService.GetAsync(id, ct);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
+				var order = await _orderService.GetAsync(id, usernameFromToken, ct);
 
 				return Ok(order);
 			}
@@ -74,7 +88,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -85,6 +99,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the created order</response>
 		/// <response code="400">Returns if the username, email or address was empty or invalid</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Created order</returns>
@@ -116,7 +131,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -128,15 +143,24 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the updated order</response>
 		/// <response code="400">Returns if the username, email or address was empty or invalid</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the order was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Updated order</returns>
 		[HttpPut("{id:int}")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> UpdateOrderStatusAsync(int id, UpdateOrderRequest request, CancellationToken ct)
 		{
 			try
 			{
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
 				var validation = _updateOrderValidator.Validate(request);
 
 				if (!validation.IsValid)
@@ -145,7 +169,7 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest(errors);
 				}
 
-				var updatedOrder = await _orderService.UpdateStatusAsync(id, request, ct);
+				var updatedOrder = await _orderService.UpdateStatusAsync(id, usernameFromToken, request, ct);
 
 				return Ok(updatedOrder);
 			}
@@ -155,7 +179,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -165,16 +189,18 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Order ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="204">Returns confirmation of deletion</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the order was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
-		public async Task<IActionResult> DeleteOrderAsync(int id, CancellationToken ct)
+		[Authorize(Roles = nameof(UserRole.Admin))]
+		public async Task<IActionResult> DeleteOrderAsync(int id, string customerUsername, CancellationToken ct)
 		{
 			try
 			{
-				await _orderService.DeleteAsync(id, ct);
+				await _orderService.DeleteAsync(id, customerUsername, ct);
 
 				return NoContent();
 
@@ -185,7 +211,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 	}

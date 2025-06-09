@@ -3,6 +3,7 @@ using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 using Microsoft.Data.SqlClient;
+using System.Net;
 
 namespace ComputerPartsShop.Services
 {
@@ -31,7 +32,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -43,7 +44,7 @@ namespace ComputerPartsShop.Services
 
 				if (result == null)
 				{
-					throw new DataErrorException(404, "Product not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Product not found");
 				}
 
 				var product = _mapper.Map<ProductResponse>(result);
@@ -52,22 +53,22 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<ProductResponse> CreateAsync(ProductRequest entity, CancellationToken ct)
+		public async Task<ProductResponse> CreateAsync(ProductRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var category = await _categoryRepository.GetByNameAsync(entity.CategoryName, ct);
+				var category = await _categoryRepository.GetByNameAsync(request.CategoryName, ct);
 
 				if (category == null)
 				{
-					throw new DataErrorException(400, "Invalid category name");
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid category name");
 				}
 
-				var newProduct = _mapper.Map<Product>(entity);
+				var newProduct = _mapper.Map<Product>(request);
 				newProduct.CategoryId = category.Id;
 				newProduct.Category = category;
 
@@ -79,11 +80,11 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<ProductResponse> UpdateAsync(int id, ProductRequest entity, CancellationToken ct)
+		public async Task<ProductResponse> UpdateAsync(int id, ProductRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -91,17 +92,17 @@ namespace ComputerPartsShop.Services
 
 				if (product == null)
 				{
-					throw new DataErrorException(404, "Product not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Product not found");
 				}
 
-				var category = await _categoryRepository.GetByNameAsync(entity.CategoryName, ct);
+				var category = await _categoryRepository.GetByNameAsync(request.CategoryName, ct);
 
 				if (category == null)
 				{
-					throw new DataErrorException(400, "Invalid category name");
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid category name");
 				}
 
-				var productToUpdate = _mapper.Map<Product>(entity);
+				var productToUpdate = _mapper.Map<Product>(request);
 				productToUpdate.CategoryId = category.Id;
 				productToUpdate.Category = category;
 
@@ -113,7 +114,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -125,14 +126,14 @@ namespace ComputerPartsShop.Services
 
 				if (product == null)
 				{
-					throw new DataErrorException(404, "Product not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Product not found");
 				}
 
 				await _productRepository.DeleteAsync(id, ct);
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 	}

@@ -1,7 +1,9 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using ComputerPartsShop.Domain;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -24,6 +26,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the list of products</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>List of products</returns>
@@ -42,7 +45,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -52,6 +55,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Product ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the product</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the product was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
@@ -71,7 +75,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -82,11 +86,13 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the created product</response>
 		/// <response code="400">Returns if the category name was empty or invalid</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Created product</returns>
 
 		[HttpPost]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> CreateProductAsync(ProductRequest request, CancellationToken ct)
 		{
 			try
@@ -109,7 +115,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -121,12 +127,14 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the updated product</response>
 		/// <response code="400">Returns if the category name was empty or invalid</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the product was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Updated product</returns>
 
 		[HttpPut("{id:int}")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> UpdateProductAsync(int id, ProductRequest request, CancellationToken ct)
 		{
 			try
@@ -149,7 +157,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -159,11 +167,13 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Product ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="204">Returns confirmation of deletion</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the product was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> DeleteProductAsync(int id, CancellationToken ct)
 		{
 			try
@@ -178,7 +188,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 	}

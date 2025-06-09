@@ -1,6 +1,8 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using ComputerPartsShop.Domain;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
@@ -23,6 +25,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the list of categories</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>List of categories</returns>
@@ -41,7 +44,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -51,6 +54,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Category ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the category</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the category was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
@@ -70,7 +74,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -80,6 +84,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="name">Category name</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the category</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the category was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
@@ -99,7 +104,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -109,10 +114,12 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="request">Category model</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the created category</response>		
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Created category</returns>
 		[HttpPost]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> CreateCategoryAsync(CategoryRequest request, CancellationToken ct)
 		{
 			try
@@ -135,7 +142,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -146,11 +153,13 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="request">Updated category model</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the updated category</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the category was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Updated category</returns>
 		[HttpPut("{id:int}")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> UpdateCategoryAsync(int id, CategoryRequest request, CancellationToken ct)
 		{
 			try
@@ -173,7 +182,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -183,11 +192,13 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Category ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="204">Returns confirmation of deletion</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the category was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
+		[Authorize(Roles = nameof(UserRole.Admin))]
 		public async Task<IActionResult> DeleteCategoryAsync(int id, CancellationToken ct)
 		{
 			try
@@ -202,7 +213,7 @@ namespace ComputerPartsShop.API.Controllers
 			}
 			catch (DataErrorException ex)
 			{
-				return StatusCode(ex.StatusCode, ex.Message);
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 	}

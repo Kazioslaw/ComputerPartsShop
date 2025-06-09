@@ -37,7 +37,7 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<ShopUser> GetAsync(Guid id, CancellationToken ct)
 		{
-			var query = "SELECT ShopUser.ID, USer.FirstName, ShopUser.LastName, ShopUser.Username, ShopUser.Email, ShopUser.PhoneNumber, " +
+			var query = "SELECT ShopUser.ID, ShopUser.FirstName, ShopUser.LastName, ShopUser.Username, ShopUser.Email, ShopUser.PhoneNumber, " +
 				"Address.ID, Address.Street, Address.City, Address.Region, Address.ZipCode, Country.Alpha3, UserPaymentSystem.ID, UserPaymentSystem.PaymentReference, " +
 				"PaymentProvider.Name, Review.ID, Review.Rating, Review.Description, Product.Name FROM ShopUser " +
 				"LEFT JOIN UserAddress ON UserAddress.UserID = ShopUser.ID " +
@@ -46,7 +46,8 @@ namespace ComputerPartsShop.Infrastructure
 				"LEFT JOIN Review ON Review.UserID = ShopUser.ID " +
 				"LEFT JOIN Country ON Address.CountryID = Country.ID " +
 				"LEFT JOIN PaymentProvider ON PaymentProvider.ID = UserPaymentSystem.ProviderID " +
-				"LEFT JOIN Product ON Product.ID = Review.ProductID WHERE ShopUser.ID = @Id";
+				"LEFT JOIN Product ON Product.ID = Review.ProductID " +
+				"WHERE ShopUser.ID = @Id";
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
@@ -104,8 +105,8 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<ShopUser> GetByUsernameOrEmailAsync(string input, CancellationToken ct)
 		{
-			var query = "SELECT ShopUser.ID, ShopUser.FirstName, ShopUser.LastName, ShopUser.Username, ShopUser.Email, ShopUser.PhoneNumber, " +
-				"Address.ID, Address.Street, Address.City, Address.Region, Address.ZipCode, Country.Alpha3 FROM ShopUser " +
+			var query = "SELECT ShopUser.ID, ShopUser.FirstName, ShopUser.LastName, ShopUser.Username, ShopUser.Email, ShopUser.PhoneNumber, ShopUser.Role, " +
+				"ShopUser.PasswordHash, ShopUser.RefreshToken, ShopUser.RefreshTokenExpiresAtUtc, Address.ID, Address.Street, Address.City, Address.Region, Address.ZipCode, Country.Alpha3 FROM ShopUser " +
 				"LEFT JOIN UserAddress ON UserAddress.UserID = ShopUser.ID " +
 				"LEFT JOIN Address ON UserAddress.AddressID = Address.ID " +
 				"LEFT JOIN Country ON Address.CountryID = Country.ID " +
@@ -115,7 +116,6 @@ namespace ComputerPartsShop.Infrastructure
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-
 				try
 				{
 					var result = await connection.QueryAsync<ShopUser, Address, Country, ShopUser>(query,
@@ -154,7 +154,19 @@ namespace ComputerPartsShop.Infrastructure
 			}
 		}
 
-		public async Task<ShopUser> GetByAddressIDAsync(Guid addressID, CancellationToken ct)
+		public async Task<bool> CheckIfUserExists(string username, string email, CancellationToken ct)
+		{
+			var query = "SELECT Count(1) FROM ShopUser WHERE Username = @Username OR Email = @Email";
+
+			using (var connection = await _dbContext.CreateConnection())
+			{
+				var count = await connection.ExecuteScalarAsync<int>(query, new { Username = username, Email = email });
+
+				return count > 0;
+			}
+		}
+
+		public async Task<ShopUser?> GetByAddressIDAsync(Guid addressID, CancellationToken ct)
 		{
 			var query = "SELECT ShopUser.Username, ShopUser.Email FROM ShopUser JOIN UserAddress ON ShopUser.ID = UserAddress.UserID " +
 				"WHERE UserAddress.AddressID = @AddressID";
@@ -164,9 +176,31 @@ namespace ComputerPartsShop.Infrastructure
 
 				try
 				{
-					var result = await connection.QueryAsync<ShopUser>(query, new { AddressID = addressID });
+					var result = await connection.QueryFirstOrDefaultAsync<ShopUser>(query, new { AddressID = addressID });
 
-					return result.FirstOrDefault();
+					return result;
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
+			}
+		}
+
+		public async Task<ShopUser?> GetByRefreshTokenAsync(string refreshToken, CancellationToken ct)
+		{
+			var query = "SELECT ID, FirstName, LastName, Username, Email, PhoneNumber, Role, PasswordHash, " +
+				"RefreshTokenExpiresAtUtc FROM ShopUser WHERE RefreshToken = @RefreshToken";
+
+			using (var connection = await _dbContext.CreateConnection())
+			{
+				try
+				{
+					var result = await connection.QueryFirstOrDefaultAsync<ShopUser>(query, new { RefreshToken = refreshToken });
+
+					return result;
 				}
 				catch (SqlException ex)
 				{
@@ -179,7 +213,8 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<ShopUser> CreateAsync(ShopUser request, CancellationToken ct)
 		{
-			var query = "INSERT INTO ShopUser (ID, FirstName, LastName, Username, Email, PhoneNumber) VALUES (@Id, @FirstName, @LastName, @Username, @Email, @PhoneNumber)";
+			var query = "INSERT INTO ShopUser (ID, FirstName, LastName, Username, Email, PhoneNumber, PasswordHash, Role) " +
+				"VALUES (@Id, @FirstName, @LastName, @Username, @Email, @PhoneNumber, @PasswordHash, @Role)";
 			request.Id = Guid.NewGuid();
 
 			var parameters = new DynamicParameters();
@@ -188,7 +223,9 @@ namespace ComputerPartsShop.Infrastructure
 			parameters.Add("LastName", request.LastName, DbType.String, ParameterDirection.Input);
 			parameters.Add("Username", request.Username, DbType.String, ParameterDirection.Input);
 			parameters.Add("Email", request.Email, DbType.String, ParameterDirection.Input);
-			parameters.Add("PhoneNumber", request.PhoneNumber ?? (object)DBNull.Value, DbType.String, ParameterDirection.Input);
+			parameters.Add("PhoneNumber", request.PhoneNumber, DbType.String, ParameterDirection.Input);
+			parameters.Add("PasswordHash", request.PasswordHash, DbType.String, ParameterDirection.Input);
+			parameters.Add("Role", request.Role.ToString(), DbType.String, ParameterDirection.Input);
 
 
 			using (var connection = await _dbContext.CreateConnection())
@@ -213,9 +250,10 @@ namespace ComputerPartsShop.Infrastructure
 			}
 		}
 
-		public async Task<ShopUser> UpdateAsync(Guid id, ShopUser request, CancellationToken ct)
+		public async Task<int> UpdateAsync(Guid id, ShopUser request, CancellationToken ct)
 		{
-			var query = "UPDATE ShopUser SET FirstName = @FirstName, LastName = @LastName, Username = @Username, Email = @Email, PhoneNumber = @PhoneNumber WHERE ID = @Id";
+			var query = "UPDATE ShopUser SET FirstName = @FirstName, LastName = @LastName, PhoneNumber = @PhoneNumber, Role = @Role, " +
+				"PasswordHash = @PasswordHash, RefreshToken = @RefreshToken, RefreshTokenExpiresAtUtc = @RefreshTokenExpiresAtUtc WHERE ID = @Id AND Username = @Username AND Email = @Email";
 			request.Id = id;
 
 			var parameters = new DynamicParameters();
@@ -224,7 +262,11 @@ namespace ComputerPartsShop.Infrastructure
 			parameters.Add("LastName", request.LastName, DbType.String, ParameterDirection.Input);
 			parameters.Add("Username", request.Username, DbType.String, ParameterDirection.Input);
 			parameters.Add("Email", request.Email, DbType.String, ParameterDirection.Input);
-			parameters.Add("PhoneNumber", request.PhoneNumber ?? (object)DBNull.Value, DbType.String, ParameterDirection.Input);
+			parameters.Add("PhoneNumber", request.PhoneNumber, DbType.String, ParameterDirection.Input);
+			parameters.Add("Role", request.Role.ToString(), DbType.String, ParameterDirection.Input);
+			parameters.Add("PasswordHash", request.PasswordHash, DbType.String, ParameterDirection.Input);
+			parameters.Add("RefreshToken", request.RefreshToken, DbType.String, ParameterDirection.Input);
+			parameters.Add("RefreshTokenExpiresAtUtc", request.RefreshTokenExpiresAtUtc, DbType.DateTime2, ParameterDirection.Input);
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
@@ -232,11 +274,11 @@ namespace ComputerPartsShop.Infrastructure
 				{
 					try
 					{
-						await connection.ExecuteAsync(query, parameters, transaction);
+						var rowsAffected = await connection.ExecuteAsync(query, parameters, transaction);
 
 						transaction.Commit();
 
-						return request;
+						return rowsAffected;
 					}
 					catch (SqlException ex)
 					{

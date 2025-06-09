@@ -44,7 +44,7 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<Review> GetAsync(int id, CancellationToken ct)
 		{
-			var query = "SELECT Review.ID, ShopUser.Username, Product.Name, Review.Rating, Review.Description FROM Review " +
+			var query = "SELECT Review.ID, Review.Rating, Review.Description, ShopUser.Username, Product.Name  FROM Review " +
 				"LEFT JOIN ShopUser ON Review.UserID = ShopUser.ID " +
 				"JOIN Product ON Review.ProductID = Product.ID WHERE Review.ID = @Id";
 
@@ -107,10 +107,10 @@ namespace ComputerPartsShop.Infrastructure
 
 		}
 
-		public async Task<Review> UpdateAsync(int id, Review request, CancellationToken ct)
+		public async Task<int> UpdateAsync(int id, Review request, CancellationToken ct)
 		{
-			var query = "UPDATE Review SET UserID = @UserID, ProductID = @ProductID, Rating = @Rating, " +
-				"Description = @Description WHERE ID = @Id";
+			var query = "UPDATE Review SET ProductID = @ProductID, Rating = @Rating, " +
+				"Description = @Description WHERE ID = @Id AND UserID = @UserID";
 
 			request.Id = id;
 
@@ -127,10 +127,11 @@ namespace ComputerPartsShop.Infrastructure
 				{
 					try
 					{
-						await connection.ExecuteAsync(query, parameters, transaction);
+						var rowsAffected = await connection.ExecuteAsync(query, parameters, transaction);
+
 						transaction.Commit();
 
-						return request;
+						return rowsAffected;
 					}
 					catch (SqlException ex)
 					{

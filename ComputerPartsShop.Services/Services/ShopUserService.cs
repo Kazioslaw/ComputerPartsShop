@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using ComputerPartsShop.Domain;
 using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 using Microsoft.Data.SqlClient;
+using System.Net;
 
 namespace ComputerPartsShop.Services
 {
@@ -10,9 +12,13 @@ namespace ComputerPartsShop.Services
 	{
 		private readonly IShopUserRepository _userRepository;
 		private readonly IMapper _mapper;
+		private readonly IPasswordHasher _passwordHasher;
+		private readonly IAuthTokenProcessor _authTokenProcessor;
 
-		public ShopUserService(IShopUserRepository userRepository, IMapper mapper)
+		public ShopUserService(IShopUserRepository userRepository, IMapper mapper, IPasswordHasher passwordHasher, IAuthTokenProcessor authTokenProcessor)
 		{
+			_authTokenProcessor = authTokenProcessor;
+			_passwordHasher = passwordHasher;
 			_userRepository = userRepository;
 			_mapper = mapper;
 		}
@@ -29,7 +35,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -41,7 +47,7 @@ namespace ComputerPartsShop.Services
 
 				if (result == null)
 				{
-					throw new DataErrorException(404, "ShopUser not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "ShopUser not found");
 				}
 
 				var user = _mapper.Map<DetailedShopUserResponse>(result);
@@ -50,7 +56,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -62,7 +68,7 @@ namespace ComputerPartsShop.Services
 
 				if (result == null)
 				{
-					throw new DataErrorException(400, "Invalid or empty username or email");
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid or empty username or email");
 				}
 
 				var user = _mapper.Map<ShopUserWithAddressResponse>(result);
@@ -71,23 +77,25 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<ShopUserResponse> CreateAsync(ShopUserRequest entity, CancellationToken ct)
+		public async Task<ShopUserResponse> CreateAsync(ShopUserRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var existingUsername = await _userRepository.GetByUsernameOrEmailAsync(entity.Username, ct);
-				var existingEmail = await _userRepository.GetByUsernameOrEmailAsync(entity.Email, ct);
+				var existingUser = await _userRepository.CheckIfUserExists(request.Username, request.Email, ct);
 
-				if (existingUsername != null || existingEmail != null)
+				if (existingUser)
 				{
-					throw new DataErrorException(400, "Failed to create user");
+					throw new DataErrorException(HttpStatusCode.BadRequest, $"User with this: {request.Username} or {request.Email} already exist");
 				}
 
-				var newUser = _mapper.Map<ShopUser>(entity);
+
+				var newUser = _mapper.Map<ShopUser>(request);
+				newUser.PasswordHash = _passwordHasher.Hash(request.Password);
+				newUser.Role = UserRole.Customer;
 
 				var result = await _userRepository.CreateAsync(newUser, ct);
 
@@ -97,11 +105,82 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<ShopUserResponse> UpdateAsync(Guid id, ShopUserRequest entity, CancellationToken ct)
+		public async Task<TokensResponse> LoginAsync(LoginRequest request, CancellationToken ct)
+		{
+			try
+			{
+				var user = await _userRepository.GetByUsernameOrEmailAsync(request.Username ?? request.Email, ct);
+
+				if (user == null || !_passwordHasher.Verify(user.PasswordHash, request.Password))
+				{
+					throw new DataErrorException(HttpStatusCode.Unauthorized, "Username or password is not correct.");
+				}
+
+				var token = _authTokenProcessor.GenerateJwtToken(user);
+				var refreshTokenValue = _authTokenProcessor.GenerateRefreshToken();
+
+				var refreshTokenExiprationDateInUtc = DateTime.UtcNow.AddDays(7);
+
+				user.RefreshToken = refreshTokenValue;
+				user.RefreshTokenExpiresAtUtc = refreshTokenExiprationDateInUtc;
+
+				await _userRepository.UpdateAsync(user.Id, user, ct);
+
+				_authTokenProcessor.WriteAuthTokenAsHttpOnlyCookie("REFRESH_TOKEN", user.RefreshToken, refreshTokenExiprationDateInUtc);
+
+				return new TokensResponse(token.jwtToken, refreshTokenValue);
+			}
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
+		}
+
+		public async Task<TokensResponse> RefreshTokenAsync(string? input, CancellationToken ct)
+		{
+			try
+			{
+				if (string.IsNullOrEmpty(input))
+				{
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Refresh token is missing");
+				}
+
+				var user = await _userRepository.GetByRefreshTokenAsync(input, ct);
+
+				if (user == null)
+				{
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Unable to retrieve user for refresh token");
+				}
+
+				if (user.RefreshTokenExpiresAtUtc < DateTime.UtcNow)
+				{
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Refresh token is expired");
+				}
+
+				var token = _authTokenProcessor.GenerateJwtToken(user);
+				var refreshTokenValue = _authTokenProcessor.GenerateRefreshToken();
+
+				var refreshTokenExiprationDateInUtc = DateTime.UtcNow.AddDays(7);
+
+				user.RefreshToken = refreshTokenValue;
+				user.RefreshTokenExpiresAtUtc = refreshTokenExiprationDateInUtc;
+
+
+				await _userRepository.UpdateAsync(user.Id, user, ct);
+
+				return new TokensResponse(token.jwtToken, refreshTokenValue);
+			}
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
+		}
+
+		public async Task<ShopUserResponse> UpdateAsync(Guid id, ShopUserRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -109,20 +188,28 @@ namespace ComputerPartsShop.Services
 
 				if (user == null)
 				{
-					throw new DataErrorException(404, "ShopUser not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "ShopUser not found");
 				}
 
-				var userToUpdate = _mapper.Map<ShopUser>(entity);
+				var userToUpdate = _mapper.Map<ShopUser>(request);
+				userToUpdate.PasswordHash = _passwordHasher.Hash(request.Password);
 
 				var result = await _userRepository.UpdateAsync(id, userToUpdate, ct);
 
-				var updatedUser = _mapper.Map<ShopUserResponse>(result);
+				if (result == 0)
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Not allowed to update this customer");
+				}
+
+				userToUpdate.Id = id;
+
+				var updatedUser = _mapper.Map<ShopUserResponse>(userToUpdate);
 
 				return updatedUser;
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -134,14 +221,14 @@ namespace ComputerPartsShop.Services
 
 				if (user == null)
 				{
-					throw new DataErrorException(404, "ShopUser not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "ShopUser not found");
 				}
 
 				await _userRepository.DeleteAsync(id, ct);
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 	}

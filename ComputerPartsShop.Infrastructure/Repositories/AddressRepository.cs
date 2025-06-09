@@ -14,10 +14,13 @@ namespace ComputerPartsShop.Infrastructure
 			_dbContext = dbContext;
 		}
 
-		public async Task<List<Address>> GetListAsync(CancellationToken ct)
+		public async Task<List<Address>> GetListAsync(string username, CancellationToken ct)
 		{
 			var query = "SELECT Address.ID, Address.Street, Address.City, Address.Region, Address.ZipCode, Country.Alpha3 FROM Address " +
-				"JOIN Country on Address.CountryID = Country.ID;";
+				"JOIN Country ON Address.CountryID = Country.ID " +
+				"JOIN UserAddress ON Address.ID = UserAddress.AddressID " +
+				"JOIN ShopUser ON UserAddress.UserID = ShopUser.ID " +
+				"WHERE Username = @username";
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
@@ -28,7 +31,7 @@ namespace ComputerPartsShop.Infrastructure
 						address.Country = country;
 
 						return address;
-					}, splitOn: "Alpha3");
+					}, param: new { Username = username }, splitOn: "Alpha3");
 
 					return result.ToList();
 				}
@@ -40,14 +43,14 @@ namespace ComputerPartsShop.Infrastructure
 			}
 		}
 
-		public async Task<Address> GetAsync(Guid id, CancellationToken ct)
+		public async Task<Address> GetAsync(Guid id, string username, CancellationToken ct)
 		{
 			var query = "SELECT Address.ID, Address.Street, Address.City, Address.Region, Address.ZipCode, Country.Alpha3, " +
 				"ShopUser.ID, ShopUser.FirstName, ShopUser.LastName, ShopUser.Username, ShopUser.Email " +
 				"FROM Address " +
 				"JOIN Country ON Address.CountryID = Country.ID " +
 				"LEFT JOIN UserAddress ON Address.ID = UserAddress.AddressID " +
-				"LEFT JOIN ShopUser ON UserAddress.UserID = ShopUser.ID WHERE Address.ID = @Id";
+				"LEFT JOIN ShopUser ON UserAddress.UserID = ShopUser.ID WHERE Address.ID = @Id AND ShopUser.Username = @Username";
 
 			var addressDictionary = new Dictionary<Guid, Address>();
 
@@ -76,7 +79,7 @@ namespace ComputerPartsShop.Infrastructure
 						}
 
 						return currentAddress;
-					}, param: new { Id = id }, splitOn: "Alpha3, ID");
+					}, param: new { Id = id, Username = username }, splitOn: "Alpha3, ID");
 
 					return result.Distinct().FirstOrDefault();
 				}
@@ -213,9 +216,9 @@ namespace ComputerPartsShop.Infrastructure
 			}
 		}
 
-		public async Task DeleteAsync(Guid id, CancellationToken ct)
+		public async Task<int> DeleteAsync(Guid id, string username, CancellationToken ct)
 		{
-			var query = "DELETE FROM Address WHERE ID = @Id";
+			var query = "DELETE FROM Address WHERE ID = @Id AND Username = @Username";
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
@@ -223,8 +226,10 @@ namespace ComputerPartsShop.Infrastructure
 				{
 					try
 					{
-						await connection.ExecuteAsync(query, new { ID = id }, transaction);
+						var rowsAffected = await connection.ExecuteAsync(query, new { ID = id, Username = username }, transaction);
 						transaction.Commit();
+
+						return rowsAffected;
 					}
 					catch (SqlException ex)
 					{

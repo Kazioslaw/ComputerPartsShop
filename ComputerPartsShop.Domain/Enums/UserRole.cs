@@ -1,8 +1,8 @@
 ﻿namespace ComputerPartsShop.Domain
 {
-	public enum Role
+	public enum UserRole
 	{
-		Administrator,
+		Admin,
 		Customer
 	}
 }

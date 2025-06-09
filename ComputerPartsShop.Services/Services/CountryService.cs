@@ -3,6 +3,7 @@ using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
 using Microsoft.Data.SqlClient;
+using System.Net;
 
 namespace ComputerPartsShop.Services
 {
@@ -29,7 +30,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -41,7 +42,7 @@ namespace ComputerPartsShop.Services
 
 				if (result == null)
 				{
-					throw new DataErrorException(404, "Country not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Country not found");
 				}
 
 				var country = _mapper.Map<DetailedCountryResponse>(result);
@@ -50,7 +51,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -62,7 +63,7 @@ namespace ComputerPartsShop.Services
 
 				if (result == null)
 				{
-					throw new DataErrorException(404, "Country not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Country not found");
 				}
 
 				var country = _mapper.Map<CountryResponse>(result);
@@ -71,15 +72,15 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<CountryResponse> CreateAsync(CountryRequest entity, CancellationToken ct)
+		public async Task<CountryResponse> CreateAsync(CountryRequest request, CancellationToken ct)
 		{
 			try
 			{
-				var newCountry = _mapper.Map<Country>(entity);
+				var newCountry = _mapper.Map<Country>(request);
 				var result = await _countryRepository.CreateAsync(newCountry, ct);
 				var createdCountry = _mapper.Map<CountryResponse>(result);
 
@@ -87,11 +88,11 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
-		public async Task<CountryResponse> UpdateAsync(int id, CountryRequest entity, CancellationToken ct)
+		public async Task<CountryResponse> UpdateAsync(int id, CountryRequest request, CancellationToken ct)
 		{
 			try
 			{
@@ -99,14 +100,14 @@ namespace ComputerPartsShop.Services
 
 				if (existingCountry == null)
 				{
-					throw new DataErrorException(404, "Country not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Country not found");
 				}
 
 				var countryToUpdate = new Country()
 				{
-					Alpha2 = entity.Alpha2,
-					Alpha3 = entity.Alpha3,
-					Name = entity.Name
+					Alpha2 = request.Alpha2,
+					Alpha3 = request.Alpha3,
+					Name = request.Name
 				};
 
 				var result = await _countryRepository.UpdateAsync(id, countryToUpdate, ct);
@@ -117,7 +118,7 @@ namespace ComputerPartsShop.Services
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 
@@ -129,14 +130,14 @@ namespace ComputerPartsShop.Services
 
 				if (country == null)
 				{
-					throw new DataErrorException(404, "Country not found");
+					throw new DataErrorException(HttpStatusCode.NotFound, "Country not found");
 				}
 
 				await _countryRepository.DeleteAsync(id, ct);
 			}
 			catch (SqlException)
 			{
-				throw new DataErrorException(500, "Database operation failed");
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 		}
 	}
