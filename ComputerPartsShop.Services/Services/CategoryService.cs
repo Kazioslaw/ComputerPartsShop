@@ -2,6 +2,8 @@
 using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
+using Microsoft.Data.SqlClient;
+using System.Net;
 
 namespace ComputerPartsShop.Services
 {
@@ -18,77 +20,129 @@ namespace ComputerPartsShop.Services
 
 		public async Task<List<CategoryResponse>> GetListAsync(CancellationToken ct)
 		{
-			var result = await _categoryRepository.GetListAsync(ct);
+			try
+			{
+				var result = await _categoryRepository.GetListAsync(ct);
 
-			var categoryList = _mapper.Map<IEnumerable<CategoryResponse>>(result);
+				var categoryList = _mapper.Map<IEnumerable<CategoryResponse>>(result);
 
-			return categoryList.ToList();
+				return categoryList.ToList();
+			}
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
 		public async Task<CategoryResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var result = await _categoryRepository.GetAsync(id, ct);
-
-			if (result == null)
+			try
 			{
-				return null;
+				var result = await _categoryRepository.GetAsync(id, ct);
+
+				if (result == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Category not found");
+				}
+
+				var category = _mapper.Map<CategoryResponse>(result);
+
+				return category;
+			}
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
 
-			var category = _mapper.Map<CategoryResponse>(result);
-
-			return category;
 		}
 
 		public async Task<CategoryResponse> GetByNameAsync(string name, CancellationToken ct)
 		{
-			var result = await _categoryRepository.GetByNameAsync(name, ct);
-
-			if (result == null)
+			try
 			{
-				return null;
+				var result = await _categoryRepository.GetByNameAsync(name, ct);
+
+				if (result == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Category not found");
+				}
+
+				var category = _mapper.Map<CategoryResponse>(result);
+
+				return category;
 			}
-
-			var category = _mapper.Map<CategoryResponse>(result);
-
-			return category;
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
-		public async Task<CategoryResponse> CreateAsync(CategoryRequest entity, CancellationToken ct)
+		public async Task<CategoryResponse> CreateAsync(CategoryRequest request, CancellationToken ct)
 		{
-			var newCategory = _mapper.Map<Category>(entity);
-
-			var result = await _categoryRepository.CreateAsync(newCategory, ct);
-
-			if (result == null)
+			try
 			{
-				return null;
+				var newCategory = _mapper.Map<Category>(request);
+
+				var result = await _categoryRepository.CreateAsync(newCategory, ct);
+
+				var createdCategory = _mapper.Map<CategoryResponse>(result);
+
+				return createdCategory;
 			}
-
-			var createdCategory = _mapper.Map<CategoryResponse>(result);
-
-			return createdCategory;
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
-		public async Task<CategoryResponse> UpdateAsync(int id, CategoryRequest entity, CancellationToken ct)
+		public async Task<CategoryResponse> UpdateAsync(int id, CategoryRequest request, CancellationToken ct)
 		{
-			var categoryToUpdate = _mapper.Map<Category>(entity);
-
-
-			var result = await _categoryRepository.UpdateAsync(id, categoryToUpdate, ct);
-
-			if (result == null)
+			try
 			{
-				return null;
+				var existingCategory = await _categoryRepository.GetAsync(id, ct);
+
+				if (existingCategory == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Category not found");
+				}
+
+				var categoryToUpdate = _mapper.Map<Category>(request);
+
+
+				var result = await _categoryRepository.UpdateAsync(id, categoryToUpdate, ct);
+
+				if (result == null)
+				{
+					throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+				}
+
+				var updatedCategory = _mapper.Map<CategoryResponse>(result);
+
+				return updatedCategory;
 			}
-
-			var updatedCategory = _mapper.Map<CategoryResponse>(result);
-
-			return updatedCategory;
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
-		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
-			return await _categoryRepository.DeleteAsync(id, ct);
+			try
+			{
+				var category = await _categoryRepository.GetAsync(id, ct);
+
+				if (category == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Category not found");
+				}
+
+				await _categoryRepository.DeleteAsync(id, ct);
+			}
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 	}
 }

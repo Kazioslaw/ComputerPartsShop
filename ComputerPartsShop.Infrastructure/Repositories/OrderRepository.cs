@@ -17,111 +17,133 @@ namespace ComputerPartsShop.Infrastructure
 
 		public async Task<List<Order>> GetListAsync(CancellationToken ct)
 		{
-			var query = "SELECT \"Order\".ID, \"Order\".CustomerID, \"Order\".Total, \"Order\".DeliveryAddressID, \"Order\".Status, " +
+			var query = "SELECT \"Order\".ID, \"Order\".UserID, \"Order\".Total, \"Order\".DeliveryAddressID, \"Order\".Status, " +
 				"\"Order\".OrderedAt, \"Order\".SendAt, OrderProduct.ProductID, OrderProduct.Quantity, Product.Name, Product.UnitPrice, " +
 				"Payment.ID FROM \"Order\" LEFT JOIN OrderProduct ON \"Order\".ID = OrderProduct.OrderID " +
 				"LEFT JOIN Payment ON \"Order\".ID = Payment.OrderID LEFT JOIN Product ON Product.ID = OrderProduct.ProductID";
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var orderDictionary = new Dictionary<int, Order>();
-				var result = await connection.QueryAsync<Order, OrderProduct, Product, Payment, Order>(query, (order, orderProduct, product, payment) =>
+
+				try
 				{
-					if (!orderDictionary.TryGetValue(order.Id, out var currentOrder))
+					var orderDictionary = new Dictionary<int, Order>();
+					var result = await connection.QueryAsync<Order, OrderProduct, Product, Payment, Order>(query, (order, orderProduct, product, payment) =>
 					{
-						currentOrder = order;
-						currentOrder.OrdersProducts = new List<OrderProduct>();
-						currentOrder.Payments = new List<Payment>();
-						orderDictionary.Add(order.Id, currentOrder);
-					}
-
-					if (orderProduct != null)
-					{
-						if (product == null)
+						if (!orderDictionary.TryGetValue(order.Id, out var currentOrder))
 						{
-							orderProduct.Product = new Product();
-						}
-						else
-						{
-							orderProduct.Product = product;
+							currentOrder = order;
+							currentOrder.OrdersProducts = new List<OrderProduct>();
+							currentOrder.Payments = new List<Payment>();
+							orderDictionary.Add(order.Id, currentOrder);
 						}
 
-
-						if (!currentOrder.OrdersProducts.Any(op => op.ProductId == orderProduct.ProductId))
+						if (orderProduct != null)
 						{
-							currentOrder.OrdersProducts.Add(orderProduct);
+							if (product == null)
+							{
+								orderProduct.Product = new Product();
+							}
+							else
+							{
+								orderProduct.Product = product;
+							}
+
+
+							if (!currentOrder.OrdersProducts.Any(op => op.ProductId == orderProduct.ProductId))
+							{
+								currentOrder.OrdersProducts.Add(orderProduct);
+							}
 						}
-					}
 
-					if (payment != null && !currentOrder.Payments.Any(p => p.Id == payment.Id))
-					{
-						currentOrder.Payments.Add(payment);
-					}
+						if (payment != null && !currentOrder.Payments.Any(p => p.Id == payment.Id))
+						{
+							currentOrder.Payments.Add(payment);
+						}
 
-					return currentOrder;
-				},
-				splitOn: "ProductID, Name, ID");
+						return currentOrder;
+					},
+					splitOn: "ProductID, Name, ID");
 
-				return result.Distinct().ToList();
+					return result.Distinct().ToList();
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
 			}
 
 		}
 
-		public async Task<Order> GetAsync(int id, CancellationToken ct)
+		public async Task<Order> GetAsync(int id, string username, CancellationToken ct)
 		{
-			var query = "SELECT \"Order\".ID, \"Order\".CustomerID, \"Order\".Total, \"Order\".DeliveryAddressID, \"Order\".Status, " +
+			var query = "SELECT \"Order\".ID, \"Order\".UserID, \"Order\".Total, \"Order\".DeliveryAddressID, \"Order\".Status, " +
 				"\"Order\".OrderedAt, \"Order\".SendAt, OrderProduct.ProductID, OrderProduct.Quantity, Product.Name, Product.UnitPrice, " +
 				"Payment.ID FROM \"Order\" LEFT JOIN OrderProduct ON \"Order\".ID = OrderProduct.OrderID " +
-				"LEFT JOIN Payment ON \"Order\".ID = Payment.OrderID LEFT JOIN Product ON Product.ID = OrderProduct.ProductID WHERE \"Order\".ID = @Id";
+				"LEFT JOIN Payment ON \"Order\".ID = Payment.OrderID " +
+				"LEFT JOIN Product ON Product.ID = OrderProduct.ProductID " +
+				"JOIN ShopUser ON \"Order\".UserID = ShopUser.ID " +
+				"WHERE \"Order\".ID = @Id AND ShopUser.Username = @Username";
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var orderDictionary = new Dictionary<int, Order>();
-				var result = await connection.QueryAsync<Order, OrderProduct, Product, Payment, Order>(query, (order, orderProduct, product, payment) =>
+				try
 				{
-					if (!orderDictionary.TryGetValue(order.Id, out var currentOrder))
+					var orderDictionary = new Dictionary<int, Order>();
+					var result = await connection.QueryAsync<Order, OrderProduct, Product, Payment, Order>(query, (order, orderProduct, product, payment) =>
 					{
-						currentOrder = order;
-						currentOrder.OrdersProducts = new List<OrderProduct>();
-						currentOrder.Payments = new List<Payment>();
-						orderDictionary.Add(order.Id, currentOrder);
-					}
-
-					if (orderProduct != null)
-					{
-						if (product == null)
+						if (!orderDictionary.TryGetValue(order.Id, out var currentOrder))
 						{
-							orderProduct.Product = new Product();
-						}
-						else
-						{
-							orderProduct.Product = product;
+							currentOrder = order;
+							currentOrder.OrdersProducts = new List<OrderProduct>();
+							currentOrder.Payments = new List<Payment>();
+							orderDictionary.Add(order.Id, currentOrder);
 						}
 
-
-						if (!currentOrder.OrdersProducts.Any(op => op.ProductId == orderProduct.ProductId))
+						if (orderProduct != null)
 						{
-							currentOrder.OrdersProducts.Add(orderProduct);
+							if (product == null)
+							{
+								orderProduct.Product = new Product();
+							}
+							else
+							{
+								orderProduct.Product = product;
+							}
+
+
+							if (!currentOrder.OrdersProducts.Any(op => op.ProductId == orderProduct.ProductId))
+							{
+								currentOrder.OrdersProducts.Add(orderProduct);
+							}
 						}
-					}
 
-					if (payment != null && !currentOrder.Payments.Any(p => p.Id == payment.Id))
-					{
-						currentOrder.Payments.Add(payment);
-					}
+						if (payment != null && !currentOrder.Payments.Any(p => p.Id == payment.Id))
+						{
+							currentOrder.Payments.Add(payment);
+						}
 
-					return currentOrder;
-				}, param: new { Id = id },
-				splitOn: "ProductID, Name, ID");
+						return currentOrder;
+					}, param: new { Id = id, Username = username },
+					splitOn: "ProductID, Name, ID");
 
-				return result.Distinct().FirstOrDefault();
+					return result.Distinct().FirstOrDefault();
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
 			}
 		}
 
 		public async Task<Order> CreateAsync(Order request, CancellationToken ct)
 		{
-			var createOrder = "INSERT INTO \"Order\" (CustomerID, DeliveryAddressID, Total, Status, OrderedAt, SendAt) " +
-				"VALUES (@CustomerID, @DeliveryAddressID, @Total, @Status, @OrderedAt, @SendAt) " +
+			var createOrder = "INSERT INTO \"Order\" (UserID, DeliveryAddressID, Total, Status, OrderedAt, SendAt) " +
+				"VALUES (@UserID, @DeliveryAddressID, @Total, @Status, @OrderedAt, @SendAt) " +
 				"SELECT CAST(SCOPE_IDENTITY() AS int)";
 
 			using (var connection = await _dbContext.CreateConnection())
@@ -131,7 +153,7 @@ namespace ComputerPartsShop.Infrastructure
 					try
 					{
 						var orderParameters = new DynamicParameters();
-						orderParameters.Add("CustomerID", request.CustomerId, DbType.Guid, ParameterDirection.Input);
+						orderParameters.Add("UserID", request.UserId, DbType.Guid, ParameterDirection.Input);
 						orderParameters.Add("DeliveryAddressID", request.DeliveryAddressId, DbType.Guid, ParameterDirection.Input);
 						orderParameters.Add("Total", request.Total, DbType.Decimal, ParameterDirection.Input);
 						orderParameters.Add("Status", request.Status.ToString(), DbType.String, ParameterDirection.Input);
@@ -159,11 +181,12 @@ namespace ComputerPartsShop.Infrastructure
 
 						return request;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 				}
 			}
@@ -192,17 +215,18 @@ namespace ComputerPartsShop.Infrastructure
 						return request;
 
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 				}
 			}
 		}
 
-		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
 			var query = "DELETE FROM \"Order\" WHERE ID = @Id";
 
@@ -214,14 +238,13 @@ namespace ComputerPartsShop.Infrastructure
 					{
 						await connection.ExecuteAsync(query, new { Id = id }, transaction);
 						transaction.Commit();
-
-						return true;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return false;
+						throw;
 					}
 				}
 			}

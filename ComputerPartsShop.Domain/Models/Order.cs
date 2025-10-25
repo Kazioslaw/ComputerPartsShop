@@ -5,8 +5,8 @@ namespace ComputerPartsShop.Domain.Models
 	public class Order
 	{
 		public int Id { get; set; }
-		public Guid CustomerId { get; set; }
-		public Customer Customer { get; set; }
+		public Guid UserId { get; set; }
+		public ShopUser User { get; set; }
 		public List<OrderProduct> OrdersProducts { get; set; }
 		public decimal Total { get; set; }
 		public Guid DeliveryAddressId { get; set; }

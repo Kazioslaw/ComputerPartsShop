@@ -1,11 +1,14 @@
-﻿using ComputerPartsShop.Domain.DTO;
+﻿using ComputerPartsShop.Domain;
+using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Services;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ComputerPartsShop.API.Controllers
 {
 	[ApiController]
+	[Authorize(Roles = nameof(UserRole.Admin))]
 	[Route("[controller]")]
 	public class PaymentProviderController : ControllerBase
 	{
@@ -25,7 +28,9 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the list of payment providers</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>List of payment providers</returns>
 		[HttpGet]
 		public async Task<IActionResult> GetPaymentProviderListAsync(CancellationToken ct)
@@ -40,6 +45,10 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
 			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode((int)ex.StatusCode, ex.Message);
+			}
 		}
 
 		/// <summary>
@@ -48,8 +57,10 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Payment provider ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the payment provider</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the payment provider was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Payment provider</returns>
 		[HttpGet("{id:int}")]
 		public async Task<IActionResult> GetPaymentProviderAsync(int id, CancellationToken ct)
@@ -69,6 +80,10 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
 			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode((int)ex.StatusCode, ex.Message);
+			}
 		}
 
 		/// <summary>
@@ -77,6 +92,7 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="name">Payment provider name</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the payment provider</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the payment provider was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
 		/// <returns>Payment provider</returns>
@@ -98,6 +114,10 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
 			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode((int)ex.StatusCode, ex.Message);
+			}
 		}
 
 		/// <summary>
@@ -106,7 +126,9 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="request">Payment provider model</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the created payment provider</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Created payment provider</returns>
 		[HttpPost]
 		public async Task<IActionResult> CreatePaymentProviderAsync(PaymentProviderRequest request, CancellationToken ct)
@@ -123,16 +145,15 @@ namespace ComputerPartsShop.API.Controllers
 
 				var paymentProvider = await _paymentProviderService.CreateAsync(request, ct);
 
-				if (paymentProvider == null)
-				{
-					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
-				}
-
 				return Created(nameof(GetPaymentProviderAsync), paymentProvider);
 			}
 			catch (OperationCanceledException)
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -143,8 +164,10 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="request">Updated payment provider model</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the updated payment provider</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the payment provider was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Updated payment provider</returns>
 		[HttpPut("{id:int}")]
 		public async Task<IActionResult> UpdatePaymentProviderAsync(int id, PaymentProviderRequest request, CancellationToken ct)
@@ -159,25 +182,17 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest(errors);
 				}
 
-				var paymentProvider = await _paymentProviderService.GetAsync(id, ct);
-
-				if (paymentProvider == null)
-				{
-					return NotFound("Payment provider not found");
-				}
-
 				var updatedPaymentProvider = await _paymentProviderService.UpdateAsync(id, request, ct);
-
-				if (updatedPaymentProvider == null)
-				{
-					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
-				}
 
 				return Ok(updatedPaymentProvider);
 			}
 			catch (OperationCanceledException)
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -187,33 +202,27 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Payment provider ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="204">Returns confirmation of deletion</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the payment provider was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:int}")]
 		public async Task<IActionResult> DeletePaymentProviderAsync(int id, CancellationToken ct)
 		{
 			try
 			{
-				var paymentProvider = await _paymentProviderService.GetAsync(id, ct);
-
-				if (paymentProvider == null)
-				{
-					return NotFound("Payment provider not found");
-				}
-
-				var isDeleted = await _paymentProviderService.DeleteAsync(id, ct);
-
-				if (!isDeleted)
-				{
-					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
-				}
+				await _paymentProviderService.DeleteAsync(id, ct);
 
 				return NoContent();
 			}
 			catch (OperationCanceledException)
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 	}

@@ -2,6 +2,8 @@
 using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
+using Microsoft.Data.SqlClient;
+using System.Net;
 
 namespace ComputerPartsShop.Services
 {
@@ -18,82 +20,125 @@ namespace ComputerPartsShop.Services
 
 		public async Task<List<CountryResponse>> GetListAsync(CancellationToken ct)
 		{
-			var result = await _countryRepository.GetListAsync(ct);
+			try
+			{
+				var result = await _countryRepository.GetListAsync(ct);
 
-			var countryList = _mapper.Map<IEnumerable<CountryResponse>>(result);
+				var countryList = _mapper.Map<IEnumerable<CountryResponse>>(result);
 
-			return countryList.ToList();
-
-
+				return countryList.ToList();
+			}
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
 		public async Task<DetailedCountryResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var result = await _countryRepository.GetAsync(id, ct);
-
-			if (result == null)
+			try
 			{
-				return null;
+				var result = await _countryRepository.GetAsync(id, ct);
+
+				if (result == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Country not found");
+				}
+
+				var country = _mapper.Map<DetailedCountryResponse>(result);
+
+				return country;
 			}
-
-			var country = _mapper.Map<DetailedCountryResponse>(result);
-
-			return country;
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
 		public async Task<CountryResponse> GetByAlpha3Async(string Alpha3, CancellationToken ct)
 		{
-			var result = await _countryRepository.GetByCountry3CodeAsync(Alpha3, ct);
-
-			if (result == null)
+			try
 			{
-				return null;
+				var result = await _countryRepository.GetByCountry3CodeAsync(Alpha3, ct);
+
+				if (result == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Country not found");
+				}
+
+				var country = _mapper.Map<CountryResponse>(result);
+
+				return country;
 			}
-
-			var country = _mapper.Map<CountryResponse>(result);
-
-			return country;
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
-		public async Task<CountryResponse> CreateAsync(CountryRequest entity, CancellationToken ct)
+		public async Task<CountryResponse> CreateAsync(CountryRequest request, CancellationToken ct)
 		{
-			var newCountry = _mapper.Map<Country>(entity);
-			var result = await _countryRepository.CreateAsync(newCountry, ct);
-
-			if (result == null)
+			try
 			{
-				return null;
+				var newCountry = _mapper.Map<Country>(request);
+				var result = await _countryRepository.CreateAsync(newCountry, ct);
+				var createdCountry = _mapper.Map<CountryResponse>(result);
+
+				return createdCountry;
 			}
-
-			var createdCountry = _mapper.Map<CountryResponse>(result);
-
-			return createdCountry;
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
-		public async Task<CountryResponse> UpdateAsync(int id, CountryRequest entity, CancellationToken ct)
+		public async Task<CountryResponse> UpdateAsync(int id, CountryRequest request, CancellationToken ct)
 		{
-			var countryToUpdate = new Country()
+			try
 			{
-				Alpha2 = entity.Alpha2,
-				Alpha3 = entity.Alpha3,
-				Name = entity.Name
-			};
+				var existingCountry = await _countryRepository.GetAsync(id, ct);
 
-			var result = await _countryRepository.UpdateAsync(id, countryToUpdate, ct);
+				if (existingCountry == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Country not found");
+				}
 
-			if (result == null)
-			{
-				return null;
+				var countryToUpdate = new Country()
+				{
+					Alpha2 = request.Alpha2,
+					Alpha3 = request.Alpha3,
+					Name = request.Name
+				};
+
+				var result = await _countryRepository.UpdateAsync(id, countryToUpdate, ct);
+
+				var updatedCountry = _mapper.Map<CountryResponse>(result);
+
+				return updatedCountry;
 			}
-
-			var updatedCountry = _mapper.Map<CountryResponse>(result);
-
-			return updatedCountry;
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
-		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
-			return await _countryRepository.DeleteAsync(id, ct);
+			try
+			{
+				var country = await _countryRepository.GetAsync(id, ct);
+
+				if (country == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Country not found");
+				}
+
+				await _countryRepository.DeleteAsync(id, ct);
+			}
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 	}
 }

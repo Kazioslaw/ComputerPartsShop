@@ -2,20 +2,22 @@
 using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
+using Microsoft.Data.SqlClient;
+using System.Net;
 
 namespace ComputerPartsShop.Services
 {
 	public class ReviewService : IReviewService
 	{
 		private readonly IReviewRepository _reviewRepository;
-		private readonly ICustomerRepository _customerRepository;
+		private readonly IShopUserRepository _userRepository;
 		private readonly IProductRepository _productRepository;
 		private readonly IMapper _mapper;
 
-		public ReviewService(IReviewRepository reviewRepository, ICustomerRepository customerRepository, IProductRepository productRepository, IMapper mapper)
+		public ReviewService(IReviewRepository reviewRepository, IShopUserRepository userRepository, IProductRepository productRepository, IMapper mapper)
 		{
 			_reviewRepository = reviewRepository;
-			_customerRepository = customerRepository;
+			_userRepository = userRepository;
 			_productRepository = productRepository;
 			_mapper = mapper;
 
@@ -23,92 +25,148 @@ namespace ComputerPartsShop.Services
 
 		public async Task<List<ReviewResponse>> GetListAsync(CancellationToken ct)
 		{
-			var result = await _reviewRepository.GetListAsync(ct);
+			try
+			{
+				var result = await _reviewRepository.GetListAsync(ct);
 
-			var reviewList = _mapper.Map<IEnumerable<ReviewResponse>>(result);
+				var reviewList = _mapper.Map<IEnumerable<ReviewResponse>>(result);
 
-			return reviewList.ToList();
+				return reviewList.ToList();
+			}
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
 		public async Task<ReviewResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var result = await _reviewRepository.GetAsync(id, ct);
-
-			if (result == null)
+			try
 			{
-				return null;
+				var result = await _reviewRepository.GetAsync(id, ct);
+
+				if (result == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Review not found");
+				}
+
+				var review = _mapper.Map<ReviewResponse>(result);
+
+				return review;
 			}
-
-			var review = _mapper.Map<ReviewResponse>(result);
-
-			return review;
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
-		public async Task<ReviewResponse> CreateAsync(ReviewRequest entity, CancellationToken ct)
+		public async Task<ReviewResponse> CreateAsync(ReviewRequest request, CancellationToken ct)
 		{
-			Customer? customer = null;
-			var product = await _productRepository.GetAsync(entity.ProductId, ct);
-
-			if (!string.IsNullOrWhiteSpace(entity.Username))
+			try
 			{
-				customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username, ct);
-			}
+				var product = await _productRepository.GetAsync(request.ProductId, ct);
 
-			var newReview = _mapper.Map<Review>(entity);
-			newReview.Product = product;
-			if (customer != null)
+				if (product == null)
+				{
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid product id");
+				}
+
+				ShopUser? user = null;
+
+				if (!string.IsNullOrWhiteSpace(request.Username))
+				{
+					user = await _userRepository.GetByUsernameOrEmailAsync(request.Username, ct);
+				}
+
+				var newReview = _mapper.Map<Review>(request);
+				newReview.Product = product;
+				if (user != null)
+				{
+					newReview.User = user;
+					newReview.UserId = user.Id;
+				}
+
+				var result = await _reviewRepository.CreateAsync(newReview, ct);
+
+				var createdReview = _mapper.Map<ReviewResponse>(result);
+
+				return createdReview;
+			}
+			catch (SqlException)
 			{
-				newReview.Customer = customer;
-				newReview.CustomerId = customer.Id;
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
-
-			var result = await _reviewRepository.CreateAsync(newReview, ct);
-
-			if (result == null)
-			{
-				return null;
-			}
-
-			var createdReview = _mapper.Map<ReviewResponse>(result);
-
-			return createdReview;
 		}
 
-		public async Task<ReviewResponse> UpdateAsync(int id, ReviewRequest entity, CancellationToken ct)
+		public async Task<ReviewResponse> UpdateAsync(int id, ReviewRequest request, CancellationToken ct)
 		{
-			var reviewToUpdate = _mapper.Map<Review>(entity);
-			Customer? customer = null;
-			var product = await _productRepository.GetAsync(entity.ProductId, ct);
-
-			if (!string.IsNullOrWhiteSpace(entity.Username))
+			try
 			{
-				customer = await _customerRepository.GetByUsernameOrEmailAsync(entity.Username, ct);
+				var review = await _reviewRepository.GetAsync(id, ct);
+
+				if (review == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Review not found");
+				}
+
+				var product = await _productRepository.GetAsync(request.ProductId, ct);
+
+				if (product == null)
+				{
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid product id");
+				}
+
+				var reviewToUpdate = _mapper.Map<Review>(request);
+				ShopUser? user = null;
+
+				if (!string.IsNullOrWhiteSpace(request.Username))
+				{
+					user = await _userRepository.GetByUsernameOrEmailAsync(request.Username, ct);
+				}
+
+				reviewToUpdate.Product = product;
+				reviewToUpdate.ProductId = product.Id;
+
+				if (user != null)
+				{
+					reviewToUpdate.User = user;
+					reviewToUpdate.UserId = user.Id;
+				}
+
+				var result = await _reviewRepository.UpdateAsync(id, reviewToUpdate, ct);
+
+				if (result == 0)
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Not allowed to update this review.");
+				}
+
+				var updatedReview = _mapper.Map<ReviewResponse>(reviewToUpdate);
+
+				return updatedReview;
 			}
-
-			reviewToUpdate.Product = product;
-			reviewToUpdate.ProductId = product.Id;
-
-			if (customer != null)
+			catch (SqlException)
 			{
-				reviewToUpdate.Customer = customer;
-				reviewToUpdate.CustomerId = customer.Id;
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
 			}
-
-			var result = await _reviewRepository.UpdateAsync(id, reviewToUpdate, ct);
-
-			if (result == null)
-			{
-				return null;
-			}
-
-			var updatedReview = _mapper.Map<ReviewResponse>(result);
-
-			return updatedReview;
 		}
 
-		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
-			return await _reviewRepository.DeleteAsync(id, ct);
+			try
+			{
+				var review = await _reviewRepository.GetAsync(id, ct);
+
+				if (review == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Review not found");
+				}
+
+				await _reviewRepository.DeleteAsync(id, ct);
+			}
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 	}
 }

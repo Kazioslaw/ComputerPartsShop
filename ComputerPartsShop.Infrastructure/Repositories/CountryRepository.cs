@@ -20,9 +20,18 @@ namespace ComputerPartsShop.Infrastructure
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var result = await connection.QueryAsync<Country>(query);
+				try
+				{
+					var result = await connection.QueryAsync<Country>(query);
 
-				return result.ToList();
+					return result.ToList();
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
 			}
 		}
 
@@ -32,27 +41,37 @@ namespace ComputerPartsShop.Infrastructure
 				"LEFT JOIN Address ON Address.CountryID = Country.ID WHERE Country.ID = @Id";
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var countryDictionary = new Dictionary<int, Country>();
-
-				var response = await connection.QueryAsync<Country, Address, Country>(query, (country, address) =>
+				try
 				{
-					Country currentCountry;
-					if (!countryDictionary.TryGetValue(country.Id, out currentCountry))
+					var countryDictionary = new Dictionary<int, Country>();
+
+					var response = await connection.QueryAsync<Country, Address, Country>(query, (country, address) =>
 					{
-						currentCountry = country;
-						currentCountry.Addresses = new List<Address>();
-						countryDictionary.Add(currentCountry.Id, currentCountry);
-					}
+						Country currentCountry;
+						if (!countryDictionary.TryGetValue(country.Id, out currentCountry))
+						{
+							currentCountry = country;
+							currentCountry.Addresses = new List<Address>();
+							countryDictionary.Add(currentCountry.Id, currentCountry);
+						}
 
-					if (address != null && address.Id != Guid.Empty && !currentCountry.Addresses.Any(a => a.Id == address.Id))
-					{
-						currentCountry.Addresses.Add(address);
-					}
+						if (address != null && address.Id != Guid.Empty && !currentCountry.Addresses.Any(a => a.Id == address.Id))
+						{
+							currentCountry.Addresses.Add(address);
+						}
 
-					return currentCountry;
-				}, splitOn: "ID", param: new { id });
+						return currentCountry;
+					}, splitOn: "ID", param: new { id });
 
-				return response.Distinct().FirstOrDefault();
+					return response.Distinct().FirstOrDefault();
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
+
 			}
 		}
 
@@ -65,9 +84,18 @@ namespace ComputerPartsShop.Infrastructure
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var result = await connection.QueryFirstOrDefaultAsync<Country>(query, parameter);
+				try
+				{
+					var result = await connection.QueryFirstOrDefaultAsync<Country>(query, parameter);
 
-				return result;
+					return result;
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
 			}
 		}
 
@@ -91,11 +119,12 @@ namespace ComputerPartsShop.Infrastructure
 
 						return request;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 				}
 			}
@@ -125,17 +154,18 @@ namespace ComputerPartsShop.Infrastructure
 
 						return request;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 				}
 			}
 		}
 
-		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
 			var query = "DELETE FROM Country WHERE ID = @Id";
 
@@ -147,14 +177,13 @@ namespace ComputerPartsShop.Infrastructure
 					{
 						await connection.ExecuteAsync(query, new { id }, transaction);
 						transaction.Commit();
-
-						return true;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return false;
+						throw;
 					}
 				}
 			}

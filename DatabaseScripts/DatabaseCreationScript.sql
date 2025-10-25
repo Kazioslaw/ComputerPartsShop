@@ -11,7 +11,7 @@ IF NOT EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME = N'Category')
 BEGIN
 	CREATE TABLE [Category] (
-		[Id] INT PRIMARY KEY,
+		[Id] INT IDENTITY(1,1) PRIMARY KEY,
 		[Name] NVARCHAR(50) UNIQUE NOT NULL,
 		[Description] NVARCHAR(4000) NOT NULL,		
 	);
@@ -20,7 +20,7 @@ IF NOT EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME = N'Country')
 BEGIN
 	CREATE TABLE [Country] (
-		[Id] INT PRIMARY KEY,
+		[Id] INT IDENTITY(1,1) PRIMARY KEY,
 		[Alpha2] CHAR(2) UNIQUE NOT NULL,
 		[Alpha3] CHAR(3) UNIQUE NOT NULL,
 		[Name] VARCHAR(100) UNIQUE NOT NULL		
@@ -31,7 +31,7 @@ IF NOT EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME = N'PaymentProvider')
 BEGIN
 	CREATE TABLE [PaymentProvider] (
-		[Id] INT PRIMARY KEY,
+		[Id] INT IDENTITY(1,1) PRIMARY KEY,
 		[Name] NVARCHAR(100) UNIQUE NOT NULL
 	);
 END;
@@ -40,7 +40,7 @@ IF NOT EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME = N'Address')
 BEGIN
 	CREATE TABLE [Address] (
-		[Id] UNIQUEIdENTIFIER PRIMARY KEY,
+		[Id] UNIQUEIDENTIFIER PRIMARY KEY,
 		[Street] NVARCHAR(100) NOT NULL,
 		[City] NVARCHAR(50) NOT NULL,
 		[Region] NVARCHAR(50) NOT NULL,
@@ -54,42 +54,46 @@ BEGIN
 END;
 
 IF NOT EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
-WHERE TABLE_NAME = N'Customer')
+WHERE TABLE_NAME = N'ShopUser')
 BEGIN
-	CREATE TABLE [Customer] (
-		[Id] UNIQUEIdENTIFIER PRIMARY KEY,
+	CREATE TABLE [ShopUser] (
+		[Id] UNIQUEIDENTIFIER PRIMARY KEY,
 		[FirstName] NVARCHAR(100) NOT NULL,
 		[LastName] NVARCHAR(100) NOT NULL,
 		[Username] VARCHAR(50) UNIQUE NOT NULL,
 		[Email] VARCHAR(50) UNIQUE NOT NULL,
-		[PhoneNumber] VARCHAR(20)
+		[PhoneNumber] VARCHAR(20),
+		[PasswordHash] VARCHAR(256) NOT NULL,
+		[Role] VARCHAR(50) NOT NULL,
+		[RefreshToken] VARCHAR(256),
+		[RefreshTokenExpiresAtUtc] DATETIME2(3)
 	);
-	CREATE INDEX IX_Customer_PhoneNumber ON [Customer] ([PhoneNumber]);
+	CREATE INDEX IX_User_PhoneNumber ON [ShopUser] ([PhoneNumber]);
 END;
 
 IF NOT EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
-WHERE TABLE_NAME = N'CustomerPaymentSystem')
+WHERE TABLE_NAME = N'UserPaymentSystem')
 BEGIN
-	CREATE TABLE [CustomerPaymentSystem] (
-		[Id] UNIQUEIdENTIFIER PRIMARY KEY,
-		[CustomerId] UNIQUEIdENTIFIER NOT NULL,
+	CREATE TABLE [UserPaymentSystem] (
+		[Id] UNIQUEIDENTIFIER PRIMARY KEY,
+		[UserId] UNIQUEIDENTIFIER NOT NULL,
 		[ProviderId] INT NOT NULL,
 		[PaymentReference] VARCHAR(50) NOT NULL,
-		FOREIGN KEY ([CustomerId]) REFERENCES [Customer] ([Id]),
+		FOREIGN KEY ([UserId]) REFERENCES [ShopUser] ([Id]),
 		FOREIGN KEY ([ProviderId]) REFERENCES [PaymentProvider] ([Id])
 	);
-	CREATE INDEX IX_CustomerPaymentSystem_CustomerId ON [CustomerPaymentSystem] ([CustomerId]);
-	CREATE INDEX IX_CustomerPaymentSystem_ProviderId ON [CustomerPaymentSystem] ([ProviderId]);
+	CREATE INDEX IX_UserPaymentSystem_UserId ON [UserPaymentSystem] ([UserId]);
+	CREATE INDEX IX_UserPaymentSystem_ProviderId ON [UserPaymentSystem] ([ProviderId]);
 END;
 
 IF NOT EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
-WHERE TABLE_NAME = N'CustomerAddress')
+WHERE TABLE_NAME = N'UserAddress')
 BEGIN
-	CREATE TABLE [CustomerAddress] (
-		[CustomerId] UNIQUEIdENTIFIER,
-		[AddressId] UNIQUEIdENTIFIER,
-		PRIMARY KEY ([CustomerId], [AddressId]),
-		FOREIGN KEY ([CustomerId]) REFERENCES [Customer] ([Id]),
+	CREATE TABLE [UserAddress] (
+		[UserId] UNIQUEIDENTIFIER,
+		[AddressId] UNIQUEIDENTIFIER,
+		PRIMARY KEY ([UserId], [AddressId]),
+		FOREIGN KEY ([UserId]) REFERENCES [ShopUser] ([Id]),
 		FOREIGN KEY ([AddressId]) REFERENCES [Address] ([Id])
 	);	
 END;
@@ -98,7 +102,7 @@ IF NOT EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME = N'Product')
 BEGIN
 	CREATE TABLE [Product] (
-		[Id] INT PRIMARY KEY,
+		[Id] INT IDENTITY(1,1) PRIMARY KEY,
 		[Name] NVARCHAR(100) NOT NULL,
 		[Description] NVARCHAR(4000) NOT NULL,
 		[UnitPrice] DECIMAL(18,2) NOT NULL,
@@ -116,17 +120,17 @@ IF NOT EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME = N'Order')
 BEGIN
 	CREATE TABLE [Order] (
-		[Id] INT PRIMARY KEY,
-		[CustomerId] UNIQUEIdENTIFIER NOT NULL,
+		[Id] INT IDENTITY(1,1) PRIMARY KEY,
+		[UserId] UNIQUEIDENTIFIER NOT NULL,
 		[Total] DECIMAL(18,2) NOT NULL,
-		[DeliveryAddressId] UNIQUEIdENTIFIER NOT NULL,
+		[DeliveryAddressId] UNIQUEIDENTIFIER NOT NULL,
 		[Status] nvarchar(255) NOT NULL CHECK ([Status] IN ('Pending', 'Processing', 'Shipped', 'Delivered', 'Returned', 'Cancelled')),
 		[OrderedAt] DATETIME2(3) NOT NULL,
 		[SendAt] DATETIME2(3)
-		FOREIGN KEY ([CustomerId]) REFERENCES [Customer] ([Id]),
+		FOREIGN KEY ([UserId]) REFERENCES [ShopUser] ([Id]),
 		FOREIGN KEY ([DeliveryAddressId]) REFERENCES [Address] ([Id])
 	);
-	CREATE INDEX IX_Order_CustomerId ON [Order] ([CustomerId])
+	CREATE INDEX IX_Order_UserId ON [Order] ([UserId])
 	CREATE INDEX IX_Order_DeliveryAddressId ON [Order] ([DeliveryAddressId])
 	CREATE INDEX IX_Order_Status ON [Order] ([Status])
 	CREATE INDEX IX_Order_Status_OrderedAt ON [Order] ([Status], [OrderedAt])
@@ -150,8 +154,8 @@ IF NOT EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME = N'Payment')
 BEGIN
 	CREATE TABLE [Payment] (
-		[Id] UNIQUEIdENTIFIER PRIMARY KEY,
-		[CustomerPaymentSystemId] UNIQUEIdENTIFIER NOT NULL,
+		[Id] UNIQUEIDENTIFIER PRIMARY KEY,
+		[UserPaymentSystemId] UNIQUEIDENTIFIER NOT NULL,
 		[OrderId] INT NOT NULL,
 		[Total] DECIMAL(18,2) NOT NULL,
 		[Method] nvarchar(255) NOT NULL CHECK ([Method] IN ('Cash', 'CreditCard', 'BLIK', 'BankTransfer', 'PayPal')),
@@ -159,10 +163,10 @@ BEGIN
 		[PaymentStartAt] DATETIME2(3) NOT NULL,
 		[PaidAt] DATETIME2(3),
 		FOREIGN KEY ([OrderId]) REFERENCES [Order] ([Id]),
-		FOREIGN KEY ([CustomerPaymentSystemId]) REFERENCES [CustomerPaymentSystem] ([Id])
+		FOREIGN KEY ([UserPaymentSystemId]) REFERENCES [UserPaymentSystem] ([Id])
 	);
 	CREATE INDEX IX_Payment_OrderId ON [Payment] ([OrderId])
-	CREATE INDEX IX_Payment_CustomerPaymentSystemId ON [Payment] ([CustomerPaymentSystemId])
+	CREATE INDEX IX_Payment_UserPaymentSystemId ON [Payment] ([UserPaymentSystemId])
 	CREATE INDEX IX_Payment_Status ON [Payment] ([Status])
 	CREATE INDEX IX_Payment_PaymentStartAt ON [Payment] ([PaymentStartAt])
 	CREATE INDEX IX_Payment_PaidAt ON [Payment] ([PaidAt])
@@ -172,15 +176,15 @@ IF NOT EXISTS (SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME = N'Review')
 BEGIN
 	CREATE TABLE [Review] (
-		[Id] INT PRIMARY KEY,
-		[CustomerId] UNIQUEIdENTIFIER,
+		[Id] INT IDENTITY(1,1) PRIMARY KEY,
+		[UserId] UNIQUEIDENTIFIER,
 		[ProductId] INT NOT NULL,
 		[Rating] TINYINT NOT NULL,
 		[Description] NVARCHAR(4000),
 		FOREIGN KEY ([ProductId]) REFERENCES [Product] ([Id]),
-		FOREIGN KEY ([CustomerId]) REFERENCES [Customer] ([Id])		
+		FOREIGN KEY ([UserId]) REFERENCES [ShopUser] ([Id])		
 	);
-	CREATE INDEX IX_Review_CustomerId ON [Review] ([CustomerId])
+	CREATE INDEX IX_Review_UserId ON [Review] ([UserId])
 	CREATE INDEX IX_Review_ProductId ON [Review] ([ProductId])
 END;
 

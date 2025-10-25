@@ -1,32 +1,28 @@
 ﻿using ComputerPartsShop.Domain.DTO;
-using ComputerPartsShop.Infrastructure;
 using ComputerPartsShop.Services;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace ComputerPartsShop.API.Controllers
 {
 	[ApiController]
+	[Authorize]
 	[Route("[controller]")]
 	public class AddressController : ControllerBase
 	{
 		private readonly IAddressService _addressService;
-		private readonly ICustomerRepository _customerRepository;
-		private readonly ICountryService _countryService;
 		private readonly IValidator<AddressRequest> _addressValidator;
 		private readonly IValidator<UpdateAddressRequest> _updateAddressValidator;
 
 
 		public AddressController(IAddressService addressService,
-			ICustomerRepository customerRepository,
-			ICountryService countryService,
 			IValidator<AddressRequest> addressValidator,
 			IValidator<UpdateAddressRequest> updateAddressValidator)
 		{
 			_addressValidator = addressValidator;
 			_addressService = addressService;
-			_customerRepository = customerRepository;
-			_countryService = countryService;
 			_updateAddressValidator = updateAddressValidator;
 		}
 
@@ -35,20 +31,33 @@ namespace ComputerPartsShop.API.Controllers
 		/// </summary>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the list of addresses</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>List of addresses</returns>
 		[HttpGet]
 		public async Task<IActionResult> GetAddressListAsync(CancellationToken ct)
 		{
 			try
 			{
-				var addressList = await _addressService.GetListAsync(ct);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
+
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
+				{
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
+				}
+
+				var addressList = await _addressService.GetListAsync(usernameFromToken, ct);
 
 				return Ok(addressList);
 			}
 			catch (OperationCanceledException)
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -58,26 +67,34 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Address ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the address</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the address was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Address</returns>
 		[HttpGet("{id:Guid}")]
 		public async Task<IActionResult> GetAddressAsync(Guid id, CancellationToken ct)
 		{
 			try
 			{
-				var address = await _addressService.GetAsync(id, ct);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
 
-				if (address == null)
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
 				{
-					return NotFound("Address not found");
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
 				}
+
+				var address = await _addressService.GetAsync(id, usernameFromToken, ct);
 
 				return Ok(address);
 			}
 			catch (OperationCanceledException)
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -88,8 +105,9 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the created address</response>
 		/// <response code="400">Returns if username, email or country3code was empty or invalid</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
-		/// <response code="500">Returns if the address could not be created</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Created address</returns>
 		[HttpPost]
 		public async Task<IActionResult> CreateAddressAsync([FromBody] AddressRequest request, CancellationToken ct)
@@ -104,32 +122,17 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest(errors);
 				}
 
-				var customer = await _customerRepository.GetByUsernameOrEmailAsync(request.Username ?? request.Email, ct);
-
-				if (customer == null)
-				{
-					return BadRequest("Invalid or missing username or email");
-				}
-
-				var country = await _countryService.GetByAlpha3Async(request.Country3Code, ct);
-
-				if (country == null)
-				{
-					return BadRequest("Invalid country code");
-				}
-
 				var address = await _addressService.CreateAsync(request, ct);
-
-				if (address == null)
-				{
-					return StatusCode(StatusCodes.Status500InternalServerError, "Create failed");
-				}
 
 				return Ok(address);
 			}
 			catch (OperationCanceledException)
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 
@@ -140,12 +143,14 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="request">Updated address model</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="200">Returns the updated address</response>
-		/// <response code="400">Returns if username, email or country3code was empty or invalid</response>
+		/// <response code="400">Returns if usernamename, email or country3code was empty or invalid</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the address was not found</response>		
 		/// <response code="499">Returns if the client cancelled the operation</response>
-		/// <response code="500">Returns if the address could not be updated</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Updated address</returns>
 		[HttpPut("{oldAddressId:guid}")]
+		[Authorize(Roles = "Admin")]
 		public async Task<IActionResult> UpdateAddressAsync(Guid oldAddressId, [FromBody] UpdateAddressRequest request, CancellationToken ct)
 		{
 			try
@@ -158,51 +163,7 @@ namespace ComputerPartsShop.API.Controllers
 					return BadRequest(errors);
 				}
 
-
-				var address = await _addressService.GetAsync(oldAddressId, ct);
-
-				if (address == null)
-				{
-					return NotFound("Address not found");
-				}
-
-				if (string.IsNullOrWhiteSpace(request.oldUsername) && string.IsNullOrWhiteSpace(request.oldEmail))
-				{
-					return BadRequest("Invalid or missing oldUsername or oldEmail");
-				}
-
-				if (string.IsNullOrWhiteSpace(request.newUsername) && string.IsNullOrWhiteSpace(request.newEmail))
-				{
-					return BadRequest("Invalid or missing newUsername or newEmail");
-				}
-
-				var oldCustomer = await _customerRepository.GetByUsernameOrEmailAsync(request.oldUsername ?? request.oldEmail, ct);
-
-				if (oldCustomer == null)
-				{
-					return BadRequest("Invalid or missing username or email");
-				}
-
-				var newCustomer = await _customerRepository.GetByUsernameOrEmailAsync(request.newUsername ?? request.newEmail, ct);
-
-				if (newCustomer == null)
-				{
-					return BadRequest("Invalid or missing username or email");
-				}
-
-				var country = await _countryService.GetByAlpha3Async(request.newCountry3Code, ct);
-
-				if (country == null)
-				{
-					return BadRequest("Country with that alpha3 code was not found");
-				}
-
 				var updatedAddress = await _addressService.UpdateAsync(oldAddressId, request, ct);
-
-				if (updatedAddress == null)
-				{
-					return StatusCode(StatusCodes.Status500InternalServerError, "Update failed");
-				}
 
 				return Ok(updatedAddress);
 			}
@@ -210,7 +171,10 @@ namespace ComputerPartsShop.API.Controllers
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
 			}
-
+			catch (DataErrorException ex)
+			{
+				return StatusCode((int)ex.StatusCode, ex.Message);
+			}
 		}
 
 		/// <summary>
@@ -219,34 +183,34 @@ namespace ComputerPartsShop.API.Controllers
 		/// <param name="id">Address ID</param>
 		/// <param name="ct">Cancellation token</param>
 		/// <response code="204">Returns confirmation of deletion</response>
+		/// <response code="401">Returns if the user is unauthorized to access the resource</response>
 		/// <response code="404">Returns if the address was not found</response>
 		/// <response code="499">Returns if the client cancelled the operation</response>
+		/// <response code="500">Returns if the database operation failed</response>
 		/// <returns>Deletion confirmation</returns>
 		[HttpDelete("{id:guid}")]
 		public async Task<IActionResult> DeleteAddressAsync(Guid id, CancellationToken ct)
 		{
 			try
 			{
-				var address = await _addressService.GetAsync(id, ct);
+				var usernameFromToken = HttpContext.User.Identity?.Name;
 
-				if (address == null)
+				if (string.IsNullOrWhiteSpace(usernameFromToken))
 				{
-					return NotFound("Address not found");
+					throw new DataErrorException(HttpStatusCode.Forbidden, "Username is empty");
 				}
 
-				var isDeleted = await _addressService.DeleteAsync(id, ct);
-
-				if (!isDeleted)
-				{
-					return StatusCode(StatusCodes.Status500InternalServerError, "Delete failed");
-				}
-
+				await _addressService.DeleteAsync(id, usernameFromToken, ct);
 
 				return NoContent();
 			}
 			catch (OperationCanceledException)
 			{
 				return StatusCode(StatusCodes.Status499ClientClosedRequest);
+			}
+			catch (DataErrorException ex)
+			{
+				return StatusCode((int)ex.StatusCode, ex.Message);
 			}
 		}
 	}

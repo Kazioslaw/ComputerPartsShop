@@ -20,13 +20,23 @@ namespace ComputerPartsShop.Infrastructure
 				"FROM Product JOIN Category ON Product.CategoryID = Category.ID";
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var productList = await connection.QueryAsync<Product, Category, Product>(query, (product, category) =>
-				{
-					product.Category = category;
-					return product;
-				}, splitOn: "Name");
 
-				return productList.ToList();
+				try
+				{
+					var productList = await connection.QueryAsync<Product, Category, Product>(query, (product, category) =>
+					{
+						product.Category = category;
+						return product;
+					}, splitOn: "Name");
+
+					return productList.ToList();
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
 			}
 		}
 
@@ -36,13 +46,22 @@ namespace ComputerPartsShop.Infrastructure
 				"FROM Product JOIN Category ON Product.CategoryID = Category.ID WHERE Product.ID = @Id";
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var product = await connection.QueryAsync<Product, Category, Product>(query, (product, category) =>
+				try
 				{
-					product.Category = category;
-					return product;
-				}, new { Id = id }, splitOn: "Name");
+					var product = await connection.QueryAsync<Product, Category, Product>(query, (product, category) =>
+					{
+						product.Category = category;
+						return product;
+					}, new { Id = id }, splitOn: "Name");
 
-				return product.FirstOrDefault();
+					return product.FirstOrDefault();
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
 			}
 		}
 
@@ -70,11 +89,12 @@ namespace ComputerPartsShop.Infrastructure
 
 						return product;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 				}
 			}
@@ -105,17 +125,18 @@ namespace ComputerPartsShop.Infrastructure
 
 						return request;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 				}
 			}
 		}
 
-		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
 			var productQuery = "DELETE FROM Product WHERE ID = @Id";
 
@@ -127,14 +148,13 @@ namespace ComputerPartsShop.Infrastructure
 					{
 						await connection.ExecuteAsync(productQuery, new { id }, transaction);
 						transaction.Commit();
-
-						return true;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return false;
+						throw;
 					}
 				}
 			}

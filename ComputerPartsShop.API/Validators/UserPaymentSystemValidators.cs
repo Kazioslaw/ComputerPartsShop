@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace ComputerPartsShop.API.Validators
 {
-	public class CustomerPaymentSystemRequestValidator : AbstractValidator<CustomerPaymentSystemRequest>
+	public class UserPaymentSystemRequestValidator : AbstractValidator<UserPaymentSystemRequest>
 	{
-		public CustomerPaymentSystemRequestValidator()
+		public UserPaymentSystemRequestValidator()
 		{
 			RuleFor(x => x).Must(x => !string.IsNullOrWhiteSpace(x.Username) || !string.IsNullOrWhiteSpace(x.Email))
 				.WithMessage("Email or Username is required (at least one must be provided)");

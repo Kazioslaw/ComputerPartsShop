@@ -2,6 +2,8 @@
 using ComputerPartsShop.Domain.DTO;
 using ComputerPartsShop.Domain.Models;
 using ComputerPartsShop.Infrastructure;
+using Microsoft.Data.SqlClient;
+using System.Net;
 
 namespace ComputerPartsShop.Services
 {
@@ -20,70 +22,119 @@ namespace ComputerPartsShop.Services
 
 		public async Task<List<ProductResponse>> GetListAsync(CancellationToken ct)
 		{
-			var result = await _productRepository.GetListAsync(ct);
+			try
+			{
+				var result = await _productRepository.GetListAsync(ct);
 
-			var productList = _mapper.Map<IEnumerable<ProductResponse>>(result);
+				var productList = _mapper.Map<IEnumerable<ProductResponse>>(result);
 
-			return productList.ToList();
+				return productList.ToList();
+			}
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
 		public async Task<ProductResponse> GetAsync(int id, CancellationToken ct)
 		{
-			var result = await _productRepository.GetAsync(id, ct);
-
-			if (result == null)
+			try
 			{
-				return null;
+				var result = await _productRepository.GetAsync(id, ct);
+
+				if (result == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Product not found");
+				}
+
+				var product = _mapper.Map<ProductResponse>(result);
+
+				return product;
 			}
-
-			var product = _mapper.Map<ProductResponse>(result);
-
-			return product;
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
-		public async Task<ProductResponse> CreateAsync(ProductRequest entity, CancellationToken ct)
+		public async Task<ProductResponse> CreateAsync(ProductRequest request, CancellationToken ct)
 		{
-			var category = await _categoryRepository.GetByNameAsync(entity.CategoryName, ct);
-
-			var newProduct = _mapper.Map<Product>(entity);
-			newProduct.CategoryId = category.Id;
-			newProduct.Category = category;
-
-			var result = await _productRepository.CreateAsync(newProduct, ct);
-
-			if (result == null)
+			try
 			{
-				return null;
+				var category = await _categoryRepository.GetByNameAsync(request.CategoryName, ct);
+
+				if (category == null)
+				{
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid category name");
+				}
+
+				var newProduct = _mapper.Map<Product>(request);
+				newProduct.CategoryId = category.Id;
+				newProduct.Category = category;
+
+				var result = await _productRepository.CreateAsync(newProduct, ct);
+
+				var createdProduct = _mapper.Map<ProductResponse>(result);
+
+				return createdProduct;
 			}
-
-			var createdProduct = _mapper.Map<ProductResponse>(result);
-
-			return createdProduct;
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
-		public async Task<ProductResponse> UpdateAsync(int id, ProductRequest entity, CancellationToken ct)
+		public async Task<ProductResponse> UpdateAsync(int id, ProductRequest request, CancellationToken ct)
 		{
-			var category = await _categoryRepository.GetByNameAsync(entity.CategoryName, ct);
-
-			var productToUpdate = _mapper.Map<Product>(entity);
-			productToUpdate.CategoryId = category.Id;
-			productToUpdate.Category = category;
-
-			var result = await _productRepository.UpdateAsync(id, productToUpdate, ct);
-
-			if (result == null)
+			try
 			{
-				return null;
+				var product = await _productRepository.GetAsync(id, ct);
+
+				if (product == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Product not found");
+				}
+
+				var category = await _categoryRepository.GetByNameAsync(request.CategoryName, ct);
+
+				if (category == null)
+				{
+					throw new DataErrorException(HttpStatusCode.BadRequest, "Invalid category name");
+				}
+
+				var productToUpdate = _mapper.Map<Product>(request);
+				productToUpdate.CategoryId = category.Id;
+				productToUpdate.Category = category;
+
+				var result = await _productRepository.UpdateAsync(id, productToUpdate, ct);
+
+				var updatedProduct = _mapper.Map<ProductResponse>(result);
+
+				return updatedProduct;
 			}
-
-			var updatedProduct = _mapper.Map<ProductResponse>(result);
-
-			return updatedProduct;
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 
-		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
-			return await _productRepository.DeleteAsync(id, ct);
+			try
+			{
+				var product = await _productRepository.GetAsync(id, ct);
+
+				if (product == null)
+				{
+					throw new DataErrorException(HttpStatusCode.NotFound, "Product not found");
+				}
+
+				await _productRepository.DeleteAsync(id, ct);
+			}
+			catch (SqlException)
+			{
+				throw new DataErrorException(HttpStatusCode.InternalServerError, "Database operation failed");
+			}
 		}
 	}
 }

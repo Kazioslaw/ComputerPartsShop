@@ -19,9 +19,18 @@ namespace ComputerPartsShop.Infrastructure
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var result = await connection.QueryAsync<Category>(query);
+				try
+				{
+					var result = await connection.QueryAsync<Category>(query);
 
-				return result.ToList();
+					return result.ToList();
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
 			}
 		}
 
@@ -31,9 +40,19 @@ namespace ComputerPartsShop.Infrastructure
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var result = await connection.QueryFirstOrDefaultAsync<Category>(query, new { id });
 
-				return result;
+				try
+				{
+					var result = await connection.QueryFirstOrDefaultAsync<Category>(query, new { id });
+
+					return result;
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
 			}
 		}
 
@@ -43,9 +62,19 @@ namespace ComputerPartsShop.Infrastructure
 
 			using (var connection = await _dbContext.CreateConnection())
 			{
-				var result = await connection.QueryFirstOrDefaultAsync<Category>(query, new { name });
+				try
+				{
+					var result = await connection.QueryFirstOrDefaultAsync<Category>(query, new { name });
 
-				return result;
+					return result;
+
+				}
+				catch (SqlException ex)
+				{
+					Console.WriteLine(ex.Message);
+
+					throw;
+				}
 			}
 		}
 
@@ -69,11 +98,12 @@ namespace ComputerPartsShop.Infrastructure
 
 						return request;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 				}
 			}
@@ -100,17 +130,18 @@ namespace ComputerPartsShop.Infrastructure
 
 						return request;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return null;
+						throw;
 					}
 				}
 			}
 		}
 
-		public async Task<bool> DeleteAsync(int id, CancellationToken ct)
+		public async Task DeleteAsync(int id, CancellationToken ct)
 		{
 			var query = "DELETE FROM Category WHERE ID = @Id";
 
@@ -123,16 +154,14 @@ namespace ComputerPartsShop.Infrastructure
 					{
 						await connection.ExecuteAsync(query, new { id }, transaction: transaction);
 						transaction.Commit();
-
-						return true;
 					}
-					catch (SqlException)
+					catch (SqlException ex)
 					{
 						transaction.Rollback();
+						Console.WriteLine(ex.Message);
 
-						return false;
+						throw;
 					}
-
 				}
 			}
 		}
